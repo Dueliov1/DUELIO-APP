@@ -1,0 +1,122 @@
+name: Base statique
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_fichiers:
+        description: "Nombre de championnats-saisons à traiter dans ce passage"
+        default: "20"
+
+permissions:
+  contents: write
+
+jobs:
+  moissonner:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Moissonner
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          MAX_FICHIERS: ${{ inputs.max_fichiers }}
+        run: |
+          cat > moisson.mjs <<'EOF'
+          import { writeFileSync, existsSync, mkdirSync } from "node:fs";
+
+          const KEY = process.env.API_FOOTBALL_KEY;
+          const MAX = parseInt(process.env.MAX_FICHIERS || "20", 10);
+          const BASE = "https://v3.football.api-sports.io";
+          const DOSSIER = "www/data/stats";
+          const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+          const COMPETITIONS = [
+            { id: 39,  nom: "Premier League" },
+            { id: 140, nom: "La Liga" },
+            { id: 135, nom: "Serie A" },
+            { id: 78,  nom: "Bundesliga" },
+            { id: 61,  nom: "Ligue 1" },
+            { id: 94,  nom: "Primeira Liga" },
+            { id: 88,  nom: "Eredivisie" },
+            { id: 203, nom: "Super Lig" },
+            { id: 71,  nom: "Brasileirao" },
+            { id: 128, nom: "Liga Argentina" },
+            { id: 2,   nom: "Ligue des champions" },
+            { id: 3,   nom: "Ligue Europa" }
+          ];
+          const SAISONS = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016];
+
+          async function get(path, tries = 5) {
+            for (let i = 1; i <= tries; i++) {
+              const r = await fetch(BASE + path, { headers: { "x-apisports-key": KEY } });
+              const j = await r.json().catch(() => null);
+              const e = j && j.errors;
+              const bad = e && (Array.isArray(e) ? e.length : Object.keys(e).length);
+              if (bad && /too many|rate/i.test(JSON.stringify(e))) {
+                await sleep(4000 * i);
+                continue;
+              }
+              if (bad) throw new Error(JSON.stringify(e));
+              if (!r.ok) throw new Error("HTTP " + r.status);
+              return j;
+            }
+            throw new Error("abandon apres " + tries + " tentatives");
+          }
+
+          mkdirSync(DOSSIER, { recursive: true });
+          let faits = 0;
+
+          for (const saison of SAISONS) {
+            for (const comp of COMPETITIONS) {
+              if (faits >= MAX) { console.log("\nPlafond du passage atteint."); break; }
+              const chemin = DOSSIER + "/" + comp.id + "-" + saison + ".json";
+              if (existsSync(chemin)) continue;
+
+              const joueurs = new Map();
+              let page = 1, total = 1, nomReel = "?";
+              try {
+                while (page <= total) {
+                  const j = await get("/players?league=" + comp.id + "&season=" + saison + "&page=" + page);
+                  total = (j.paging && j.paging.total) || 1;
+                  for (const row of j.response || []) {
+                    const p = row.player;
+                    if (!p || !p.id) continue;
+                    const s0 = (row.statistics || [])[0];
+                    if (s0 && s0.league && s0.league.name) nomReel = s0.league.name;
+                    joueurs.set(p.id, { i: p.id, n: p.name, a: p.age, c: p.nationality, s: row.statistics });
+                  }
+                  page++;
+                  await sleep(500);
+                }
+              } catch (err) {
+                console.log("ECHEC " + comp.nom + " " + saison + " : " + err.message);
+                continue;
+              }
+
+              if (!joueurs.size) {
+                console.log("vide  " + comp.nom + " " + saison + " — aucune donnee, ignore");
+                continue;
+              }
+
+              writeFileSync(chemin, JSON.stringify({
+                league: comp.id, nomAttendu: comp.nom, nomRecu: nomReel,
+                season: saison, count: joueurs.size,
+                players: [...joueurs.values()]
+              }));
+              faits++;
+              console.log("OK    " + comp.nom + " " + saison + " — " + joueurs.size + " joueurs, " + total + " pages (API dit: " + nomReel + ")");
+            }
+            if (faits >= MAX) break;
+          }
+
+          console.log("\n" + faits + " fichier(s) produit(s) dans ce passage.");
+          EOF
+          node moisson.mjs
+
+      - name: Enregistrer dans le dépôt
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add www/data/stats
+          git diff --staged --quiet || git commit -m "Base statique : nouveaux championnats-saisons"
+          git push
