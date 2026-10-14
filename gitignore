@@ -1,0 +1,21 @@
+# Dépendances installées par npm — jamais dans le dépôt
+node_modules/
+
+# Projets natifs régénérés à chaque compilation par Capacitor.
+# Ils reviendront dans le dépôt le jour où on y mettra des réglages
+# à conserver (icônes, permissions, google-services.json).
+android/
+ios/
+
+# Secrets — ne doivent JAMAIS être versionnés
+.env
+.env.*
+*.keystore
+*.jks
+google-services.json
+GoogleService-Info.plist
+
+# Divers
+.DS_Store
+Thumbs.db
+*.log

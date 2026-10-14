@@ -1,0 +1,19 @@
+{
+  "appId": "app.duelio",
+  "appName": "Duelio",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "backgroundColor": "#0B1730",
+      "showSpinner": false
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#0B1730"
+    }
+  }
+}
