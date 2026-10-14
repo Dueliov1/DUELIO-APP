@@ -1,0 +1,79 @@
+name: Pilote base statique
+
+on:
+  workflow_dispatch:
+
+jobs:
+  pilote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aspirer Ligue 1 2024
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          cat > pilote.mjs <<'EOF'
+          import { writeFileSync } from "node:fs";
+          import { gzipSync } from "node:zlib";
+
+          const KEY = process.env.API_FOOTBALL_KEY;
+          const LEAGUE = 61, SEASON = 2024;
+          const BASE = "https://v3.football.api-sports.io";
+          const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+          async function get(path, tries = 4) {
+            for (let i = 1; i <= tries; i++) {
+              const r = await fetch(BASE + path, { headers: { "x-apisports-key": KEY } });
+              const j = await r.json().catch(() => null);
+              const e = j && j.errors;
+              const bad = e && (Array.isArray(e) ? e.length : Object.keys(e).length);
+              if (bad && /too many|rate/i.test(JSON.stringify(e))) {
+                console.log("  limite atteinte, pause " + (3 * i) + "s");
+                await sleep(3000 * i);
+                continue;
+              }
+              if (bad) throw new Error(JSON.stringify(e));
+              if (!r.ok) throw new Error("HTTP " + r.status);
+              return j;
+            }
+            throw new Error("abandon apres plusieurs tentatives");
+          }
+
+          const players = new Map();
+          let page = 1, total = 1, entries = 0;
+
+          while (page <= total) {
+            const j = await get("/players?league=" + LEAGUE + "&season=" + SEASON + "&page=" + page);
+            total = (j.paging && j.paging.total) || 1;
+            for (const row of j.response || []) {
+              const p = row.player;
+              if (!p || !p.id) continue;
+              const prev = players.get(p.id) || { id: p.id, name: p.name, stats: {} };
+              prev.stats[SEASON] = row.statistics;
+              entries += (row.statistics || []).length;
+              players.set(p.id, prev);
+            }
+            if (page % 10 === 0 || page === total) console.log("page " + page + "/" + total + " — " + players.size + " joueurs");
+            page++;
+            await sleep(500);
+          }
+
+          const out = JSON.stringify([...players.values()]);
+          writeFileSync("ligue1-2024.json", out);
+          const gz = gzipSync(out);
+
+          console.log("");
+          console.log("RESULTATS");
+          console.log("  pages lues        : " + total);
+          console.log("  joueurs uniques   : " + players.size);
+          console.log("  blocs de stats    : " + entries);
+          console.log("  taille brute      : " + Math.round(out.length / 1024) + " Ko");
+          console.log("  taille compressee : " + Math.round(gz.length / 1024) + " Ko");
+          console.log("  par joueur        : " + Math.round(out.length / players.size) + " octets");
+          EOF
+          node pilote.mjs
+
+      - name: Publier le fichier
+        uses: actions/upload-artifact@v4
+        with:
+          name: pilote-ligue1-2024
+          path: ligue1-2024.json
