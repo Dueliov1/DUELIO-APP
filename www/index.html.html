@@ -1913,6 +1913,7 @@ const REAL_DATA_CONFIG = {
   // retraités compris. Remplace l'index KV du proxy, qui ne couvrait que la saison
   // en cours de 5 championnats et n'a jamais fini de se construire.
   searchIndexUrl: 'https://duelio-app.bensouna-ahmed.workers.dev/data/search.json',
+  seuilComplementApi: 5,         // sous ce nombre de résultats locaux seulement, on interroge l'API en complément
   leagueIds: [61, 39],           // 61 = Ligue 1, 39 = Premier League (via /leagues?name=...)
   seasons: [2025, 2024],         // saisons réelles disponibles ; [0] = saison de base
   maxPages: 25,                  // sécurité anti-boucle infinie sur la pagination
@@ -4560,9 +4561,12 @@ document.getElementById('pickerSearch').addEventListener('input', e=>{
   document.getElementById('pickerSearchField').classList.toggle('has-value', !!e.target.value);
   clearTimeout(pickerSearchTimer);
   setPickerStatus('');
-  if(pickerSearch.length >= 2) mergeSearchResults(searchLocalIndex(pickerSearch), pickerSearch); // instantané
+  let locauxPicker = [];
+  if(pickerSearch.length >= 2){ locauxPicker = searchLocalIndex(pickerSearch); mergeSearchResults(locauxPicker, pickerSearch); } // instantané
   renderPickerList();
-  if(pickerSearch.length>=REAL_DATA_CONFIG.searchMinChars){
+  // L'API n'est plus qu'un filet de sécurité : l'index local couvre 41 553 joueurs sur dix
+  // saisons et douze compétitions. On ne la dérange que si la recherche locale n'a rien donné.
+  if(pickerSearch.length>=REAL_DATA_CONFIG.searchMinChars && locauxPicker.length < REAL_DATA_CONFIG.seuilComplementApi){
     const cached = getCachedSearch(pickerSearch) || searchByPrefixCache(pickerSearch);
     if(cached){
       setCachedSearch(pickerSearch, cached);  // la prochaine lettre repartira de cette liste
@@ -5135,10 +5139,11 @@ function renderBrowse(){
     clearTimeout(globalSearchTimer);
     setBrowseStatus('');
     // 1. Instantané : l'index local, dès 2 lettres, sans réseau
-    if(browseSearch.length >= 2) mergeSearchResults(searchLocalIndex(browseSearch), browseSearch);
+    let locauxBrowse = [];
+    if(browseSearch.length >= 2){ locauxBrowse = searchLocalIndex(browseSearch); mergeSearchResults(locauxBrowse, browseSearch); }
     renderBrowseList();
-    // 2. Complément : toute la base API-Football dès 4 lettres (résultat mémorisé 24 h)
-    if(browseSearch.length>=REAL_DATA_CONFIG.searchMinChars){
+    // 2. Complément API, uniquement si l'index local n'a presque rien trouvé (résultat mémorisé 24 h)
+    if(browseSearch.length>=REAL_DATA_CONFIG.searchMinChars && locauxBrowse.length < REAL_DATA_CONFIG.seuilComplementApi){
       const cached = getCachedSearch(browseSearch) || searchByPrefixCache(browseSearch);
       if(cached){
         setCachedSearch(browseSearch, cached);  // la prochaine lettre repartira de cette liste
