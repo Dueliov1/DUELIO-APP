@@ -16,9 +16,11 @@ jobs:
         run: |
           cat > regroupe.mjs <<'EOF'
           import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+          import { gzipSync } from "node:zlib";
 
           const SOURCE = "www/data/stats";
           const SORTIE = "www/data/players";
+          const RECHERCHE = "www/data/search.json";
           const NB_PAQUETS = 1000;
 
           const fichiers = readdirSync(SOURCE).filter(f => f.endsWith(".json")).sort();
@@ -36,14 +38,13 @@ jobs:
               const liste = j.s[saison] || (j.s[saison] = []);
               for (const st of p.s || []) {
                 const cle = (st.league && st.league.id) + "/" + (st.team && st.team.id);
-                const existe = liste.some(x => ((x.league && x.league.id) + "/" + (x.team && x.team.id)) === cle);
-                if (existe) { doublons++; continue; }
+                if (liste.some(x => ((x.league && x.league.id) + "/" + (x.team && x.team.id)) === cle)) { doublons++; continue; }
                 liste.push(st);
                 blocs++;
               }
             }
-            console.log("  " + f + " -> " + joueurs.size + " joueurs cumules");
           }
+          console.log(joueurs.size + " joueurs uniques");
 
           if (existsSync(SORTIE)) rmSync(SORTIE, { recursive: true });
           mkdirSync(SORTIE, { recursive: true });
@@ -59,20 +60,47 @@ jobs:
             octets += txt.length; pleins++;
             if (txt.length > plusGros) plusGros = txt.length;
           });
-
           writeFileSync(SORTIE + "/index.json", JSON.stringify({
-            paquets: NB_PAQUETS, joueurs: joueurs.size, blocs,
-            genere: new Date().toISOString()
+            paquets: NB_PAQUETS, joueurs: joueurs.size, blocs, genere: new Date().toISOString()
           }));
+
+          // ---- Index de recherche, au format attendu par l'application ----
+          const posCode = p => {
+            const s = (p || "").toLowerCase();
+            if (s.includes("goal")) return "GK";
+            if (s.includes("def")) return "DEF";
+            if (s.includes("mid")) return "MID";
+            return "FWD";
+          };
+          const recherche = [];
+          for (const j of joueurs.values()) {
+            const saisons = Object.keys(j.s).map(Number).sort((a, b) => b - a);
+            let poste = null, club = null, clubId = null;
+            for (const sn of saisons) {
+              for (const st of j.s[sn] || []) {
+                if (!poste && st.games && st.games.position) poste = st.games.position;
+                if (!club && st.team && st.team.name) { club = st.team.name; clubId = st.team.id; }
+              }
+              if (poste && club) break;
+            }
+            recherche.push({ i: j.i, n: j.n || "", f: "", l: "", a: j.a || null,
+                             c: j.c || "", p: posCode(poste), t: club || "", ti: clubId || null });
+          }
+          recherche.sort((a, b) => (a.n || "").localeCompare(b.n || ""));
+          const txtRecherche = JSON.stringify({
+            v: 1, updatedAt: new Date().toISOString(),
+            count: recherche.length, players: recherche
+          });
+          writeFileSync(RECHERCHE, txtRecherche);
 
           console.log("");
           console.log("RESULTATS");
           console.log("  joueurs uniques : " + joueurs.size);
           console.log("  blocs de stats  : " + blocs + " (doublons ecartes : " + doublons + ")");
           console.log("  paquets ecrits  : " + pleins + " / " + NB_PAQUETS);
-          console.log("  taille totale   : " + Math.round(octets / 1048576) + " Mo");
-          console.log("  paquet moyen    : " + Math.round(octets / pleins / 1024) + " Ko");
-          console.log("  plus gros       : " + Math.round(plusGros / 1024) + " Ko");
+          console.log("  taille paquets  : " + Math.round(octets / 1048576) + " Mo, plus gros " + Math.round(plusGros / 1024) + " Ko");
+          console.log("  index recherche : " + Math.round(txtRecherche.length / 1024) + " Ko brut, "
+                      + Math.round(gzipSync(txtRecherche).length / 1024) + " Ko compresse");
           EOF
           node --max-old-space-size=8192 regroupe.mjs
 
@@ -80,6 +108,6 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add -A www/data/players
-          git diff --staged --quiet || git commit -m "Statistiques regroupees par joueur"
+          git add -A www/data/players www/data/search.json
+          git diff --staged --quiet || git commit -m "Paquets par joueur et index de recherche"
           git push
