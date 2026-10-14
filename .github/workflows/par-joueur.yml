@@ -1,0 +1,85 @@
+name: Réorganiser par joueur
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  regrouper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Regrouper par joueur
+        run: |
+          cat > regroupe.mjs <<'EOF'
+          import { readdirSync, readFileSync, writeFileSync, mkdirSync, rmSync, existsSync } from "node:fs";
+
+          const SOURCE = "www/data/stats";
+          const SORTIE = "www/data/players";
+          const NB_PAQUETS = 1000;
+
+          const fichiers = readdirSync(SOURCE).filter(f => f.endsWith(".json")).sort();
+          console.log(fichiers.length + " fichiers source");
+
+          const joueurs = new Map();
+          let blocs = 0, doublons = 0;
+
+          for (const f of fichiers) {
+            const doc = JSON.parse(readFileSync(SOURCE + "/" + f, "utf8"));
+            const saison = doc.season;
+            for (const p of doc.players || []) {
+              let j = joueurs.get(p.i);
+              if (!j) { j = { i: p.i, n: p.n, a: p.a, c: p.c, s: {} }; joueurs.set(p.i, j); }
+              const liste = j.s[saison] || (j.s[saison] = []);
+              for (const st of p.s || []) {
+                const cle = (st.league && st.league.id) + "/" + (st.team && st.team.id);
+                const existe = liste.some(x => ((x.league && x.league.id) + "/" + (x.team && x.team.id)) === cle);
+                if (existe) { doublons++; continue; }
+                liste.push(st);
+                blocs++;
+              }
+            }
+            console.log("  " + f + " -> " + joueurs.size + " joueurs cumules");
+          }
+
+          if (existsSync(SORTIE)) rmSync(SORTIE, { recursive: true });
+          mkdirSync(SORTIE, { recursive: true });
+
+          const paquets = Array.from({ length: NB_PAQUETS }, () => []);
+          for (const j of joueurs.values()) paquets[j.i % NB_PAQUETS].push(j);
+
+          let octets = 0, pleins = 0, plusGros = 0;
+          paquets.forEach((liste, n) => {
+            if (!liste.length) return;
+            const txt = JSON.stringify(liste);
+            writeFileSync(SORTIE + "/" + n + ".json", txt);
+            octets += txt.length; pleins++;
+            if (txt.length > plusGros) plusGros = txt.length;
+          });
+
+          writeFileSync(SORTIE + "/index.json", JSON.stringify({
+            paquets: NB_PAQUETS, joueurs: joueurs.size, blocs,
+            genere: new Date().toISOString()
+          }));
+
+          console.log("");
+          console.log("RESULTATS");
+          console.log("  joueurs uniques : " + joueurs.size);
+          console.log("  blocs de stats  : " + blocs + " (doublons ecartes : " + doublons + ")");
+          console.log("  paquets ecrits  : " + pleins + " / " + NB_PAQUETS);
+          console.log("  taille totale   : " + Math.round(octets / 1048576) + " Mo");
+          console.log("  paquet moyen    : " + Math.round(octets / pleins / 1024) + " Ko");
+          console.log("  plus gros       : " + Math.round(plusGros / 1024) + " Ko");
+          EOF
+          node --max-old-space-size=8192 regroupe.mjs
+
+      - name: Enregistrer
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A www/data/players
+          git diff --staged --quiet || git commit -m "Statistiques regroupees par joueur"
+          git push
