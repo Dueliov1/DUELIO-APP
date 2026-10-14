@@ -5,7 +5,7 @@ on:
     inputs:
       max_fichiers:
         description: "Nombre de championnats-saisons à traiter dans ce passage"
-        default: "20"
+        default: "40"
 
 permissions:
   contents: write
@@ -25,7 +25,7 @@ jobs:
           import { writeFileSync, existsSync, mkdirSync } from "node:fs";
 
           const KEY = process.env.API_FOOTBALL_KEY;
-          const MAX = parseInt(process.env.MAX_FICHIERS || "20", 10);
+          const MAX = parseInt(process.env.MAX_FICHIERS || "40", 10);
           const BASE = "https://v3.football.api-sports.io";
           const DOSSIER = "www/data/stats";
           const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -42,7 +42,19 @@ jobs:
             { id: 71,  nom: "Brasileirao" },
             { id: 128, nom: "Liga Argentina" },
             { id: 2,   nom: "Ligue des champions" },
-            { id: 3,   nom: "Ligue Europa" }
+            { id: 3,   nom: "Ligue Europa" },
+            { id: 1,   nom: "Coupe du monde" },
+            { id: 4,   nom: "Euro" },
+            { id: 5,   nom: "Ligue des nations" },
+            { id: 6,   nom: "Coupe d Afrique" },
+            { id: 9,   nom: "Copa America" },
+            { id: 10,  nom: "Amicaux" },
+            { id: 29,  nom: "Qualif Mondial Afrique" },
+            { id: 30,  nom: "Qualif Mondial Asie" },
+            { id: 31,  nom: "Qualif Mondial CONCACAF" },
+            { id: 32,  nom: "Qualif Mondial Europe" },
+            { id: 34,  nom: "Qualif Mondial Amerique du Sud" },
+            { id: 960, nom: "Qualif Euro" }
           ];
           const SAISONS = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016];
 
@@ -52,10 +64,7 @@ jobs:
               const j = await r.json().catch(() => null);
               const e = j && j.errors;
               const bad = e && (Array.isArray(e) ? e.length : Object.keys(e).length);
-              if (bad && /too many|rate/i.test(JSON.stringify(e))) {
-                await sleep(4000 * i);
-                continue;
-              }
+              if (bad && /too many|rate/i.test(JSON.stringify(e))) { await sleep(4000 * i); continue; }
               if (bad) throw new Error(JSON.stringify(e));
               if (!r.ok) throw new Error("HTTP " + r.status);
               return j;
@@ -68,7 +77,7 @@ jobs:
 
           for (const saison of SAISONS) {
             for (const comp of COMPETITIONS) {
-              if (faits >= MAX) { console.log("\nPlafond du passage atteint."); break; }
+              if (faits >= MAX) break;
               const chemin = DOSSIER + "/" + comp.id + "-" + saison + ".json";
               if (existsSync(chemin)) continue;
 
@@ -93,18 +102,15 @@ jobs:
                 continue;
               }
 
-              if (!joueurs.size) {
-                console.log("vide  " + comp.nom + " " + saison + " — aucune donnee, ignore");
-                continue;
-              }
-
+              // On écrit même quand c'est vide : le fichier sert de marque-page et évite
+              // de redemander éternellement une saison qui n'existe pas dans leur base.
               writeFileSync(chemin, JSON.stringify({
                 league: comp.id, nomAttendu: comp.nom, nomRecu: nomReel,
-                season: saison, count: joueurs.size,
-                players: [...joueurs.values()]
+                season: saison, count: joueurs.size, players: [...joueurs.values()]
               }));
               faits++;
-              console.log("OK    " + comp.nom + " " + saison + " — " + joueurs.size + " joueurs, " + total + " pages (API dit: " + nomReel + ")");
+              if (!joueurs.size) console.log("vide  " + comp.nom + " " + saison);
+              else console.log("OK    " + comp.nom + " " + saison + " — " + joueurs.size + " joueurs, " + total + " pages (API dit: " + nomReel + ")");
             }
             if (faits >= MAX) break;
           }
@@ -118,5 +124,5 @@ jobs:
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add www/data/stats
-          git diff --staged --quiet || git commit -m "Base statique : nouveaux championnats-saisons"
+          git diff --staged --quiet || git commit -m "Base statique : competitions internationales"
           git push
