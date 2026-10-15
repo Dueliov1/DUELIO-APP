@@ -1,0 +1,178 @@
+name: Carrières complètes
+
+# Moissonne la carrière entière des joueurs les plus marquants, toutes compétitions
+# et toutes saisons confondues, et écrit un fichier par joueur dans www/data/full/.
+# Reprend là où il s'est arrêté à chaque passage : un joueur déjà écrit est sauté.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cible:
+        description: "Nombre total de joueurs à couvrir"
+        default: "5000"
+      budget:
+        description: "Appels API maximum pour ce passage"
+        default: "12000"
+  schedule:
+    # Toutes les heures : les passages s'enchaînent seuls jusqu'à la cible.
+    - cron: "0 * * * *"
+
+permissions:
+  contents: write
+
+# Un seul passage à la fois, sinon deux exécutions se marchent dessus au moment du push.
+concurrency:
+  group: carrieres-completes
+  cancel-in-progress: false
+
+jobs:
+  moissonner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Moissonner les carrières
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          CIBLE: ${{ inputs.cible || '5000' }}
+          BUDGET: ${{ inputs.budget || '12000' }}
+        run: |
+          cat > carrieres.mjs <<'EOF'
+          import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+
+          const KEY    = process.env.API_FOOTBALL_KEY;
+          const CIBLE  = parseInt(process.env.CIBLE  || "5000",  10);
+          const BUDGET = parseInt(process.env.BUDGET || "12000", 10);
+          const BASE   = "https://v3.football.api-sports.io";
+          const PAQUETS = "www/data/players";
+          const SORTIE  = "www/data/full";
+          const PAUSE   = 220;   // 220 ms entre deux appels : ~272/min, sous le plafond Ultra
+
+          const sleep = ms => new Promise(r => setTimeout(r, ms));
+          let appels = 0;
+
+          async function get(chemin, tries = 5) {
+            for (let i = 1; i <= tries; i++) {
+              appels++;
+              const r = await fetch(BASE + chemin, { headers: { "x-apisports-key": KEY } });
+              const j = await r.json().catch(() => null);
+              const e = j && j.errors;
+              const mauvais = e && (Array.isArray(e) ? e.length : Object.keys(e).length);
+              if (mauvais && /too many|rate/i.test(JSON.stringify(e))) { await sleep(4000 * i); continue; }
+              if (mauvais) throw new Error(JSON.stringify(e));
+              if (!r.ok) throw new Error("HTTP " + r.status);
+              return j;
+            }
+            throw new Error("abandon apres " + tries + " tentatives");
+          }
+
+          // ---- 1. Classer les joueurs de la base statique par volume de jeu ----
+          // Le nombre d'apparitions est le meilleur indicateur dont on dispose pour
+          // deviner qui sera recherché. Tri strictement déterministe, pour que chaque
+          // passage reprenne la même liste dans le même ordre.
+          if (!existsSync(PAQUETS)) {
+            console.log("www/data/players est absent : lancez d'abord « Réorganiser par joueur ».");
+            process.exit(0);
+          }
+
+          const classement = [];
+          for (const f of readdirSync(PAQUETS)) {
+            if (!f.endsWith(".json") || f === "index.json") continue;
+            for (const j of JSON.parse(readFileSync(PAQUETS + "/" + f, "utf8"))) {
+              let matchs = 0;
+              for (const saison of Object.values(j.s || {}))
+                for (const st of saison || [])
+                  matchs += (st.games && st.games.appearences) || 0;
+              classement.push({ i: j.i, n: j.n, a: j.a, c: j.c, matchs });
+            }
+          }
+          classement.sort((x, y) => (y.matchs - x.matchs) || (x.i - y.i));
+          const retenus = classement.slice(0, CIBLE);
+          console.log(classement.length + " joueurs dans la base, " + retenus.length + " retenus");
+
+          // ---- 2. Moissonner, en sautant ce qui est déjà écrit ----
+          mkdirSync(SORTIE, { recursive: true });
+
+          let faits = 0, sautes = 0, echecs = 0, vides = 0;
+
+          for (const p of retenus) {
+            if (appels >= BUDGET) { console.log("\nBudget d'appels atteint."); break; }
+
+            const chemin = SORTIE + "/" + p.i + ".json";
+            if (existsSync(chemin)) { sautes++; continue; }
+
+            try {
+              const sais = await get("/players/seasons?player=" + p.i);
+              await sleep(PAUSE);
+              const saisons = (sais.response || []).filter(s => s >= 2000).sort((a, b) => b - a);
+
+              if (!saisons.length) {
+                // On écrit quand même : le fichier sert de marque-page et évite de
+                // redemander éternellement un joueur que l'API ne connaît pas.
+                writeFileSync(chemin, JSON.stringify({ i: p.i, n: p.n, a: p.a, c: p.c, s: {} }));
+                vides++; faits++;
+                console.log("vide  " + p.n + " (" + p.i + ")");
+                continue;
+              }
+
+              const parSaison = {};
+              let blocs = 0;
+              for (const sn of saisons) {
+                if (appels >= BUDGET) break;
+                const j = await get("/players?id=" + p.i + "&season=" + sn);
+                await sleep(PAUSE);
+                const row = (j.response || [])[0];
+                if (row && row.statistics && row.statistics.length) {
+                  parSaison[sn] = row.statistics;
+                  blocs += row.statistics.length;
+                }
+              }
+
+              writeFileSync(chemin, JSON.stringify({
+                i: p.i, n: p.n, a: p.a, c: p.c,
+                saisons: Object.keys(parSaison).map(Number).sort((a, b) => b - a),
+                s: parSaison
+              }));
+              faits++;
+              console.log("OK    " + p.n + " (" + p.i + ") — "
+                          + Object.keys(parSaison).length + " saisons, " + blocs + " blocs");
+            } catch (err) {
+              echecs++;
+              console.log("ECHEC " + p.n + " (" + p.i + ") : " + err.message);
+            }
+          }
+
+          // ---- 3. Index, pour savoir d'un coup d'œil où on en est ----
+          const ecrits = readdirSync(SORTIE).filter(f => f.endsWith(".json") && f !== "index.json");
+          writeFileSync(SORTIE + "/index.json", JSON.stringify({
+            v: 1, genere: new Date().toISOString(),
+            cible: CIBLE, couverts: ecrits.length,
+            ids: ecrits.map(f => parseInt(f, 10)).sort((a, b) => a - b)
+          }));
+
+          console.log("");
+          console.log("RESULTATS DE CE PASSAGE");
+          console.log("  joueurs ecrits   : " + faits + " (dont " + vides + " sans donnees)");
+          console.log("  deja faits       : " + sautes);
+          console.log("  echecs           : " + echecs);
+          console.log("  appels API       : " + appels + " / " + BUDGET);
+          console.log("");
+          console.log("AVANCEMENT TOTAL   : " + ecrits.length + " / " + CIBLE
+                      + " (" + Math.round(ecrits.length / CIBLE * 100) + " %)");
+          if (ecrits.length >= CIBLE) console.log("Cible atteinte : les prochains passages n'auront rien a faire.");
+          EOF
+          node --max-old-space-size=8192 carrieres.mjs
+
+      - name: Enregistrer dans le dépôt
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A www/data/full
+          if git diff --staged --quiet; then
+            echo "Rien de nouveau à enregistrer."
+          else
+            git commit -m "Carrières complètes : nouveau lot de joueurs"
+            git pull --rebase origin main
+            git push
+          fi
