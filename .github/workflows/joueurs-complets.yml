@@ -31,6 +31,20 @@ jobs:
     timeout-minutes: 330
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Historique complet : sans lui, le rebase avant le push échoue.
+          fetch-depth: 0
+          ref: main
+
+      # Une exécution programmée part du commit qui existait au moment du
+      # déclenchement, pas du dernier. Sans cette remise à niveau, un passage
+      # ne voit pas les joueurs écrits par le précédent et les refait tous.
+      - name: Se placer sur le dernier état de main
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+          echo "Parti de $(git rev-parse --short HEAD)"
+          echo "Joueurs déjà écrits : $(ls www/data/full 2>/dev/null | wc -l)"
 
       - name: Moissonner les carrières
         env:
@@ -171,8 +185,18 @@ jobs:
           git add -A www/data/full
           if git diff --staged --quiet; then
             echo "Rien de nouveau à enregistrer."
-          else
-            git commit -m "Carrières complètes : nouveau lot de joueurs"
-            git pull --rebase origin main
-            git push
+            exit 0
           fi
+          git commit -m "Carrières complètes : nouveau lot de joueurs"
+          for essai in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase origin/main && git push origin HEAD:main; then
+              echo "Enregistré (tentative $essai)."
+              exit 0
+            fi
+            echo "Tentative $essai échouée, nouvel essai dans 10 s."
+            git rebase --abort 2>/dev/null || true
+            sleep 10
+          done
+          echo "Impossible d'enregistrer après 5 tentatives."
+          exit 1
