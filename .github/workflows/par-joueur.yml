@@ -88,16 +88,43 @@ jobs:
                 && !/club|champions|europa|conference|libertadores/.test(ln);
           };
 
-          const recherche = [];
-          for (const j of joueurs.values()) {
-            const saisons = Object.keys(j.s).map(Number).sort((a, b) => b - a);
+          // Cherche le club le plus récent dans une fiche {s:{saison:[blocs]}}
+          const dernierClub = (fiche, nationalite) => {
             let poste = null, club = null, clubId = null;
-            for (const sn of saisons) {
-              for (const st of j.s[sn] || []) {
+            for (const sn of Object.keys(fiche.s || {}).map(Number).sort((a, b) => b - a)) {
+              for (const st of fiche.s[sn] || []) {
                 if (!poste && st.games && st.games.position) poste = st.games.position;
-                if (!club && st.team && st.team.name && !estSelection(st, j.c)) { club = st.team.name; clubId = st.team.id; }
+                if (!club && st.team && st.team.name && !estSelection(st, nationalite)) {
+                  club = st.team.name; clubId = st.team.id;
+                }
               }
               if (poste && club) break;
+            }
+            return { poste, club, clubId };
+          };
+
+          const FULL = "www/data/full";
+          let viaCarriere = 0;
+
+          const recherche = [];
+          for (const j of joueurs.values()) {
+            // La carrière complète d'abord : elle couvre les championnats absents de
+            // data/stats. Sans elle, Ronaldo ressort « Manchester United » et Messi
+            // « Paris Saint Germain », faute de Saudi Pro League et de MLS.
+            let poste = null, club = null, clubId = null;
+            const cheminFull = FULL + "/" + j.i + ".json";
+            if (existsSync(cheminFull)) {
+              try {
+                const f = JSON.parse(readFileSync(cheminFull, "utf8"));
+                const r = dernierClub(f, f.c || j.c);
+                poste = r.poste; club = r.club; clubId = r.clubId;
+                if (club) viaCarriere++;
+              } catch (e) { /* fichier illisible : on retombe sur les paquets */ }
+            }
+            if (!club || !poste) {
+              const r = dernierClub(j, j.c);
+              poste = poste || r.poste; 
+              if (!club) { club = r.club; clubId = r.clubId; }
             }
             recherche.push({ i: j.i, n: j.n || "", f: "", l: "", a: j.a || null,
                              c: j.c || "", p: posCode(poste), t: club || "", ti: clubId || null });
@@ -115,6 +142,7 @@ jobs:
           console.log("  blocs de stats  : " + blocs + " (doublons ecartes : " + doublons + ")");
           console.log("  paquets ecrits  : " + pleins + " / " + NB_PAQUETS);
           console.log("  taille paquets  : " + Math.round(octets / 1048576) + " Mo, plus gros " + Math.round(plusGros / 1024) + " Ko");
+          console.log("  club via carriere: " + viaCarriere);
           console.log("  index recherche : " + Math.round(txtRecherche.length / 1024) + " Ko brut, "
                       + Math.round(gzipSync(txtRecherche).length / 1024) + " Ko compresse");
           EOF
