@@ -13,9 +13,12 @@ on:
       budget:
         description: "Appels API maximum pour ce passage"
         default: "12000"
-  schedule:
-    # Toutes les heures : les passages s'enchaînent seuls jusqu'à la cible.
-    - cron: "0 * * * *"
+  # Le déclencheur horaire a été retiré le 16 octobre 2026 : les 5 000 joueurs
+  # sont moissonnés. Pour reprendre — relever la cible, rattraper des joueurs
+  # ajoutés depuis — lancez ce workflow à la main depuis l'onglet Actions, et
+  # remettez le cron ci-dessous s'il doit s'enchaîner tout seul :
+  #   schedule:
+  #     - cron: "0 * * * *"
 
 permissions:
   contents: write
