@@ -72,6 +72,22 @@ jobs:
             if (s.includes("mid")) return "MID";
             return "FWD";
           };
+          // Le club affiché dans la recherche doit être un club, pas une sélection :
+          // sans ce filtre, Ronaldo s'affichait « Portugal » et Messi « Argentine »,
+          // parce que la première équipe rencontrée en remontant les saisons pouvait
+          // être l'équipe nationale.
+          const _norm = v => String(v || "").normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+          const estSelection = (st, nationalite) => {
+            const t = st.team || {}, lg = st.league || {};
+            if (t.national === true) return true;
+            const tn = _norm(t.name), nat = _norm(nationalite);
+            if (nat && tn === nat) return true;
+            const ln = _norm(lg.name);
+            return /world cup|euro|nations league|copa america|africa cup|asian cup|gold cup|confederations|friendlies|qualification/.test(ln)
+                && !/club|champions|europa|conference|libertadores/.test(ln);
+          };
+
           const recherche = [];
           for (const j of joueurs.values()) {
             const saisons = Object.keys(j.s).map(Number).sort((a, b) => b - a);
@@ -79,7 +95,7 @@ jobs:
             for (const sn of saisons) {
               for (const st of j.s[sn] || []) {
                 if (!poste && st.games && st.games.position) poste = st.games.position;
-                if (!club && st.team && st.team.name) { club = st.team.name; clubId = st.team.id; }
+                if (!club && st.team && st.team.name && !estSelection(st, j.c)) { club = st.team.name; clubId = st.team.id; }
               }
               if (poste && club) break;
             }
