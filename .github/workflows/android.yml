@@ -30,11 +30,27 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      # Capacitor recopie tout www/ dans l'APK, base de données comprise :
+      # 417 Mo de JSON qui ne seraient jamais lus, puisque l'application
+      # appelle ses données par leur adresse complète sur Cloudflare. On les
+      # retire, et on vérifie qu'il ne reste que l'interface.
+      - name: Retirer la base de données de l'APK
+        run: |
+          CIBLE=android/app/src/main/assets/public
+          echo "Avant : $(du -sh $CIBLE | cut -f1)"
+          rm -rf "$CIBLE/data"
+          echo "Après : $(du -sh $CIBLE | cut -f1)"
+          echo "Contenu embarqué :"
+          ls -la "$CIBLE"
+
       - name: Compiler l'APK
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+
+      - name: Taille de l'APK
+        run: ls -lh android/app/build/outputs/apk/debug/*.apk
 
       - name: Publier l'APK
         uses: actions/upload-artifact@v4
