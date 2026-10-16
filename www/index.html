@@ -1909,6 +1909,11 @@ const REAL_DATA_CONFIG = {
   // Mettre staticBase à null désactive tout le mécanisme et revient au tout-API.
   staticBase: 'https://duelio-app.bensouna-ahmed.workers.dev/data/players',
   staticShards: 1000,            // nombre de paquets (voir data/players/index.json)
+  // Carrières complètes des 5 000 joueurs les plus capés : un fichier par joueur,
+  // toutes compétitions et toutes saisons, sélection nationale comprise. C'est ce qui
+  // permet d'afficher les 1 053 buts de Ronaldo sans le moindre appel API.
+  // Mettre fullBase à null revient au comportement précédent.
+  fullBase: 'https://duelio-app.bensouna-ahmed.workers.dev/data/full',
   // Index de recherche fabriqué à partir de la base statique : 41 553 joueurs,
   // retraités compris. Remplace l'index KV du proxy, qui ne couvrait que la saison
   // en cours de 5 championnats et n'a jamais fini de se construire.
@@ -2535,19 +2540,52 @@ function chargerPaquetStatique(apiId){
   return promesse;
 }
 
-// Rend les saisons connues hors ligne pour ce joueur, au format exact d'une réponse /pack
+/* Carrière complète d'un joueur : un seul fichier, téléchargé à la demande et gardé en
+ * mémoire. N'existe que pour les 5 000 joueurs les plus capés ; pour les autres on
+ * retombe sur les paquets ci-dessus, qui ne couvrent que les compétitions de clubs. */
+const carrieresCompletes = new Map();    // idJoueur -> fiche, ou null si absente
+const carrieresEnCours = new Map();      // idJoueur -> promesse en vol
+
+function chargerCarriereComplete(apiId){
+  if(carrieresCompletes.has(apiId)) return Promise.resolve(carrieresCompletes.get(apiId));
+  if(carrieresEnCours.has(apiId)) return carrieresEnCours.get(apiId);
+  const promesse = fetch(`${REAL_DATA_CONFIG.fullBase}/${apiId}.json`)
+    .then(r => r.ok ? r.json() : null)
+    .then(fiche => {
+      const valide = (fiche && fiche.s && Object.keys(fiche.s).length) ? fiche : null;
+      carrieresCompletes.set(apiId, valide);
+      carrieresEnCours.delete(apiId);
+      return valide;
+    })
+    .catch(() => { carrieresEnCours.delete(apiId); return null; });
+  carrieresEnCours.set(apiId, promesse);
+  return promesse;
+}
+
+// Rend les saisons connues hors ligne pour ce joueur, au format exact d'une réponse /pack.
+// `complet` indique que la carrière entière est là : dans ce cas aucun appel API n'est
+// nécessaire, pas même pour l'onglet Sélection ou le mode Carrière.
 async function packStatique(apiId){
-  if(!REAL_DATA_CONFIG.staticBase || !apiId) return null;
-  const paquet = await chargerPaquetStatique(apiId);
-  const fiche = paquet && paquet.get(apiId);
+  if(!apiId) return null;
+  let fiche = null, complet = false;
+
+  if(REAL_DATA_CONFIG.fullBase){
+    fiche = await chargerCarriereComplete(apiId);
+    complet = !!fiche;
+  }
+  if(!fiche && REAL_DATA_CONFIG.staticBase){
+    const paquet = await chargerPaquetStatique(apiId);
+    fiche = paquet && paquet.get(apiId);
+  }
   if(!fiche || !fiche.s) return null;
+
   const data = {};
   for(const cle of Object.keys(fiche.s)){
     const stats = fiche.s[cle];
     if(stats && stats.length) data[cle] = { player: { name: fiche.n, age: fiche.a, nationality: fiche.c }, statistics: stats };
   }
   const seasons = Object.keys(data).map(Number).sort((a,b)=>b-a);
-  return seasons.length ? { id: apiId, seasons, data } : null;
+  return seasons.length ? { id: apiId, seasons, data, complet } : null;
 }
 
 async function fetchPack(p, opts){
@@ -2570,8 +2608,10 @@ async function fetchPack(p, opts){
       const demandees = (opts.seasons && opts.seasons.length) ? opts.seasons.map(Number)
                       : (opts.season ? [Number(opts.season)] : null);
       const couvert = demandees ? demandees.every(sn => obtenues.includes(sn))
-                    // Sans demande précise (hors mode carrière) : il suffit d'avoir une saison de référence.
-                    : (!opts.career && REAL_DATA_CONFIG.seasons.some(sn => obtenues.includes(sn)));
+                    // Mode carrière : couvert seulement si on tient la carrière entière.
+                    : (opts.career ? !!local.complet
+                    // Sans demande précise : il suffit d'avoir une saison de référence.
+                                   : REAL_DATA_CONFIG.seasons.some(sn => obtenues.includes(sn)));
 
       if(couvert && obtenues.length){
         const preferee = REAL_DATA_CONFIG.seasons.find(sn => obtenues.includes(sn));
