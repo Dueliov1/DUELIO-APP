@@ -105,6 +105,7 @@ jobs:
 
           const FULL = "www/data/full";
           let viaCarriere = 0;
+          const avecCarriere = new Set();   // les joueurs du petit index
 
           const recherche = [];
           for (const j of joueurs.values()) {
@@ -119,6 +120,7 @@ jobs:
                 const r = dernierClub(f, f.c || j.c);
                 poste = r.poste; club = r.club; clubId = r.clubId;
                 if (club) viaCarriere++;
+                avecCarriere.add(j.i);
               } catch (e) { /* fichier illisible : on retombe sur les paquets */ }
             }
             if (!club || !poste) {
@@ -136,6 +138,18 @@ jobs:
           });
           writeFileSync(RECHERCHE, txtRecherche);
 
+          // Index réduit aux joueurs dont on a la carrière complète. Quelques
+          // centaines de kilo-octets au lieu de cinq mégaoctets : l'application le
+          // charge d'abord, la recherche des joueurs connus marche tout de suite,
+          // et le gros index arrive derrière sans que personne ne l'attende.
+          const RECHERCHE_TOP = "www/data/search-top.json";
+          const top = recherche.filter(e => avecCarriere.has(e.i));
+          const txtTop = JSON.stringify({
+            v: 1, updatedAt: new Date().toISOString(),
+            count: top.length, partiel: true, players: top
+          });
+          writeFileSync(RECHERCHE_TOP, txtTop);
+
           console.log("");
           console.log("RESULTATS");
           console.log("  joueurs uniques : " + joueurs.size);
@@ -143,6 +157,9 @@ jobs:
           console.log("  paquets ecrits  : " + pleins + " / " + NB_PAQUETS);
           console.log("  taille paquets  : " + Math.round(octets / 1048576) + " Mo, plus gros " + Math.round(plusGros / 1024) + " Ko");
           console.log("  club via carriere: " + viaCarriere);
+          console.log("  index court     : " + top.length + " joueurs, "
+                      + Math.round(txtTop.length / 1024) + " Ko brut, "
+                      + Math.round(gzipSync(txtTop).length / 1024) + " Ko compresse");
           console.log("  index recherche : " + Math.round(txtRecherche.length / 1024) + " Ko brut, "
                       + Math.round(gzipSync(txtRecherche).length / 1024) + " Ko compresse");
           EOF
