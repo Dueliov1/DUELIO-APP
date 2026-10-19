@@ -34,7 +34,33 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-14h30 — partage sur duelio.app">
+<meta name="duelio-version" content="2026-10-19-15h10 — mesure d audience prete, jeton a coller">
+
+<!-- ====================== Mesure d'audience ======================
+     Cloudflare Web Analytics : gratuit, sans cookie, sans identifiant individuel.
+     Rien n'est chargé tant que le jeton est vide, donc aucune requête inutile et
+     aucune erreur en console avant qu'il soit renseigné.
+
+     Pour obtenir le jeton : tableau de bord Cloudflare → Analytics & Logs →
+     Web Analytics → « Add a site » → duelio.app. Cloudflare affiche alors un
+     extrait contenant "token": "……" ; c'est cette suite de caractères qu'il faut
+     coller ci-dessous, entre les guillemets.
+
+     Ce traceur ne pose pas de cookie et ne suit personne d'un site à l'autre, ce
+     qui le place hors du champ du bandeau de consentement selon la lecture la plus
+     courante — je ne suis pas juriste, et c'est à vérifier si vous avez un doute. -->
+<script>
+  (function mesureAudience(){
+    const JETON = '';   // ← coller ici le jeton Cloudflare
+    if(!JETON) return;
+    const s = document.createElement('script');
+    s.defer = true;
+    s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+    s.setAttribute('data-cf-beacon', JSON.stringify({ token: JETON }));
+    document.head.appendChild(s);
+  })();
+</script>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Les fichiers de police viennent de gstatic, pas de googleapis : sans cette
      ligne le navigateur n'ouvre la connexion qu'après avoir lu la feuille de
