@@ -1,0 +1,110 @@
+name: Image d'aperçu du partage
+
+# L'image affichée quand on partage un lien Duelio porte les portraits de deux joueurs.
+# Les photos viennent de media.api-sports.io, que l'environnement de développement ne
+# peut pas joindre. GitHub, lui, a un accès internet libre : ce workflow télécharge les
+# photos, les découpe en rond et les incruste dans la carte de fond, puis publie le
+# résultat. Relancez-le pour changer de duel : il suffit de modifier les deux
+# identifiants ci-dessous.
+
+on:
+  workflow_dispatch:
+    inputs:
+      joueur_gauche:
+        description: "Identifiant API du joueur de gauche (874 = Cristiano Ronaldo)"
+        required: false
+        default: "874"
+      joueur_droite:
+        description: "Identifiant API du joueur de droite (154 = Lionel Messi)"
+        required: false
+        default: "154"
+
+permissions:
+  contents: write
+
+jobs:
+  composer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          sparse-checkout: |
+            www/og-base.png
+            www/og-positions.json
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Installer sharp
+        run: npm install --no-save sharp@0.33.5
+
+      - name: Incruster les portraits
+        env:
+          GAUCHE: ${{ inputs.joueur_gauche || '874' }}
+          DROITE: ${{ inputs.joueur_droite || '154' }}
+        run: |
+          cat > composer.mjs <<'EOF'
+          import sharp from "sharp";
+          import { readFileSync, writeFileSync } from "node:fs";
+
+          const ids = [process.env.GAUCHE, process.env.DROITE];
+          const pos = JSON.parse(readFileSync("www/og-positions.json", "utf8"));
+          if (pos.length !== 2) throw new Error("og-positions.json doit decrire deux emplacements");
+
+          // Telecharge la photo officielle du joueur.
+          async function photo(id) {
+            const url = `https://media.api-sports.io/football/players/${id}.png`;
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`photo ${id} : HTTP ${res.status}`);
+            const buf = Buffer.from(await res.arrayBuffer());
+            console.log(`  joueur ${id} : ${Math.round(buf.length / 1024)} Ko telecharges`);
+            return buf;
+          }
+
+          // Decoupe en rond a la taille voulue. Le masque est un cercle plein en SVG :
+          // sharp s'en sert comme canal alpha, ce qui donne un bord net sans halo.
+          async function rond(buf, taille) {
+            const masque = Buffer.from(
+              `<svg width="${taille}" height="${taille}">` +
+              `<circle cx="${taille / 2}" cy="${taille / 2}" r="${taille / 2}" fill="#fff"/></svg>`
+            );
+            return sharp(buf)
+              .resize(taille, taille, { fit: "cover", position: "top" })
+              .composite([{ input: masque, blend: "dest-in" }])
+              .png()
+              .toBuffer();
+          }
+
+          const fond = sharp("www/og-base.png");
+          const calques = [];
+          for (let i = 0; i < 2; i++) {
+            const p = pos[i];
+            const tete = await rond(await photo(ids[i]), p.w);
+            calques.push({ input: tete, left: p.x, top: p.y });
+          }
+          const sortie = await fond.composite(calques).png({ compressionLevel: 9 }).toBuffer();
+          writeFileSync("www/og-image.png", sortie);
+          console.log(`  og-image.png : ${Math.round(sortie.length / 1024)} Ko`);
+          EOF
+          node composer.mjs
+
+      - name: Publier
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -- www/og-image.png
+          if git diff --cached --quiet; then
+            echo "image inchangee, rien a publier"
+            exit 0
+          fi
+          git commit -m "Image d'apercu : portraits reels des joueurs"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "nouvelle tentative $i"
+            sleep 5
+          done
+          exit 1
