@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-12h — les vraies donnees passent avant l API, fiche jamais vide">
+<meta name="duelio-version" content="2026-10-19-12h30 — interface : libelles uniques, action en tete, cibles tactiles 44px">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Les fichiers de police viennent de gstatic, pas de googleapis : sans cette
      ligne le navigateur n'ouvre la connexion qu'après avoir lu la feuille de
@@ -874,6 +874,26 @@
   .stat-row.lead .k{ color:#04231a; opacity:.8; }
   .stat-row.lead .v{ color:#04231a; }
 
+  /* Comparatif à deux : le libellé une seule fois, au-dessus de la paire de chiffres. */
+  .duel-rows{ display:flex; flex-direction:column; gap:11px; }
+  .dr-label{
+    text-align:center; font-size:10.5px; font-weight:700; color:var(--chalk-dim);
+    line-height:1.25; margin-bottom:5px; padding:0 6px;
+  }
+  .dr-vals{ display:flex; gap:14px; justify-content:center; align-items:stretch; }
+  .dr-val{
+    flex:0 0 150px; min-width:0; box-sizing:border-box; height:46px; padding:0 8px;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    background: rgba(30,47,92,.55); border:1px solid var(--line); border-radius:14px;
+    font-family:'Unbounded'; font-weight:800; font-size:15px; color:#fff;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  /* Le meilleur reste signalé, mais sans repeindre la moitié de l'écran : une teinte et
+     un liseré suffisent. Le fond plein est gardé pour les écarts vraiment nets. */
+  .dr-val.lead{ background: var(--win-dim); border-color: rgba(47,232,138,.5); color: var(--win); }
+  .dr-val.lead.net{ background: var(--win); border-color: var(--win); color:#04231a; box-shadow:0 3px 12px rgba(47,232,138,.22); }
+  .dr-val.unknown{ color: var(--chalk-dim); font-weight:600; font-size:12px; font-family:'Plus Jakarta Sans',sans-serif; }
+
   /* Tutoriel du comparatif vide */
   .tuto{ width:100%; max-width:340px; align-self:center; margin: 18px auto 6px; padding: 0 2px; }
   .tuto-kicker{ text-align:center; font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
@@ -944,8 +964,10 @@
   .gen-tuto.anim .gm-bar em{ animation: tutoIn .3s ease both; animation-delay:.9s; }
   @keyframes mockIn{ from{ opacity:0; transform: translateY(14px) rotate(-6deg) scale(.92); } to{ opacity:1; transform: rotate(-2deg); } }
   @keyframes barGrow{ from{ transform: scaleX(0); } to{ transform: scaleX(1); } }
-  .tuto.gen-tuto.anim .tuto-step{ animation-delay: calc(.55s + var(--d) * .12s); }
-  .tuto.gen-tuto.anim .tuto-cta, .tuto.gen-tuto.anim .tuto-or, .tuto.gen-tuto.anim .tuto-duels{ animation-delay: 1.05s; }
+  .tuto.gen-tuto.anim .tuto-cta{ animation-delay:.5s; }
+  .tuto.gen-tuto.anim .tuto-or, .tuto.gen-tuto.anim .tuto-duels{ animation-delay:.58s; }
+  .tuto.gen-tuto.anim .tuto-kicker-steps{ animation-delay:.68s; }
+  .tuto.gen-tuto.anim .tuto-step{ animation-delay: calc(.74s + var(--d) * .09s); }
   .tart-picks{ display:flex; flex-direction:column; gap:3px; align-items:center; }
   .tart-picks span{ font-size:7px; font-weight:700; padding:1px 6px; border-radius:8px; border:1px solid var(--line); color:var(--chalk-dim); white-space:nowrap; }
   .tart-picks span.on{ border-color: var(--gold); color: var(--gold); background: rgba(34,211,238,.1); }
@@ -959,8 +981,12 @@
   /* Apparition en cascade, seulement la première fois */
   .tuto.anim .tuto-kicker, .tuto.anim .tuto-title, .tuto.anim .tuto-sub{ animation: tutoIn .45s ease both; }
   .tuto.anim .tuto-title{ animation-delay:.06s; } .tuto.anim .tuto-sub{ animation-delay:.12s; }
-  .tuto.anim .tuto-step{ animation: tutoIn .45s ease both; animation-delay: calc(.2s + var(--d) * .12s); }
-  .tuto.anim .tuto-cta, .tuto.anim .tuto-or, .tuto.anim .tuto-duels{ animation: tutoIn .45s ease both; animation-delay:.72s; }
+  /* L'action passe devant l'explication : le bouton et les duels s'affichent les premiers,
+     les étapes « comment ça marche » viennent après, pour qui veut les lire. */
+  .tuto.anim .tuto-cta{ animation: tutoIn .45s ease both; animation-delay:.18s; }
+  .tuto.anim .tuto-or, .tuto.anim .tuto-duels{ animation: tutoIn .45s ease both; animation-delay:.26s; }
+  .tuto.anim .tuto-kicker-steps{ animation-delay:.36s; }
+  .tuto.anim .tuto-step{ animation: tutoIn .45s ease both; animation-delay: calc(.42s + var(--d) * .09s); }
   @keyframes tutoIn{ from{ opacity:0; transform: translateY(10px); } to{ opacity:1; transform:none; } }
   /* Le « + » de la carte à remplir respire doucement */
   .portrait.placeholder.pulse{ animation: plusPulse 2s ease-in-out infinite; }
@@ -1013,6 +1039,42 @@
   .picker-item .pov{ font-family:'Unbounded'; font-weight:800; font-size:15px; color:var(--gold); flex-shrink:0; }
   .picker-item.disabled{ opacity:.3; pointer-events:none; }
   .picker-empty{ text-align:center; color:var(--chalk-dim); font-size:12.5px; padding:30px 10px; }
+
+  /* ---------------- Zones tactiles ----------------
+   * Un doigt couvre environ 9 mm, soit 44 px. En dessous, on rate sa cible — et sur
+   * cette application c'est arrivé sur une douzaine de commandes, dont l'échange de
+   * joueurs (18 px) et la croix d'effacement (30 px).
+   * Deux méthodes selon le cas. Les barres et les pastilles grandissent vraiment.
+   * Les petites icônes gardent leur taille visible et reçoivent une surface de touche
+   * invisible : on ne déforme pas le dessin pour satisfaire une règle.
+   * Ce bloc est placé en fin de feuille pour l'emporter sans avoir à alourdir
+   * chacune des règles d'origine. */
+  .tuto-kicker-steps{ margin-top:30px; }
+
+  .tab-btn, .period-btn, .reset-btn, .duel-chip{ min-height:44px; }
+  .icon-btn{ width:44px; height:44px; }
+  .search-field input{ min-height:44px; }
+  .season-pick{ min-height:44px; }
+  .scope-link{ min-height:44px; display:inline-flex; align-items:center; padding:2px 6px; margin:-2px -6px; }
+
+  .slot-swap, .search-clear, .picker-close, .nav-back{ position:relative; }
+  .slot-swap::after, .picker-close::after, .nav-back::after{
+    content:''; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:44px; height:44px; border-radius:50%;
+  }
+  /* La croix d'effacement s'étend surtout vers la droite et le bord du champ ; les
+     quelques pixels pris à gauche tombent dans le rembourrage, jamais sur le texte —
+     on n'efface donc pas sa recherche en voulant poser le curseur. */
+  .search-clear::after{
+    content:''; position:absolute; top:50%; transform:translateY(-50%);
+    left:-7px; right:-7px; height:44px;
+  }
+  /* Le bouton « Effacer » des joueurs récents ne faisait que 37 × 14 px. */
+  #clearRecentsBtn{ position:relative; }
+  #clearRecentsBtn::after{
+    content:''; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:100%; min-width:44px; height:44px;
+  }
 </style>
 </head>
 <body>
@@ -4266,6 +4328,45 @@ function renderAll(){
     return `<div class="col-stats">${heroRows}${rows}</div>`;
   }
 
+  /* Comparatif à deux : une ligne par statistique, le libellé écrit UNE fois.
+   * Avant, chaque colonne portait le sien — « Apparitions » apparaissait deux fois sur
+   * la même ligne, et l'œil devait apparier les valeurs lui-même. Le libellé passe
+   * au-dessus de la paire, les deux chiffres restent alignés sous leur joueur. */
+  function duelRowsHtml(){
+    const list = activeTab==='trophies' ? TROPHIES : (compareBasis==='nation' ? NATION_STATS : activeStats);
+    const getVal = (fp,key) => {
+      if(activeTab!=='stats') return trophyValue(fp, key);
+      if(compareBasis==='nation') return fp[key];
+      return getStatValue(fp,key);
+    };
+    const unknown = activeTab==='stats' && compareBasis!=='nation';
+    const corps = list.map(r=>{
+      const vals = filled.map(fp=> (unknown && statUnknown(fp,r.key)) ? null : getVal(fp,r.key));
+      const known = vals.filter(v=>v!==null && v!==undefined && !isNaN(Number(v))).map(Number);
+      const best = known.length ? (r.lowerIsBetter ? Math.min(...known) : Math.max(...known)) : null;
+      const tie = known.length < 2 || known.every(v=>v===best);
+      // Un écart net mérite plus d'encre qu'une victoire d'un cheveu : le fond plein est
+      // réservé aux écarts d'au moins 25 %, les autres reçoivent une simple teinte.
+      let net = false;
+      if(!tie && known.length >= 2){
+        const haut = Math.max(...known.map(Math.abs));
+        if(haut > 0) net = (Math.max(...known) - Math.min(...known)) / haut >= 0.25;
+      }
+      const cellule = (v, i) => {
+        const lead = v !== null && best !== null && Number(v) === best && !tie;
+        const txt = v === null
+          ? (unknown ? fmtStat(filled[i], r.key, r.suffix) : trophyPlaceholder(filled[i], r.key))
+          : `${v}${r.suffix || ''}`;
+        return `<div class="dr-val${lead ? ' lead' : ''}${lead && net ? ' net' : ''}${v === null ? ' unknown' : ''}">${txt}</div>`;
+      };
+      return `<div class="dr-row">
+          <div class="dr-label">${r.label}</div>
+          <div class="dr-vals">${cellule(vals[0], 0)}${cellule(vals[1], 1)}</div>
+        </div>`;
+    }).join('');
+    return `<div class="duel-rows">${corps}</div>`;
+  }
+
   function compactTableHtml(){
     const list = activeTab==='trophies' ? TROPHIES : (compareBasis==='nation' ? NATION_STATS : activeStats);
     const getVal = (fp,key) => {
@@ -4337,7 +4438,11 @@ function renderAll(){
     </div>
     <div class="career-progress" id="careerProgress">${careerProgressHtml()}</div>` : ''}
     <div class="compare-wrap ${compactView ? 'compact-view' : ''}">
-      ${compactView && filled.length>=2 ? compactTableHtml() : (filled.length>=2 ? `<div class="compare-cols count-${slots.length}">${statsColsHtml}</div>` : '')}
+      ${compactView && filled.length>=2 ? compactTableHtml()
+        : (filled.length>=2
+            ? (slots.length===2 ? duelRowsHtml()
+                                : `<div class="compare-cols count-${slots.length}">${statsColsHtml}</div>`)
+            : '')}
       ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs de l'équipe nationale A trouvés dans la base API-Football (amicaux compris), parfois incomplet pour les anciennes saisons. Titres : titres gagnés selon l'API. « — » = rien dans la base.</div>` : ''}
       ${activeTab==='stats' && filled.length>=2 && compareBasis!=='nation' && !compactView ? `
       <div class="radar-panel">
@@ -4477,10 +4582,8 @@ function compareTutorialHtml(filled, isDemo){
   ];
   return `
     <section class="tuto ${anim}" aria-label="Comment ça marche">
-      <div class="tuto-kicker">Comment ça marche</div>
       <h3 class="tuto-title">Qui est le meilleur ?</h3>
       <p class="tuto-sub">Mettez deux joueurs face à face : les chiffres tranchent le débat.</p>
-      ${tutoStepsHtml(steps.map((st,i)=>({...st, current: i===0})))}
       <button class="tuto-cta" id="tutoCta" type="button" data-slot="${nextIdx}">${n===0 ? 'Choisir le premier joueur' : `Choisir le joueur ${nextIdx+1}`}</button>
       ${!isDemo && n===0 ? `
       <div class="tuto-or">ou essayez un duel tout prêt</div>
@@ -4488,6 +4591,8 @@ function compareTutorialHtml(filled, isDemo){
         ${SUGGESTED_DUELS.slice(0,4).map((d,i)=>`<button class="duel-chip" type="button" data-tduel="${i}" ${duelLoading ? 'disabled' : ''}>${d.a.label} <span class="vs">VS</span> ${d.b.label}</button>`).join('')}
       </div>
       <div class="tuto-status ${tutoStatus.err ? 'error' : ''}" id="tutoStatus">${escapeHtml(tutoStatus.msg)}</div>` : ''}
+      <div class="tuto-kicker tuto-kicker-steps">Comment ça marche</div>
+      ${tutoStepsHtml(steps.map((st,i)=>({...st, current: i===0})))}
     </section>`;
 }
 function wireCompareTutorial(root){
@@ -4555,11 +4660,9 @@ function generateTutorialHtml(filled){
   ];
   return `
     <section class="tuto gen-tuto ${anim}" aria-label="Créer une image à partager">
-      <div class="tuto-kicker">Image à partager</div>
       <h3 class="tuto-title">Votre duel, prêt à poster</h3>
       <p class="tuto-sub">Transformez une comparaison en image et laissez vos abonnés trancher.</p>
       ${mock}
-      ${tutoStepsHtml(steps)}
       <button class="tuto-cta" id="genTutoCta" type="button" data-slot="${nextIdx}">${n===0 ? 'Choisir les joueurs' : `Choisir le joueur ${nextIdx+1}`}</button>
       ${!isDemo && n===0 ? `
       <div class="tuto-or">ou créez tout de suite l'image d'un duel</div>
@@ -4567,6 +4670,8 @@ function generateTutorialHtml(filled){
         ${SUGGESTED_DUELS.slice(0,4).map((d,i)=>`<button class="duel-chip" type="button" data-gduel="${i}" ${duelLoading ? 'disabled' : ''}>${d.a.label} <span class="vs">VS</span> ${d.b.label}</button>`).join('')}
       </div>
       <div class="tuto-status ${genTutoStatus.err ? 'error' : ''}" id="genTutoStatus">${escapeHtml(genTutoStatus.msg)}</div>` : ''}
+      <div class="tuto-kicker tuto-kicker-steps">Image à partager, pas à pas</div>
+      ${tutoStepsHtml(steps)}
     </section>`;
 }
 function wireGenerateTutorial(root){
