@@ -2098,6 +2098,10 @@ const REAL_DATA_CONFIG = {
   // retraités compris. Remplace l'index KV du proxy, qui ne couvrait que la saison
   // en cours de 5 championnats et n'a jamais fini de se construire.
   searchIndexUrl: 'https://duelio-app.bensouna-ahmed.workers.dev/data/search.json',
+  // Index court : les 5 000 joueurs dont on a la carrière complète, 493 Ko au lieu
+  // de 5,3 Mo. Chargé en premier pour que la recherche réponde tout de suite ;
+  // le grand index arrive derrière. Mettre à null pour revenir au chargement unique.
+  searchIndexTopUrl: 'https://duelio-app.bensouna-ahmed.workers.dev/data/search-top.json',
   seuilComplementApi: 5,         // sous ce nombre de résultats locaux seulement, on interroge l'API en complément
   leagueIds: [61, 39],           // 61 = Ligue 1, 39 = Premier League (via /leagues?name=...)
   seasons: [2025, 2024],         // saisons réelles disponibles ; [0] = saison de base
@@ -3432,6 +3436,23 @@ async function loadPlayerIndex(){
   let stored = null;
   try{ stored = JSON.parse(localStorage.getItem(INDEX_LS_KEY) || 'null'); }catch(e){}
   if(stored && stored.data) applyPlayerIndex(stored.data);
+
+  // Premier étage : l'index court, pour que la recherche des joueurs connus
+  // réponde en moins d'une seconde au lieu d'attendre les 5,3 Mo du grand index.
+  if(!PLAYER_INDEX.loaded && REAL_DATA_CONFIG.searchIndexTopUrl){
+    try{
+      const r = await fetch(REAL_DATA_CONFIG.searchIndexTopUrl);
+      if(r.ok){
+        const court = await r.json();
+        if(applyPlayerIndex(court)){
+          // Celui-là tient dans le stockage du navigateur, contrairement au grand.
+          try{ localStorage.setItem(INDEX_LS_KEY, JSON.stringify({t: Date.now(), data: court})); }catch(e){}
+          if(currentScreen==='browse' && !browseDetailId && !browseSearch) renderBrowse();
+        }
+      }
+    }catch(e){ /* index court absent : le grand index suffit */ }
+  }
+
   // Avec l'index statique on va TOUJOURS vérifier s'il a changé, au lieu de s'arrêter
   // pendant 6 h sur la copie locale. Le fichier est servi avec des en-têtes de cache :
   // la requête revient en « non modifié » et ne coûte quasiment rien. Sans ce garde-fou,
@@ -3441,9 +3462,11 @@ async function loadPlayerIndex(){
     const res = await fetch(REAL_DATA_CONFIG.searchIndexUrl || `${REAL_DATA_CONFIG.proxyUrl}/index.json`);
     if(!res.ok) return; // index pas encore construit côté proxy : la recherche API seule continue
     const data = await res.json();
-    if(applyPlayerIndex(data)){
-      try{ localStorage.setItem(INDEX_LS_KEY, JSON.stringify({t: Date.now(), data})); }catch(e){}
-      if(currentScreen==='browse' && !browseDetailId && !browseSearch) renderBrowse(); // met à jour la consigne « dès 2 lettres »
+    // On ne range plus le grand index dans localStorage : 5,3 Mo dépassent le quota
+    // du navigateur, l'écriture échouait silencieusement à chaque chargement. Le cache
+    // HTTP de Cloudflare fait ce travail, et l'index court sert de secours hors ligne.
+    if(applyPlayerIndex(data) && currentScreen==='browse' && !browseDetailId && !browseSearch){
+      renderBrowse(); // met à jour la consigne « dès 2 lettres »
     }
   }catch(e){ /* hors ligne ou proxy indisponible : rien à faire, l'index déjà stocké reste utilisé */ }
 }
@@ -3469,6 +3492,20 @@ function searchScore(nameWords, allWords, sNorm, qw, nq){
   if(qw.every(x => allWords.some(w => w.startsWith(x)))) return 90;
   if(sNorm.includes(nq)) return 50;
   return 0;
+}
+/* Vrai quand le premier résultat local correspond franchement au nom tapé : chaque
+ * mot saisi est le début d'un mot de son nom. Dans ce cas l'index suffit, et aller
+ * demander un complément à l'API n'ajouterait qu'une attente — d'autant que plus la
+ * recherche est précise, moins elle renvoie de résultats, donc plus elle déclenchait
+ * d'appels réseau. */
+function correspondanceFranche(liste, q){
+  if(!liste || !liste.length) return false;
+  const qw = normalizeSearch(q).trim().split(/\s+/).filter(Boolean);
+  if(!qw.length) return false;
+  const mots = normalizeSearch(liste[0].name || '').split(/[\s\-'.]+/).filter(Boolean);
+  if(!qw.every(x => mots.some(w => w.startsWith(x)))) return false;
+  // Un seul mot tapé : on n'est sûr que s'il est long et désigne un mot entier du nom.
+  return qw.length >= 2 || (qw[0].length >= 5 && mots.some(w => w === qw[0]));
 }
 function searchLocalIndex(q, limit=20){
   if(!PLAYER_INDEX.loaded) return [];
@@ -5269,7 +5306,7 @@ document.getElementById('pickerSearch').addEventListener('input', e=>{
   renderPickerList();
   // L'API n'est plus qu'un filet de sécurité : l'index local couvre 41 553 joueurs sur dix
   // saisons et douze compétitions. On ne la dérange que si la recherche locale n'a rien donné.
-  if(pickerSearch.length>=REAL_DATA_CONFIG.searchMinChars && locauxPicker.length < REAL_DATA_CONFIG.seuilComplementApi){
+  if(pickerSearch.length>=REAL_DATA_CONFIG.searchMinChars && locauxPicker.length < REAL_DATA_CONFIG.seuilComplementApi && !correspondanceFranche(locauxPicker, pickerSearch)){
     const cached = getCachedSearch(pickerSearch) || searchByPrefixCache(pickerSearch);
     if(cached){
       setCachedSearch(pickerSearch, cached);  // la prochaine lettre repartira de cette liste
@@ -5849,7 +5886,7 @@ function renderBrowse(){
     if(browseSearch.length >= 2){ locauxBrowse = searchLocalIndex(browseSearch); mergeSearchResults(locauxBrowse, browseSearch); }
     renderBrowseList();
     // 2. Complément API, uniquement si l'index local n'a presque rien trouvé (résultat mémorisé 24 h)
-    if(browseSearch.length>=REAL_DATA_CONFIG.searchMinChars && locauxBrowse.length < REAL_DATA_CONFIG.seuilComplementApi){
+    if(browseSearch.length>=REAL_DATA_CONFIG.searchMinChars && locauxBrowse.length < REAL_DATA_CONFIG.seuilComplementApi && !correspondanceFranche(locauxBrowse, browseSearch)){
       const cached = getCachedSearch(browseSearch) || searchByPrefixCache(browseSearch);
       if(cached){
         setCachedSearch(browseSearch, cached);  // la prochaine lettre repartira de cette liste
