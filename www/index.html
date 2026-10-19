@@ -232,7 +232,9 @@
   }
   .welcome-half{
     position:absolute; left:0; right:0; height:50%; overflow:hidden;
-    transition: transform .6s cubic-bezier(.65,0,.35,1);
+    /* 600 ms d'animation de sortie, c'est long à l'usage : l'utilisateur a déjà
+       décidé quand il appuie. Ramené à 380 ms, le mouvement reste lisible. */
+    transition: transform .38s cubic-bezier(.65,0,.35,1);
   }
   .welcome-top{ top:0; }
   .welcome-bottom{ bottom:0; }
@@ -5407,7 +5409,8 @@ document.getElementById('pickerSearch').addEventListener('input', e=>{
         if(locauxPicker.length) setPickerStatus('');
         else setPickerStatus('Recherche impossible : '+(err && err.message || err), true);
       }).finally(()=>{ pickerSearchInFlight = ''; });
-    }, 220);
+    }, 120);   // la recherche locale coûte quelques millisecondes et n'appelle plus
+               // l'API quand elle trouve : rien ne justifie d'attendre 220 ms.
   }
 });
 document.getElementById('pickerSearchClear').addEventListener('click', ()=>{
@@ -6127,7 +6130,7 @@ document.querySelectorAll('.welcome-cta').forEach(btn=>{
     if(screen.classList.contains('leaving')) return;
     try{ localStorage.setItem('duelio_welcomed','1'); }catch(e){}
     screen.classList.add('leaving');
-    setTimeout(()=>{ screen.classList.add('gone'); }, 650);
+    setTimeout(()=>{ screen.classList.add('gone'); }, 420);   // suit la durée de l'animation
   });
 });
 // L'écran d'accueil n'est montré qu'à la première visite : ensuite on arrive directement sur le comparatif
