@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-16h35 — chiffres corriges : blocs repetes de la source ecartes">
+<meta name="duelio-version" content="2026-10-19-17h — selections nationales correctement reconnues">
 
 <!-- ====================== Mesure d'audience ======================
      Cloudflare Web Analytics : gratuit, sans cookie, sans identifiant individuel.
@@ -45,8 +45,8 @@
      Cloudflare, donc Cloudflare n'injecte pas la balise de lui-même. Le jeton vient
      de Web Analytics → duelio.app → Installation.
 
-     Le chargement passe par du JavaScript plutôt que par une balise <script> écrite
-     en dur, pour que la page ne tente rien quand le jeton est vide.
+     Le chargement se fait par JavaScript plutôt que par une balise écrite en dur,
+     pour que la page ne tente aucune requête quand le jeton est vide.
 
      Ce traceur ne pose pas de cookie et ne suit personne d'un site à l'autre, ce
      qui le place hors du champ du bandeau de consentement selon la lecture la plus
@@ -2904,15 +2904,57 @@ function _normTxt(t){ return (t||'').normalize('NFD').replace(/[\u0300-\u036f]/g
 //   'friendly' = match amical (sélection « Friendlies » ou club « Friendlies Clubs ») : jamais compté avec les matchs officiels
 //   'youth'    = sélection de jeunes (U21, U23, JO) : rangée avec la sélection
 //   'nation'   = équipe nationale A        'club' = tout le reste
+/* Noms des sélections nationales, tels que l'API les écrit.
+ * Indispensable parce que deux choses manquent dans la source :
+ *   - le drapeau « équipe nationale » n'est JAMAIS renseigné (0 bloc sur 255 570) ;
+ *   - le nom de la sélection ne correspond pas toujours à la nationalité du joueur
+ *     (« Korea Republic » contre « South Korea », « Côte d'Ivoire » contre « Ivory Coast »),
+ *     et 285 joueurs sont dans ce cas, binationaux compris.
+ * Liste établie sur les 5 000 carrières, avec une règle sûre : une sélection ne joue
+ * jamais dans un championnat domestique. C'est ce qui écarte Liverpool, qu'API-Football
+ * crédite pourtant de matchs de Coupe d'Afrique des Nations. */
+const SELECTIONS_NATIONALES = new Set([
+  "albania", "algeria", "angola", "argentina", "armenia", "australia",
+  "austria", "azerbaijan", "belarus", "belgium", "benin", "bosnia & herzegovina",
+  "bosnia and herzegovina", "brazil", "bulgaria", "burkina faso", "burundi", "cameroon",
+  "canada", "cape verde", "cape verde islands", "central african republic", "chad", "chile",
+  "china", "china pr", "colombia", "comoros", "congo", "congo dr",
+  "costa rica", "cote d'ivoire", "croatia", "curacao", "cyprus", "czech republic",
+  "czechia", "denmark", "dominican republic", "ecuador", "egypt", "england",
+  "equatorial guinea", "estonia", "finland", "france", "french guiana", "french guyana",
+  "fyr macedonia", "gabon", "gambia", "georgia", "germany", "ghana",
+  "gibraltar", "greece", "guadeloupe", "guinea", "guinea-bissau", "haiti",
+  "honduras", "hungary", "iceland", "indonesia", "iran", "iraq",
+  "israel", "italy", "ivory coast", "jamaica", "japan", "jordan",
+  "kazakhstan", "kenya", "korea republic", "kosovo", "latvia", "libya",
+  "liechtenstein", "lithuania", "luxembourg", "madagascar", "malaysia", "mali",
+  "malta", "martinique", "mexico", "moldova", "montenegro", "morocco",
+  "mozambique", "netherlands", "new zealand", "nigeria", "north macedonia", "northern ireland",
+  "norway", "panama", "paraguay", "peru", "philippines", "poland",
+  "portugal", "rep. of ireland", "republic of ireland", "romania", "russia", "scotland",
+  "senegal", "serbia", "sierra leone", "slovakia", "slovenia", "south africa",
+  "south korea", "spain", "suriname", "sweden", "switzerland", "syria",
+  "tanzania", "togo", "tunisia", "turkey", "turkiye", "ukraine",
+  "uruguay", "usa", "uzbekistan", "venezuela", "wales", "zambia",
+  "zimbabwe"
+]);
 function statTeamKind(st, pl){
   const t = st.team || {}, lg = st.league || {};
   const tn = _normTxt(t.name), nat = _normTxt(pl && pl.nationality);
   const ln = _normTxt(lg.name);
-  if(/friendl/.test(ln)) return 'friendly';
+  // Les équipes de jeunes d'abord : une sélection U21 n'est pas la sélection A.
   // (l'ancien test « olympi » sur le nom d'équipe classait à tort l'OM, l'OL ou l'Olympiakos en équipe de jeunes)
   if(/\bu-?\d{2}\b|youth/.test(tn) || /olympic|\bu-?\d{2}\b/.test(ln)) return 'youth';
+  // Sélection A, reconnue sur le NOM de l'équipe. Ce test passe avant celui des amicaux,
+  // parce qu'un match amical avec son pays est une sélection officielle : les buts comptent,
+  // c'est la convention de la FIFA et celle de toutes les sources publiques. Auparavant ils
+  // étaient rangés avec les amicaux de club et disparaissaient du total : Son Heung-min
+  // affichait 32 buts internationaux au lieu de 59.
+  if(SELECTIONS_NATIONALES.has(tn)) return 'nation';
   if(t.national === true) return 'nation';
   if(nat && tn === nat) return 'nation';
+  // Amical de club : rien à voir avec une sélection.
+  if(/friendl/.test(ln)) return 'friendly';
   if(/world cup|euro championship|uefa euro|european championship|nations league|copa america|africa cup|asian cup|gold cup|confederations/.test(ln) && !/club|champions|europa|conference|libertadores|u-?\d{2}/.test(ln)) return 'nation';
   return 'club';
 }
@@ -4784,7 +4826,7 @@ function renderAll(){
   const scopeChip = document.getElementById('scopeChip');
   if(scopeChip) scopeChip.addEventListener('click', ()=>{
     openValueSheet('Quels matchs compter ?', 'Les matchs amicaux ne sont jamais mélangés aux matchs officiels.',
-      [{value:'club', label:'Club seulement', meta:'Matchs officiels · par défaut'},{value:'all', label:'Club + sélection', meta:'Coupe du monde, Euro… comptés dans la saison qui suit'},{value:'nation', label:'Sélection seulement', meta:'Matchs officiels'},{value:'friendly', label:'Amicaux seulement', meta:'Club et sélection'}]
+      [{value:'club', label:'Club seulement', meta:'Matchs officiels · par défaut'},{value:'all', label:'Club + sélection', meta:'Coupe du monde, Euro… comptés dans la saison qui suit'},{value:'nation', label:'Sélection seulement', meta:'Matchs officiels'},{value:'friendly', label:'Amicaux de club', meta:'Les amicaux en sélection comptent comme officiels'}]
         // Pas de mention à côté du nom : « Cette compétition seulement » se répétait
         // sur chaque ligne sans rien apprendre, le titre de la feuille le dit déjà.
         .concat(competitionsDisponibles().map(c => ({ value:'comp:'+c[0], label:c[1] }))), teamScope,
