@@ -112,7 +112,7 @@ jobs:
             // La carrière complète d'abord : elle couvre les championnats absents de
             // data/stats. Sans elle, Ronaldo ressort « Manchester United » et Messi
             // « Paris Saint Germain », faute de Saudi Pro League et de MLS.
-            let poste = null, club = null, clubId = null;
+            let poste = null, club = null, clubId = null, matchs = 0;
             const cheminFull = FULL + "/" + j.i + ".json";
             if (existsSync(cheminFull)) {
               try {
@@ -121,6 +121,14 @@ jobs:
                 poste = r.poste; club = r.club; clubId = r.clubId;
                 if (club) viaCarriere++;
                 avecCarriere.add(j.i);
+                // Total des matchs joues sur toute la carriere. C'est le seul signal de
+                // notoriete dont on dispose, et il sert a classer les resultats de
+                // recherche : sans lui, taper « salah » remontait I. Salah avant Mohamed
+                // Salah, et « kane » C. Kane avant Harry Kane, l'index etant trie par
+                // ordre alphabetique puis par longueur du nom.
+                for (const saison of Object.values(f.s || {}))
+                  for (const bloc of (saison || []))
+                    matchs += ((bloc.games && bloc.games.appearences) || 0);
               } catch (e) { /* fichier illisible : on retombe sur les paquets */ }
             }
             if (!club || !poste) {
@@ -129,7 +137,8 @@ jobs:
               if (!club) { club = r.club; clubId = r.clubId; }
             }
             recherche.push({ i: j.i, n: j.n || "", f: "", l: "", a: j.a || null,
-                             c: j.c || "", p: posCode(poste), t: club || "", ti: clubId || null });
+                             c: j.c || "", p: posCode(poste), t: club || "", ti: clubId || null,
+                             m: matchs || 0 });
           }
           recherche.sort((a, b) => (a.n || "").localeCompare(b.n || ""));
           const txtRecherche = JSON.stringify({
