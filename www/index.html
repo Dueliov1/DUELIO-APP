@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-13h — apercu de partage, recherche tolerante aux fautes, donnees locales affichees d abord">
+<meta name="duelio-version" content="2026-10-19-13h20 — image partagee : verdict, vert du gagnant, marque lisible">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Les fichiers de police viennent de gstatic, pas de googleapis : sans cette
      ligne le navigateur n'ouvre la connexion qu'après avoir lu la feuille de
@@ -5545,6 +5545,11 @@ async function generateShareImage(){
     return lines.slice(0,3);
   }
 
+  // Décompte des lignes gagnées, pour écrire un verdict en bas de l'image. Des chiffres
+  // alignés ne disent pas qui gagne ; une phrase, si — et c'est ce qui fait réagir
+  // quelqu'un qui croise l'image dans un fil.
+  let gagneesA = 0, gagneesB = 0;
+
   list.forEach((r,ri)=>{
     const rowY = statsTop + ri*rowPitch;
     const vals = filled.map(fp=>{
@@ -5576,8 +5581,16 @@ async function generateShareImage(){
         roundRect(ctx, x0, barCY-barH/2, fullW, barH, barH/2); ctx.fillStyle = 'rgba(120,170,215,.18)'; ctx.fill();
         return;
       }
-      const gl = ctx.createLinearGradient(x0,0,Math.max(splitX,x0+1),0); gl.addColorStop(0,'#3d9be8'); gl.addColorStop(1,'#45bfee');
-      const gr = ctx.createLinearGradient(splitX,0,Math.max(x0+fullW,splitX+1),0); gr.addColorStop(0,'#2fd88a'); gr.addColorStop(1,'#29c481');
+      // Le vert signale le MEILLEUR, comme partout ailleurs dans l'application. Avant,
+      // il marquait seulement le joueur de DROITE : sur une image partagée, le perdant
+      // ressortait en vert une ligne sur deux, et qui connaît l'appli lisait de travers.
+      const gagneA = r.lowerIsBetter ? (nA < nB) : (nA > nB);
+      const gagneB = r.lowerIsBetter ? (nB < nA) : (nB > nA);
+      if(gagneA) gagneesA++; else if(gagneB) gagneesB++;
+      const VERT = ['#2FE88A','#29C481'], NEUTRE = ['#3d9be8','#45bfee'];
+      const cg = gagneA ? VERT : NEUTRE, cd = gagneB ? VERT : NEUTRE;
+      const gl = ctx.createLinearGradient(x0,0,Math.max(splitX,x0+1),0); gl.addColorStop(0,cg[0]); gl.addColorStop(1,cg[1]);
+      const gr = ctx.createLinearGradient(splitX,0,Math.max(x0+fullW,splitX+1),0); gr.addColorStop(0,cd[0]); gr.addColorStop(1,cd[1]);
       ctx.save();
       roundRect(ctx, x0, barCY-barH/2, fullW, barH, barH/2); ctx.clip();
       ctx.fillStyle = gl; ctx.fillRect(x0, barCY-barH/2, splitX-x0, barH);
@@ -5600,10 +5613,24 @@ async function generateShareImage(){
   });
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 
-  // --- Pied de page ---
-  ctx.font = `500 ${11*S}px 'Plus Jakarta Sans', sans-serif`;
-  ctx.fillStyle = '#7f97b1'; ctx.textAlign='center';
-  ctx.fillText('D U E L I O . A P P', W/2, Math.min(statsTop+statsH+38*S, H-16*S));
+  // --- Pied de page : le verdict, puis la marque ---
+  const marqueY = Math.min(statsTop + statsH + 46*S, H - 14*S);
+  if(n === 2 && (gagneesA || gagneesB)){
+    const total = gagneesA + gagneesB;
+    const score = Math.max(gagneesA, gagneesB);
+    const phrase = gagneesA === gagneesB
+      ? `Égalité : ${gagneesA} statistique${gagneesA > 1 ? 's' : ''} chacun`
+      : `${shortName(gagneesA > gagneesB ? filled[0] : filled[1])} l'emporte `
+        + `sur ${score} statistique${score > 1 ? 's' : ''} sur ${total}`;
+    ctx.font = `800 ${15.5*S}px 'Plus Jakarta Sans', sans-serif`;
+    ctx.fillStyle = '#2FE88A'; ctx.textAlign = 'center';
+    ctx.fillText(phrase, W/2, marqueY - 22*S);
+  }
+  // La marque était écrite en gris sombre, presque invisible sur une image faite pour
+  // circuler. Elle est maintenant lisible sans écraser le contenu.
+  ctx.font = `700 ${11.5*S}px 'Plus Jakarta Sans', sans-serif`;
+  ctx.fillStyle = '#A9CFC5'; ctx.textAlign='center';
+  ctx.fillText('D U E L I O . A P P', W/2, marqueY);
   ctx.textAlign = 'left';
 
   canvas.toBlob((blob)=>{
