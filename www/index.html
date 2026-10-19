@@ -41,10 +41,13 @@
      Rien n'est chargé tant que le jeton est vide, donc aucune requête inutile et
      aucune erreur en console avant qu'il soit renseigné.
 
-     Pour obtenir le jeton : tableau de bord Cloudflare → Analytics & Logs →
-     Web Analytics → « Add a site » → duelio.app. Cloudflare affiche alors un
-     extrait contenant "token": "……" ; c'est cette suite de caractères qu'il faut
-     coller ci-dessous, entre les guillemets.
+     EN PRATIQUE, CE BLOC NE SERT PAS. duelio.app passe par Cloudflare, qui injecte
+     donc la mesure tout seul : il suffit d'ajouter le site dans Web Analytics, sans
+     toucher au code. Vérifié aussi qu'aucun en-tête « no-transform » ne bloque cette
+     injection, seul cas où elle échouerait.
+
+     Ce bloc reste comme filet : si l'injection automatique venait à ne plus marcher,
+     coller le jeton du site ci-dessous suffit à poser la mesure à la main.
 
      Ce traceur ne pose pas de cookie et ne suit personne d'un site à l'autre, ce
      qui le place hors du champ du bandeau de consentement selon la lecture la plus
