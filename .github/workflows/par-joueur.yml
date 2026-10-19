@@ -159,6 +159,46 @@ jobs:
           });
           writeFileSync(RECHERCHE_TOP, txtTop);
 
+          // Index decoupe par initiale. L'index complet pese 1,1 Mo compresse : des
+          // qu'une recherche ne trouvait rien dans l'index court, le telephone
+          // telechargeait ce megaoctet entier, soit une dizaine de secondes en 3G.
+          // Chaque joueur est range sous l'initiale de CHACUN de ses mots d'au moins
+          // deux lettres, ce qui correspond exactement a ce que la recherche compare.
+          // Les initiales isolees (« E. ») sont ignorees : on ne cherche jamais sur une
+          // seule lettre, et les inclure gonflait les tranches d'un tiers.
+          const AZ = "www/data/search-az";
+          rmSync(AZ, { recursive: true, force: true });
+          mkdirSync(AZ, { recursive: true });
+          const SPECIALES = { "\u00f8":"o", "\u00e5":"a", "\u00e6":"a", "\u0153":"o",
+                              "\u00df":"s", "\u0111":"d", "\u0142":"l", "\u00f0":"d",
+                              "\u00fe":"t", "\u0127":"h", "\u0131":"i" };
+          const sansAccent = (t) => String(t || "").normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "").toLowerCase()
+            .replace(/[\u00f8\u00e5\u00e6\u0153\u00df\u0111\u0142\u00f0\u00fe\u0127\u0131]/g,
+                     (c) => SPECIALES[c] || c);
+          const tranches = new Map();
+          for (const e of recherche) {
+            const mots = sansAccent(e.n).split(/[^a-z0-9]+/).filter((w) => w.length >= 2);
+            const cles = new Set(mots.map((w) => (/[a-z]/.test(w[0]) ? w[0] : "0")));
+            if (!cles.size) cles.add("0");
+            for (const c of cles) {
+              if (!tranches.has(c)) tranches.set(c, []);
+              tranches.get(c).push(e);
+            }
+          }
+          let azOctets = 0, azMax = 0, azMaxNom = "";
+          for (const [c, liste] of [...tranches].sort()) {
+            const txt = JSON.stringify({ v: 1, tranche: c, count: liste.length, players: liste });
+            writeFileSync(AZ + "/" + c + ".json", txt);
+            const comp = gzipSync(txt).length;
+            azOctets += comp;
+            if (comp > azMax) { azMax = comp; azMaxNom = c; }
+          }
+          writeFileSync(AZ + "/index.json", JSON.stringify({
+            v: 1, updatedAt: new Date().toISOString(),
+            tranches: [...tranches.keys()].sort()
+          }));
+
           console.log("");
           console.log("RESULTATS");
           console.log("  joueurs uniques : " + joueurs.size);
@@ -171,6 +211,9 @@ jobs:
                       + Math.round(gzipSync(txtTop).length / 1024) + " Ko compresse");
           console.log("  index recherche : " + Math.round(txtRecherche.length / 1024) + " Ko brut, "
                       + Math.round(gzipSync(txtRecherche).length / 1024) + " Ko compresse");
+          console.log("  tranches A-Z    : " + tranches.size + " fichiers, "
+                      + Math.round(azOctets / 1024) + " Ko compresses au total, "
+                      + "plus grosse « " + azMaxNom + " » " + Math.round(azMax / 1024) + " Ko");
           EOF
           node --max-old-space-size=8192 regroupe.mjs
 
@@ -178,6 +221,6 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add -A www/data/players www/data/search.json www/data/search-top.json
+          git add -A www/data/players www/data/search.json www/data/search-top.json www/data/search-az
           git diff --staged --quiet || git commit -m "Paquets par joueur et index de recherche"
           git push

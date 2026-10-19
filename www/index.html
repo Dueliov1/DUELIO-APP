@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-13h20 — image partagee : verdict, vert du gagnant, marque lisible">
+<meta name="duelio-version" content="2026-10-19-13h45 — index decoupe par initiale">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Les fichiers de police viennent de gstatic, pas de googleapis : sans cette
      ligne le navigateur n'ouvre la connexion qu'après avoir lu la feuille de
@@ -2201,6 +2201,10 @@ const REAL_DATA_CONFIG = {
   // retraités compris. Remplace l'index KV du proxy, qui ne couvrait que la saison
   // en cours de 5 championnats et n'a jamais fini de se construire.
   searchIndexUrl: 'https://duelio-app.bensouna-ahmed.workers.dev/data/search.json',
+  // Index découpé par initiale : on ne télécharge que la tranche utile. L'index complet
+  // pèse 1,1 Mo compressé, la plus grosse tranche 184 Ko — onze secondes en 3G contre
+  // moins de deux. Si ces fichiers manquent, l'application retombe sur l'index complet.
+  searchShardBase: 'https://duelio-app.bensouna-ahmed.workers.dev/data/search-az',
   // Index court : les 5 000 joueurs dont on a la carrière complète, 493 Ko au lieu
   // de 5,3 Mo. Chargé en premier pour que la recherche réponde tout de suite ;
   // le grand index arrive derrière. Mettre à null pour revenir au chargement unique.
@@ -3673,6 +3677,68 @@ async function loadPlayerIndex(){
 
 let _indexCompletEnCours = null;
 function indexCompletCharge(){ return PLAYER_INDEX.players.length > 20000; }
+
+/* ---------- Index de recherche découpé par initiale ----------
+ * Jusqu'ici, dès qu'une recherche ne trouvait rien dans l'index court, le téléphone
+ * téléchargeait l'index complet : 1,1 Mo compressé, une dizaine de secondes en 3G.
+ * On ne charge désormais que la ou les tranches correspondant aux initiales tapées.
+ * Chaque joueur est rangé sous l'initiale de chacun de ses mots, donc chercher un
+ * prénom marche aussi bien qu'un nom de famille. */
+const tranchesChargees = new Set();
+const _tranchesEnCours = new Map();
+
+function initialesDe(q){
+  return [...new Set(normalizeSearch(q).split(/[^a-z0-9]+/)
+    .filter(w => w.length >= 2)
+    .map(w => /[a-z]/.test(w[0]) ? w[0] : '0'))];
+}
+// Vrai si l'on a déjà tout ce qu'il faut pour cette recherche : inutile de retélécharger.
+function trancheChargee(q){
+  if(indexCompletCharge()) return true;
+  const cs = initialesDe(q);
+  return cs.length > 0 && cs.every(c => tranchesChargees.has(c));
+}
+// Ajoute des joueurs à l'index sans écraser ceux déjà présents (l'index court reste).
+function fusionnerIndex(data){
+  if(!data || !Array.isArray(data.players) || !data.players.length) return false;
+  const vus = new Set(PLAYER_INDEX.players.map(e => e.i));
+  for(const e of data.players){
+    if(vus.has(e.i)) continue;
+    vus.add(e.i);
+    PLAYER_INDEX.players.push(prepareIndexEntry(e));
+  }
+  PLAYER_INDEX.loaded = true;
+  return true;
+}
+async function chargerTranche(base, c){
+  if(_tranchesEnCours.has(c)) return _tranchesEnCours.get(c);
+  const prom = (async ()=>{
+    try {
+      const res = await fetch(`${base}/${c}.json`);
+      if(!res.ok) return null;                 // null : tranche pas encore publiée
+      const ok = fusionnerIndex(await res.json());
+      if(ok) tranchesChargees.add(c);
+      return ok;
+    } catch(e){ return null; }
+  })();
+  _tranchesEnCours.set(c, prom);
+  prom.then(()=>_tranchesEnCours.delete(c), ()=>_tranchesEnCours.delete(c));
+  return prom;
+}
+async function chargerTranchesPour(q){
+  if(indexCompletCharge()) return true;
+  const base = REAL_DATA_CONFIG.searchShardBase;
+  if(!base) return chargerIndexComplet();
+  const cs = initialesDe(q).filter(c => !tranchesChargees.has(c));
+  if(!cs.length) return true;
+  const res = await Promise.all(cs.map(c => chargerTranche(base, c)));
+  // Aucune tranche n'a répondu : les fichiers ne sont pas encore en ligne. On retombe
+  // sur l'index complet plutôt que de laisser l'utilisateur sans résultat.
+  if(res.every(x => x === null)) return chargerIndexComplet();
+  const ok = res.some(Boolean);
+  if(ok && currentScreen === 'browse' && !browseDetailId && !browseSearch) renderBrowse();
+  return ok;
+}
 async function chargerIndexComplet(){
   if(indexCompletCharge()) return true;
   if(_indexCompletEnCours) return _indexCompletEnCours;
@@ -5691,9 +5757,9 @@ document.getElementById('pickerSearch').addEventListener('input', e=>{
     // L'index court ne porte que les 5 000 joueurs les plus capés. Quand il ne
     // trouve rien, on va chercher le grand index — une fois pour la session — et
     // on relance la recherche dès qu'il est là.
-    if(!locauxPicker.length && !indexCompletCharge()){
+    if(!locauxPicker.length && !trancheChargee(pickerSearch)){
       setPickerStatus('Recherche élargie…');
-      chargerIndexComplet().then(ok => {
+      chargerTranchesPour(pickerSearch).then(ok => {
         const el = document.getElementById('pickerSearch');
         if(ok && el && el.value === pickerSearch) el.dispatchEvent(new Event('input', {bubbles:true}));
       });
@@ -6282,9 +6348,9 @@ function renderBrowse(){
     // L'index court ne porte que les 5 000 joueurs les plus capés. Quand il ne
     // trouve rien, on va chercher le grand index — une fois pour la session — et
     // on relance la recherche dès qu'il est là.
-    if(!locauxBrowse.length && !indexCompletCharge()){
+    if(!locauxBrowse.length && !trancheChargee(browseSearch)){
       setBrowseStatus('Recherche élargie…');
-      chargerIndexComplet().then(ok => {
+      chargerTranchesPour(browseSearch).then(ok => {
         const el = document.getElementById('browseSearchInput');
         if(ok && el && el.value === browseSearch) el.dispatchEvent(new Event('input', {bubbles:true}));
       });
