@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-15h50 — liste des competitions allegee">
+<meta name="duelio-version" content="2026-10-19-16h — choix de saison repense">
 
 <!-- ====================== Mesure d'audience ======================
      Cloudflare Web Analytics : gratuit, sans cookie, sans identifiant individuel.
@@ -4976,37 +4976,27 @@ function seasonPickHtml(p, opts){
   }
   if(p.needsStats || !p.seasonsAvailable || !p.seasonsAvailable.length) return `<div class="season-pick static">Chargement…</div>`;
   const busy = seasonPickLoading[p.id];
-  const seasons = p.seasonsAvailable.slice().sort((a,b)=>b-a);
-  const options = seasons.map(sn=>{
-    const st = p.statsBySeason && p.statsBySeason[sn];
-    const noData = p.seasonsNoData && p.seasonsNoData[sn];
-    const lbl = seasonLabel(sn) + (st && st.teamName ? ' · ' + st.teamName : '') + (p.bestSeason===sn ? '  ★ meilleure' : '') + (noData ? '  (rien dans la base)' : '');
-    return `<option value="${sn}" ${sn===p.seasonShown ? 'selected' : ''} ${noData ? 'disabled' : ''}>${escapeHtml(lbl)}</option>`;
-  }).join('');
   const short = slots.length > 2 && !opts.detail;
   const shown = busy ? 'Chargement…' : `${short ? '' : 'Saison '}${seasonLabel(p.seasonShown)}${opts.detail && p.club ? ' · ' + escapeHtml(p.club) : ''}`;
-  return `<label class="season-pick ${busy ? 'busy' : ''}">
+  // Un bouton, pas un <select> : le menu déroulant natif s'affichait en blanc avec
+  // la police du système, au milieu d'une application sombre, et ne montrait qu'une
+  // ligne de texte par saison. La feuille de choix ci-dessous existait déjà dans
+  // l'application mais n'était branchée nulle part : elle donne le club, les buts et
+  // les passes de chaque saison, signale la meilleure, et propose de charger toute
+  // la carrière.
+  return `<button type="button" class="season-pick ${busy ? 'busy' : ''}" data-season-pick="${p.id}"
+      aria-label="Choisir la saison de ${escapeHtml(p.name)}" ${busy ? 'disabled' : ''}>
       <span class="sp-txt">${shown}</span><span class="sp-arrow" aria-hidden="true">▾</span>
-      <select class="season-select" data-pid="${p.id}" aria-label="Saison de ${escapeHtml(p.name)}" ${busy ? 'disabled' : ''}>${options}</select>
-    </label>${seasonPickError[p.id] ? `<div class="season-pick-err">${escapeHtml(seasonPickError[p.id])}</div>` : ''}`;
+    </button>${seasonPickError[p.id] ? `<div class="season-pick-err">${escapeHtml(seasonPickError[p.id])}</div>` : ''}`;
 }
 function wireSeasonSelects(root, rerender){
-  root.querySelectorAll('select.season-select').forEach(sel=>{
-    sel.addEventListener('click', e=>e.stopPropagation());
-    sel.addEventListener('change', async ()=>{
-      const p = PLAYERS.find(x=>x.id===parseInt(sel.dataset.pid,10)); if(!p) return;
-      const sn = parseInt(sel.value,10);
+  root.querySelectorAll('[data-season-pick]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const p = PLAYERS.find(x=>x.id===parseInt(btn.dataset.seasonPick,10));
+      if(!p) return;
       delete seasonPickError[p.id];
-      seasonPickLoading[p.id] = sn; rerender();
-      try{
-        const st = await ensureSeasonLoaded(p, sn);
-        if(!st){ p.seasonsNoData = p.seasonsNoData || {}; p.seasonsNoData[sn] = true; seasonPickError[p.id] = `Rien dans la base pour ${seasonLabel(sn)}.`; }
-        else applySeasonToPlayer(p, sn, true);
-      }catch(err){
-        seasonPickError[p.id] = (err && err.message) || 'Chargement impossible, réessayez.';
-      }finally{
-        delete seasonPickLoading[p.id]; rerender();
-      }
+      openSeasonSheet(p, rerender);
     });
   });
 }
