@@ -3640,10 +3640,11 @@ async function loadSuggestedDuel(duel, statusCb, opts){
   opts = opts || {};
   if(duelLoading) return;
   duelLoading = true;
-  const ids = [];
   try{
-    for(const side of [duel.a, duel.b]){
-      statusCb(`Chargement de ${side.label}…`);
+    statusCb('Chargement du duel…');
+
+    // Retrouve la fiche d'un côté du duel, sans réseau quand l'identifiant est connu.
+    async function fiche(side){
       const nf = normalizeSearch(side.first);
       const prefer = pl => {
         const pf = normalizeSearch(pl.firstname||''), nn = normalizeSearch(pl.name||'');
@@ -3652,23 +3653,25 @@ async function loadSuggestedDuel(duel, statusCb, opts){
         // l'index abrège le plus souvent le prénom : « E. Haaland » pour Erling Haaland
         return !!nf && nn.startsWith(nf[0] + '. ');
       };
-      // D'abord l'identifiant, qui ne peut pas se tromper de joueur. On laisse à
-      // l'index le temps d'arriver : il met moins d'une seconde.
       let found = [];
       if(side.id){
         for(let i = 0; i < 20 && !PLAYER_INDEX.loaded; i++) await sleep(100);
         const direct = joueurParId(side.id);
         if(direct) found = [direct];
       }
-      // Sinon l'index local par le nom (aucun appel), l'API en dernier recours
       if(!found.length) found = searchLocalIndex(side.q, 10).filter(p=>prefer({firstname: (p.fullName||'').split(' ')[0], name: p.name}));
       if(!found.length) found = await searchProfilesByName(side.q, {limit:1, prefer});
       if(!found.length) throw new Error(`${side.label} introuvable dans la base API-Football.`);
-      const id = ensurePlayerInList(found[0]);
-      await loadPlayerStats(PLAYERS.find(x=>x.id===id));
-      ids.push(id);
-      await sleep(REAL_DATA_CONFIG.requestDelayMs);
+      return found[0];
     }
+
+    // Les deux joueurs de front. Ils étaient chargés l'un après l'autre, séparés par
+    // une pause de 200 ms destinée à ménager l'API — inutile ici, puisque leurs fiches
+    // viennent de la base statique et ne coûtent aucun appel.
+    const trouves = await Promise.all([fiche(duel.a), fiche(duel.b)]);
+    const ids = trouves.map(ensurePlayerInList);
+    await Promise.all(ids.map(id => loadPlayerStats(PLAYERS.find(x => x.id === id))));
+
     slots = [ids[0], ids[1]]; compareBasis = 'current'; compareMode = 'shown'; teamScope = 'club'; compactView = false;
     statusCb('');
     if(opts.stayOnGenerate && currentScreen==='generate'){ renderAll(); renderGenerate(); document.getElementById('generateScreen').scrollTop = 0; return; }
@@ -6077,6 +6080,27 @@ document.querySelectorAll('.welcome-cta').forEach(btn=>{
   let seen = false;
   try{ seen = localStorage.getItem('duelio_welcomed') === '1'; }catch(e){}
   if(seen) document.getElementById('welcomeScreen').classList.add('gone');
+})();
+
+/* Préchargement des duels. Les fiches viennent de fichiers figés : on peut aller
+ * les chercher avant même que l'utilisateur ait fini d'appuyer. */
+function prechargerDuel(d){
+  if(!d || !REAL_DATA_CONFIG.fullBase) return;
+  for(const side of [d.a, d.b]) if(side && side.id) chargerCarriereComplete(side.id);
+}
+// Dès que le doigt se pose sur une puce : entre le contact et le clic il s'écoule
+// cent à deux cents millisecondes sur mobile, autant s'en servir.
+document.addEventListener('pointerdown', (e)=>{
+  const chip = e.target && e.target.closest && e.target.closest('.duel-chip');
+  if(!chip) return;
+  const n = chip.dataset.tduel != null ? chip.dataset.tduel : chip.dataset.duel;
+  prechargerDuel(SUGGESTED_DUELS[parseInt(n, 10)]);
+}, true);
+// Le premier duel est de loin le plus cliqué : on le charge pendant un temps mort.
+(function premierDuelAuChaud(){
+  const lancer = ()=> prechargerDuel(SUGGESTED_DUELS[0]);
+  if(window.requestIdleCallback) requestIdleCallback(lancer, { timeout: 4000 });
+  else setTimeout(lancer, 2500);
 })();
 
 (async function init(){
