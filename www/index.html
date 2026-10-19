@@ -6146,10 +6146,19 @@ function prechargerDuel(d){
 // Dès que le doigt se pose sur une puce : entre le contact et le clic il s'écoule
 // cent à deux cents millisecondes sur mobile, autant s'en servir.
 document.addEventListener('pointerdown', (e)=>{
-  const chip = e.target && e.target.closest && e.target.closest('.duel-chip');
-  if(!chip) return;
-  const n = chip.dataset.tduel != null ? chip.dataset.tduel : chip.dataset.duel;
-  prechargerDuel(SUGGESTED_DUELS[parseInt(n, 10)]);
+  const cible = e.target && e.target.closest ? e.target : null;
+  if(!cible) return;
+  const chip = cible.closest('.duel-chip');
+  if(chip){
+    const n = chip.dataset.tduel != null ? chip.dataset.tduel : chip.dataset.duel;
+    prechargerDuel(SUGGESTED_DUELS[parseInt(n, 10)]);
+    return;
+  }
+  // Même principe pour un résultat de recherche : seuls les deux premiers étaient
+  // préchargés, si bien que choisir le troisième faisait attendre.
+  const ligne = cible.closest('.picker-item, .browse-item');
+  const api = ligne && ligne.dataset && ligne.dataset.api;
+  if(api && REAL_DATA_CONFIG.fullBase) chargerCarriereComplete(parseInt(api, 10));
 }, true);
 // Le premier duel est de loin le plus cliqué : on le charge pendant un temps mort.
 (function premierDuelAuChaud(){
