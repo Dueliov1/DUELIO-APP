@@ -79,13 +79,54 @@ jobs:
             return "club";
           }
 
+          // --- Nettoyage des defauts de la source ---------------------------------
+          // Meme regle que l'application : API-Football renvoie parfois le meme bloc
+          // sous plusieurs saisons et de mauvais noms de competition. Sans ce tri,
+          // l'image afficherait 899 buts pour Ronaldo quand la fiche en montre 822.
+          function scorePlausibilite(nom, matchs) {
+            const n = _norm(nom);
+            let s = 0;
+            if (/friendl/.test(n)) s -= 2;
+            if (matchs >= 15 && /cup|coupe|copa|pokal|beker/.test(n)) s -= 1;
+            return s;
+          }
+          function nettoyerCarriere(s) {
+            const propre = {}, vus = new Map();
+            for (const cle of Object.keys(s)) {
+              propre[cle] = (s[cle] || []).filter((b) => {
+                const g = b.games || {}, go = b.goals || {};
+                if (!(g.appearences || 0) && ((go.total || 0) > 0 || (go.assists || 0) > 0)) return false;
+                return true;
+              });
+              propre[cle].forEach((b, i) => {
+                const g = b.games || {}, go = b.goals || {};
+                const m = g.appearences || 0, buts = go.total || 0;
+                if (m < 5 || buts < 3) return;
+                const k = `${(b.team || {}).id}|${m}|${buts}`;
+                const nom = (b.league || {}).name || "";
+                if (!vus.has(k)) vus.set(k, []);
+                vus.get(k).push({ saison: cle, index: i, ligue: nom, score: scorePlausibilite(nom, m) });
+              });
+            }
+            for (const liste of vus.values()) {
+              if (liste.length < 2) continue;
+              if (new Set(liste.map((x) => x.saison)).size < 2) continue;
+              if (new Set(liste.map((x) => x.ligue)).size < 2) continue;
+              const garde = liste.slice().sort(
+                (a, b) => b.score - a.score || Number(a.saison) - Number(b.saison))[0];
+              for (const x of liste) if (x !== garde) propre[x.saison][x.index] = null;
+            }
+            for (const cle of Object.keys(propre)) propre[cle] = propre[cle].filter(Boolean);
+            return propre;
+          }
+
           // --- Totaux de carrière en club ----------------------------------------
           function fiche(id) {
             const chemin = `www/data/full/${id}.json`;
             if (!existsSync(chemin)) throw new Error(`carriere introuvable : ${chemin}`);
             const f = JSON.parse(readFileSync(chemin, "utf8"));
             let matchs = 0, buts = 0, passes = 0;
-            for (const saison of Object.values(f.s || {})) {
+            for (const saison of Object.values(nettoyerCarriere(f.s || {}))) {
               for (const bloc of (saison || [])) {
                 if (typeEquipe(bloc, f.c) !== "club") continue;
                 const g = bloc.games || {}, b = bloc.goals || {};
