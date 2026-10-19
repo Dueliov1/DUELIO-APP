@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-16h — choix de saison repense">
+<meta name="duelio-version" content="2026-10-19-16h35 — chiffres corriges : blocs repetes de la source ecartes">
 
 <!-- ====================== Mesure d'audience ======================
      Cloudflare Web Analytics : gratuit, sans cookie, sans identifiant individuel.
@@ -3329,6 +3329,62 @@ function chargerCarriereComplete(apiId){
 // Rend les saisons connues hors ligne pour ce joueur, au format exact d'une réponse /pack.
 // `complet` indique que la carrière entière est là : dans ce cas aucun appel API n'est
 // nécessaire, pas même pour l'onglet Sélection ou le mode Carrière.
+/* ---------------- Nettoyage des défauts de la source ----------------
+ * API-Football renvoie parfois le MÊME bloc de statistiques sous plusieurs saisons et
+ * sous de mauvais noms de compétition. Mesuré sur les 5 000 carrières : 182 joueurs
+ * touchés, 2 081 buts comptés deux fois. Cristiano Ronaldo en affichait 899 en club au
+ * lieu de 811, ce qui explique l'écart avec les chiffres publiés partout.
+ * Les cas les plus parlants sont absurdes à l'œil nu : une « Supercoupe » créditée de
+ * 31 matchs et 35 buts, alors que c'est un match unique.
+ *
+ * On ne touche pas aux fichiers : le tri se fait à la lecture, donc si la source se
+ * corrige un jour, il suffira de retirer ce bloc. */
+function scorePlausibilite(nomLigue, matchs){
+  const n = normalizeSearch(nomLigue || '');
+  let s = 0;
+  if(/friendl/.test(n)) s -= 2;                                   // un amical n'est jamais la vraie ligne
+  if(matchs >= 15 && /cup|coupe|copa|pokal|beker/.test(n)) s -= 1; // une coupe ne fait pas 15 matchs
+  return s;
+}
+function nettoyerCarriere(s){
+  const propre = {};
+  const vus = new Map();   // clé → [{saison, index, ligue, matchs, score}]
+  for(const cle of Object.keys(s)){
+    propre[cle] = (s[cle] || []).filter(b => {
+      const g = b.games || {}, go = b.goals || {};
+      const m = g.appearences || 0;
+      // Des buts ou des passes sans aucun match : la ligne est inexploitable et fausse
+      // en plus toutes les moyennes par match. 845 blocs dans la base.
+      if(!m && ((go.total || 0) > 0 || (go.assists || 0) > 0)) return false;
+      return true;
+    });
+    propre[cle].forEach((b, i) => {
+      const g = b.games || {}, go = b.goals || {};
+      const m = g.appearences || 0, buts = go.total || 0;
+      if(m < 5 || buts < 3) return;              // en dessous, une répétition est une coïncidence
+      const k = `${(b.team || {}).id}|${m}|${buts}`;
+      const nom = (b.league || {}).name || '';
+      if(!vus.has(k)) vus.set(k, []);
+      vus.get(k).push({ saison: cle, index: i, ligue: nom, score: scorePlausibilite(nom, m) });
+    });
+  }
+  for(const liste of vus.values()){
+    if(liste.length < 2) continue;
+    const saisons = new Set(liste.map(x => x.saison));
+    const ligues  = new Set(liste.map(x => x.ligue));
+    // Deux saisons ET deux compétitions différentes : une saison ne se rejoue pas.
+    if(saisons.size < 2 || ligues.size < 2) continue;
+    // On garde la ligne la plus plausible ; à égalité, la plus ancienne.
+    const garde = liste.slice().sort((a, b) => b.score - a.score || Number(a.saison) - Number(b.saison))[0];
+    for(const x of liste){
+      if(x === garde) continue;
+      propre[x.saison][x.index] = null;
+    }
+  }
+  for(const cle of Object.keys(propre)) propre[cle] = propre[cle].filter(Boolean);
+  return propre;
+}
+
 async function packStatique(apiId){
   if(!apiId) return null;
   let fiche = null, complet = false;
@@ -3343,9 +3399,12 @@ async function packStatique(apiId){
   }
   if(!fiche || !fiche.s) return null;
 
+  // Un seul point de passage pour les deux sources : carrière complète et paquet.
+  const saisons = nettoyerCarriere(fiche.s);
+
   const data = {};
-  for(const cle of Object.keys(fiche.s)){
-    const stats = fiche.s[cle];
+  for(const cle of Object.keys(saisons)){
+    const stats = saisons[cle];
     if(stats && stats.length) data[cle] = { player: { name: fiche.n, age: fiche.a, nationality: fiche.c }, statistics: stats };
   }
   const seasons = Object.keys(data).map(Number).sort((a,b)=>b-a);
