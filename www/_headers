@@ -1,28 +1,43 @@
-# Règles de cache servies par Cloudflare.
-# Sans ce fichier, les ressources sont revalidées à chaque demande : même
-# inchangées, elles coûtent un aller-retour réseau. Sur mobile, c'est 100 à
-# 400 ms par fichier, payés à chaque ouverture de fiche joueur.
-
+# En-têtes servis par Cloudflare pour les fichiers du site.
+#
+# 1. AUTORISATION D'ORIGINE (Access-Control-Allow-Origin)
+#    L'application tourne sur duelio.app, mais ses données sont servies depuis
+#    duelio-app.bensouna-ahmed.workers.dev. Pour un navigateur ce sont deux sites
+#    distincts, et sans autorisation explicite il refuse purement et simplement les
+#    réponses : plus aucune fiche joueur ne s'ouvre. L'application Android est dans
+#    le même cas, sa page étant servie depuis https://localhost.
+#    Ces fichiers sont publics et en lecture seule : les ouvrir à toutes les origines
+#    ne présente aucun risque.
+#
+# 2. DURÉE DE CACHE
+#    Sans ces règles, chaque fichier est revalidé à chaque demande : même inchangé,
+#    il coûte un aller-retour réseau, soit 100 à 400 ms sur mobile, payés à chaque
+#    ouverture de fiche.
 # Carrières complètes : un fichier par joueur, qui ne bouge qu'au moissonnage.
 # Une semaine de cache, et on sert l'ancienne version pendant la revalidation.
 /data/full/*
   Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
 
 # Paquets par joueur : reconstruits par « Réorganiser par joueur ».
 /data/players/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+  Access-Control-Allow-Origin: *
 
 # Statistiques brutes par championnat et par saison.
 /data/stats/*
   Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
 
 # Index de recherche : rafraîchis plus souvent, mais jamais bloquants grâce
 # à stale-while-revalidate — le navigateur affiche l'ancien et récupère le neuf.
 /data/search.json
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
 
 /data/search-top.json
   Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
 
 # L'application elle-même ne doit JAMAIS rester en cache : sinon une correction
 # poussée aujourd'hui n'atteindrait vos utilisateurs que des jours plus tard.
@@ -35,3 +50,8 @@
 # Image d'apercu du partage : elle ne change qu'avec la marque.
 /og-image.png
   Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+
+# Tranches alphabétiques de l'index de recherche, chargées à la demande.
+/data/search-az/*
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+  Access-Control-Allow-Origin: *
