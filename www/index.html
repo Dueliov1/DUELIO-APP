@@ -3616,14 +3616,25 @@ function ensurePlayerInList(p){
 }
 
 // --- Duels suggérés (vrais joueurs, chargés depuis l'API seulement quand on clique) ---
+/* Duels tout prêts. Chacun porte l'identifiant API du joueur : l'index de recherche
+ * n'enregistre pas les prénoms et abrège les noms (« E. Haaland »), si bien que
+ * retrouver « Erling Haaland » par le nom échouait et renvoyait chaque duel vers
+ * l'API. Avec l'identifiant, le joueur est trouvé dans l'index local, sans réseau.
+ * Les douze joueurs ci-dessous ont tous leur carrière complète dans la base. */
 const SUGGESTED_DUELS = [
-  {a:{q:'Mbappe', first:'Kylian', label:'Mbappé'},     b:{q:'Haaland', first:'Erling', label:'Haaland'}},
-  {a:{q:'Salah', first:'Mohamed', label:'Salah'},      b:{q:'Saka', first:'Bukayo', label:'Saka'}},
-  {a:{q:'Kane', first:'Harry', label:'Kane'},          b:{q:'Lewandowski', first:'Robert', label:'Lewandowski'}},
-  {a:{q:'Bellingham', first:'Jude', label:'Bellingham'}, b:{q:'Pedri', first:'Pedro', label:'Pedri'}},
-  {a:{q:'Robertson', first:'Andrew', label:'Robertson'}, b:{q:'Hakimi', first:'Achraf', label:'Hakimi'}},
-  {a:{q:'Courtois', first:'Thibaut', label:'Courtois'}, b:{q:'Donnarumma', first:'Gianluigi', label:'Donnarumma'}}
+  {a:{id:278,    q:'Mbappe',      first:'Kylian',    label:'Mbappé'},      b:{id:1100,  q:'Haaland',     first:'Erling',    label:'Haaland'}},
+  {a:{id:874,    q:'Ronaldo',     first:'Cristiano', label:'Ronaldo'},     b:{id:154,   q:'Messi',       first:'Lionel',    label:'Messi'}},
+  {a:{id:521,    q:'Lewandowski', first:'Robert',    label:'Lewandowski'}, b:{id:217,   q:'Lautaro',     first:'Lautaro',   label:'Lautaro'}},
+  {a:{id:129718, q:'Bellingham',  first:'Jude',      label:'Bellingham'},  b:{id:133609,q:'Pedri',       first:'Pedro',     label:'Pedri'}},
+  {a:{id:289,    q:'Robertson',   first:'Andrew',    label:'Robertson'},   b:{id:9,     q:'Hakimi',      first:'Achraf',    label:'Hakimi'}},
+  {a:{id:730,    q:'Courtois',    first:'Thibaut',   label:'Courtois'},    b:{id:1622,  q:'Donnarumma',  first:'Gianluigi', label:'Donnarumma'}}
 ];
+// Retrouve une fiche légère directement par son identifiant API, sans recherche.
+function joueurParId(apiId){
+  if(!PLAYER_INDEX.loaded || !apiId) return null;
+  const e = PLAYER_INDEX.players.find(x => x.i === apiId);
+  return e ? mapIndexEntryToLightPlayer(e) : null;
+}
 let duelLoading = false;
 async function loadSuggestedDuel(duel, statusCb, opts){
   opts = opts || {};
@@ -3633,9 +3644,24 @@ async function loadSuggestedDuel(duel, statusCb, opts){
   try{
     for(const side of [duel.a, duel.b]){
       statusCb(`Chargement de ${side.label}…`);
-      const prefer = pl => normalizeSearch(pl.firstname||'').startsWith(normalizeSearch(side.first)) || normalizeSearch(pl.name||'').includes(normalizeSearch(side.first));
-      // L'index local d'abord (aucun appel), l'API seulement s'il n'y est pas
-      let found = searchLocalIndex(side.q, 10).filter(p=>prefer({firstname: p.fullName.split(' ')[0], name: p.name}));
+      const nf = normalizeSearch(side.first);
+      const prefer = pl => {
+        const pf = normalizeSearch(pl.firstname||''), nn = normalizeSearch(pl.name||'');
+        if(pf && pf.startsWith(nf)) return true;
+        if(nn.includes(nf)) return true;
+        // l'index abrège le plus souvent le prénom : « E. Haaland » pour Erling Haaland
+        return !!nf && nn.startsWith(nf[0] + '. ');
+      };
+      // D'abord l'identifiant, qui ne peut pas se tromper de joueur. On laisse à
+      // l'index le temps d'arriver : il met moins d'une seconde.
+      let found = [];
+      if(side.id){
+        for(let i = 0; i < 20 && !PLAYER_INDEX.loaded; i++) await sleep(100);
+        const direct = joueurParId(side.id);
+        if(direct) found = [direct];
+      }
+      // Sinon l'index local par le nom (aucun appel), l'API en dernier recours
+      if(!found.length) found = searchLocalIndex(side.q, 10).filter(p=>prefer({firstname: (p.fullName||'').split(' ')[0], name: p.name}));
       if(!found.length) found = await searchProfilesByName(side.q, {limit:1, prefer});
       if(!found.length) throw new Error(`${side.label} introuvable dans la base API-Football.`);
       const id = ensurePlayerInList(found[0]);
