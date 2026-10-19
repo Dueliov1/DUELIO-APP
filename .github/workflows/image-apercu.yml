@@ -1,21 +1,25 @@
 name: Image d'aperçu du partage
 
-# L'image affichée quand on partage un lien Duelio porte les portraits de deux joueurs.
-# Les photos viennent de media.api-sports.io, que l'environnement de développement ne
-# peut pas joindre. GitHub, lui, a un accès internet libre : ce workflow télécharge les
-# photos, les découpe en rond et les incruste dans la carte de fond, puis publie le
-# résultat. Relancez-le pour changer de duel : il suffit de modifier les deux
-# identifiants ci-dessous.
+# L'image affichée quand on partage un lien Duelio montre un duel : deux portraits,
+# deux noms, trois statistiques de carrière. Tout est fabriqué ici, à partir des vraies
+# données du site.
+#
+# Pourquoi un workflow plutôt qu'un fichier figé : les photos viennent de
+# media.api-sports.io, que l'environnement de développement ne peut pas joindre.
+# GitHub, lui, a un accès internet libre.
+#
+# Pour changer le duel affiché : lancez ce workflow en donnant deux identifiants de
+# joueurs. Les portraits, les noms ET les chiffres suivent.
 
 on:
   workflow_dispatch:
     inputs:
       joueur_gauche:
-        description: "Identifiant API du joueur de gauche (874 = Cristiano Ronaldo)"
+        description: "Identifiant du joueur de gauche (874 = Cristiano Ronaldo)"
         required: false
         default: "874"
       joueur_droite:
-        description: "Identifiant API du joueur de droite (154 = Lionel Messi)"
+        description: "Identifiant du joueur de droite (154 = Lionel Messi)"
         required: false
         default: "154"
 
@@ -31,67 +35,131 @@ jobs:
           fetch-depth: 0
           ref: main
           sparse-checkout: |
-            www/og-base.png
-            www/og-positions.json
+            www/og-template.html
             www/og-image.png
+            www/data/full
           sparse-checkout-cone-mode: false
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Installer sharp
-        run: npm install --no-save sharp@0.33.5
+      - name: Installer Playwright
+        run: |
+          npm install --no-save playwright@1.48.2
+          npx playwright install --with-deps chromium
 
-      - name: Incruster les portraits
+      - name: Fabriquer l'image
         env:
           GAUCHE: ${{ inputs.joueur_gauche || '874' }}
           DROITE: ${{ inputs.joueur_droite || '154' }}
         run: |
-          cat > composer.mjs <<'EOF'
-          import sharp from "sharp";
-          import { readFileSync, writeFileSync } from "node:fs";
+          cat > carte.mjs <<'EOF'
+          import { chromium } from "playwright";
+          import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
-          const ids = [process.env.GAUCHE, process.env.DROITE];
-          const pos = JSON.parse(readFileSync("www/og-positions.json", "utf8"));
-          if (pos.length !== 2) throw new Error("og-positions.json doit decrire deux emplacements");
+          const ids = [process.env.GAUCHE, process.env.DROITE].map(String);
 
-          // Telecharge la photo officielle du joueur.
+          // --- Club, selection, jeunes ou amical ---------------------------------
+          // Copie fidele de statTeamKind() de l'application. Sans elle les totaux de
+          // l'image divergeaient de ceux de la fiche : ma premiere version comptait les
+          // amicaux de club et les equipes de jeunes, soit dix-sept matchs de trop pour
+          // Ronaldo. L'image doit donner exactement les memes chiffres que l'appli.
+          const _norm = (t) => String(t || "").normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+          function typeEquipe(st, nationalite) {
+            const t = st.team || {}, lg = st.league || {};
+            const tn = _norm(t.name), nat = _norm(nationalite), ln = _norm(lg.name);
+            if (/friendl/.test(ln)) return "friendly";
+            if (/\bu-?\d{2}\b|youth/.test(tn) || /olympic|\bu-?\d{2}\b/.test(ln)) return "youth";
+            if (t.national === true) return "nation";
+            if (nat && tn === nat) return "nation";
+            if (/world cup|euro championship|uefa euro|european championship|nations league|copa america|africa cup|asian cup|gold cup|confederations/.test(ln)
+                && !/club|champions|europa|conference|libertadores|u-?\d{2}/.test(ln)) return "nation";
+            return "club";
+          }
+
+          // --- Totaux de carrière en club ----------------------------------------
+          function fiche(id) {
+            const chemin = `www/data/full/${id}.json`;
+            if (!existsSync(chemin)) throw new Error(`carriere introuvable : ${chemin}`);
+            const f = JSON.parse(readFileSync(chemin, "utf8"));
+            let matchs = 0, buts = 0, passes = 0;
+            for (const saison of Object.values(f.s || {})) {
+              for (const bloc of (saison || [])) {
+                if (typeEquipe(bloc, f.c) !== "club") continue;
+                const g = bloc.games || {}, b = bloc.goals || {};
+                matchs += g.appearences || 0;
+                buts   += b.total || 0;
+                passes += b.assists || 0;
+              }
+            }
+            // Nom court : la carte laisse environ seize caracteres. On retire une
+            // initiale de tete (« L. Messi » donne « Messi »), on garde le nom entier
+            // s'il tient (« Vinicius Junior »), sinon le dernier mot seulement
+            // (« Cristiano Ronaldo » donne « Ronaldo »).
+            const nom = String(f.n || "").trim().replace(/^\p{L}\.\s+/u, "");
+            const court = nom.length <= 16 ? nom : (nom.split(/\s+/).at(-1) || nom);
+            return { nom: court, matchs, buts, passes };
+          }
+
           async function photo(id) {
-            const url = `https://media.api-sports.io/football/players/${id}.png`;
-            const res = await fetch(url);
+            const res = await fetch(`https://media.api-sports.io/football/players/${id}.png`);
             if (!res.ok) throw new Error(`photo ${id} : HTTP ${res.status}`);
             const buf = Buffer.from(await res.arrayBuffer());
-            console.log(`  joueur ${id} : ${Math.round(buf.length / 1024)} Ko telecharges`);
-            return buf;
+            console.log(`  joueur ${id} : photo ${Math.round(buf.length / 1024)} Ko`);
+            return "data:image/png;base64," + buf.toString("base64");
           }
 
-          // Decoupe en rond a la taille voulue. Le masque est un cercle plein en SVG :
-          // sharp s'en sert comme canal alpha, ce qui donne un bord net sans halo.
-          async function rond(buf, taille) {
-            const masque = Buffer.from(
-              `<svg width="${taille}" height="${taille}">` +
-              `<circle cx="${taille / 2}" cy="${taille / 2}" r="${taille / 2}" fill="#fff"/></svg>`
-            );
-            return sharp(buf)
-              .resize(taille, taille, { fit: "cover", position: "top" })
-              .composite([{ input: masque, blend: "dest-in" }])
-              .png()
-              .toBuffer();
-          }
+          const j = ids.map(fiche);
+          j.forEach((x, i) => console.log(
+            `  ${ids[i]} = ${x.nom} : ${x.matchs} matchs, ${x.buts} buts, ${x.passes} passes`));
 
-          const fond = sharp("www/og-base.png");
-          const calques = [];
-          for (let i = 0; i < 2; i++) {
-            const p = pos[i];
-            const tete = await rond(await photo(ids[i]), p.w);
-            calques.push({ input: tete, left: p.x, top: p.y });
-          }
-          const sortie = await fond.composite(calques).png({ compressionLevel: 9 }).toBuffer();
-          writeFileSync("www/og-image.png", sortie);
-          console.log(`  og-image.png : ${Math.round(sortie.length / 1024)} Ko`);
+          // --- Lignes de statistiques --------------------------------------------
+          // Le vert signale le meilleur ; le fond plein est reserve aux ecarts d'au
+          // moins 25 %, exactement comme dans l'application.
+          const LIGNES = [
+            ["Apparitions", "matchs"],
+            ["Buts", "buts"],
+            ["Passes décisives", "passes"],
+          ];
+          const nombre = (n) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+          let gagneesA = 0, gagneesB = 0;
+          const html = LIGNES.map(([libelle, cle]) => {
+            const a = j[0][cle], b = j[1][cle];
+            const haut = Math.max(Math.abs(a), Math.abs(b));
+            const net = haut > 0 && (Math.max(a, b) - Math.min(a, b)) / haut >= 0.25;
+            const cls = (gagne) => gagne ? (net ? "v net" : "v win") : "v";
+            if (a > b) gagneesA++; else if (b > a) gagneesB++;
+            return `<div class="row"><div class="lbl">${libelle}</div>`
+                 + `<div class="vals"><div class="${cls(a > b)}">${nombre(a)}</div>`
+                 + `<div class="${cls(b > a)}">${nombre(b)}</div></div></div>`;
+          }).join("\n        ");
+
+          const page = readFileSync("www/og-template.html", "utf8")
+            .replace("__TETE_A__", await photo(ids[0]))
+            .replace("__TETE_B__", await photo(ids[1]))
+            .replace("__NOM_A__", j[0].nom)
+            .replace("__NOM_B__", j[1].nom)
+            .replace("__CA__", gagneesA >= gagneesB ? "a" : "")
+            .replace("__CB__", gagneesB > gagneesA ? "a" : "")
+            .replace("__LIGNES__", html);
+
+          writeFileSync("carte.html", page);
+
+          const nav = await chromium.launch();
+          const pg = await nav.newPage({ viewport: { width: 1200, height: 630 } });
+          await pg.goto("file://" + process.cwd() + "/carte.html", { waitUntil: "networkidle" });
+          await pg.evaluate(() => document.fonts.ready);
+          await pg.waitForTimeout(600);
+          const casse = await pg.evaluate(
+            () => [...document.images].filter((i) => !i.naturalWidth).length);
+          if (casse) throw new Error(`${casse} image(s) n'ont pas charge`);
+          await pg.screenshot({ path: "www/og-image.png" });
+          await nav.close();
+          console.log("  og-image.png ecrite");
           EOF
-          node composer.mjs
+          node carte.mjs
 
       - name: Publier
         run: |
@@ -103,7 +171,7 @@ jobs:
             echo "image inchangee, rien a publier"
             exit 0
           fi
-          git commit -m "Image d'apercu : portraits reels des joueurs"
+          git commit -m "Image d'apercu : ${{ inputs.joueur_gauche || '874' }} contre ${{ inputs.joueur_droite || '154' }}"
           for i in 1 2 3 4 5; do
             git pull --rebase origin main && git push origin HEAD:main && exit 0
             echo "nouvelle tentative $i"
