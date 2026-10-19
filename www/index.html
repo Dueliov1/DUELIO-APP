@@ -9,6 +9,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Duelio">
+<!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
+     de la page en ligne, quelle version Cloudflare sert réellement. -->
+<meta name="duelio-version" content="2026-10-19-11h — recherche instantanee, cache des donnees, duels preCharges">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Les fichiers de police viennent de gstatic, pas de googleapis : sans cette
      ligne le navigateur n'ouvre la connexion qu'après avoir lu la feuille de
@@ -6169,6 +6172,10 @@ document.addEventListener('pointerdown', (e)=>{
   if(window.requestIdleCallback) requestIdleCallback(lancer, { timeout: 4000 });
   else setTimeout(lancer, 2500);
 })();
+
+// Affiché dans la console du navigateur : deuxième moyen de vérifier la version servie.
+try{ console.log('%cDuelio', 'font-weight:bold;color:#2DD4BF',
+  'version ' + (document.querySelector('meta[name="duelio-version"]')||{}).content); }catch(e){}
 
 (async function init(){
   const content = document.getElementById('content');
