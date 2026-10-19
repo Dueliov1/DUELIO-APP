@@ -34,30 +34,29 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-15h10 — mesure d audience prete, jeton a coller">
+<meta name="duelio-version" content="2026-10-19-15h25 — mesure d audience active">
 
 <!-- ====================== Mesure d'audience ======================
      Cloudflare Web Analytics : gratuit, sans cookie, sans identifiant individuel.
      Rien n'est chargé tant que le jeton est vide, donc aucune requête inutile et
      aucune erreur en console avant qu'il soit renseigné.
 
-     EN PRATIQUE, CE BLOC NE SERT PAS. duelio.app passe par Cloudflare, qui injecte
-     donc la mesure tout seul : il suffit d'ajouter le site dans Web Analytics, sans
-     toucher au code. Vérifié aussi qu'aucun en-tête « no-transform » ne bloque cette
-     injection, seul cas où elle échouerait.
+     Pose manuelle, et c'est nécessaire : duelio.app n'est pas un site du compte
+     Cloudflare, donc Cloudflare n'injecte pas la balise de lui-même. Le jeton vient
+     de Web Analytics → duelio.app → Installation.
 
-     Ce bloc reste comme filet : si l'injection automatique venait à ne plus marcher,
-     coller le jeton du site ci-dessous suffit à poser la mesure à la main.
+     Le chargement passe par du JavaScript plutôt que par une balise <script> écrite
+     en dur, pour que la page ne tente rien quand le jeton est vide.
 
      Ce traceur ne pose pas de cookie et ne suit personne d'un site à l'autre, ce
      qui le place hors du champ du bandeau de consentement selon la lecture la plus
      courante — je ne suis pas juriste, et c'est à vérifier si vous avez un doute. -->
 <script>
   (function mesureAudience(){
-    const JETON = '';   // ← coller ici le jeton Cloudflare
+    const JETON = '11fe3e7e1c074ed1b305b5bbacd1040f';
     if(!JETON) return;
     const s = document.createElement('script');
-    s.defer = true;
+    s.type = 'module';   // c'est la forme servie par Cloudflare ; un module est différé d'office
     s.src = 'https://static.cloudflareinsights.com/beacon.min.js';
     s.setAttribute('data-cf-beacon', JSON.stringify({ token: JETON }));
     document.head.appendChild(s);
