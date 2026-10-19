@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-11h — recherche instantanee, cache des donnees, duels preCharges">
+<meta name="duelio-version" content="2026-10-19-12h — les vraies donnees passent avant l API, fiche jamais vide">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <!-- Les fichiers de police viennent de gstatic, pas de googleapis : sans cette
      ligne le navigateur n'ouvre la connexion qu'après avoir lu la feuille de
@@ -3093,7 +3093,22 @@ function loadPlayerStats(p){
     if(firstSeason == null){
       // Les saisons récentes sont vides : on cherche plus loin dans le passé
       const reste = available.filter(sn => !seasonKnown(p, sn)).slice(0, 3);
-      if(reste.length){ const r2 = await fetchPack(p, { seasons: reste, priority: 'high' }); firstSeason = r2.premiere; }
+      if(reste.length){
+        try {
+          const r2 = await fetchPack(p, { seasons: reste, priority: 'high' });
+          firstSeason = r2.premiere;
+        } catch(e){ /* on se rattrape juste en dessous sur ce qui est déjà en mémoire */ }
+      }
+    }
+    if(firstSeason == null){
+      // Dernier recours : une saison a peut-être déjà été rattachée au joueur par la
+      // base statique. Afficher la plus récente vaut mieux qu'une fiche vide.
+      const presentes = Object.keys(p.statsBySeason || {}).map(Number)
+        .filter(sn => p.statsBySeason[sn]).sort((a,b)=>b-a);
+      if(presentes.length){
+        const pref = REAL_DATA_CONFIG.seasons.find(sn => presentes.includes(sn));
+        firstSeason = pref != null ? pref : presentes[0];
+      }
     }
     if(firstSeason == null) throw new Error("Aucune statistique trouvée pour ce joueur sur les saisons disponibles.");
     const baseEntry = { player: (p.rawBySeason && p.rawBySeason[firstSeason] ? null : null), statistics: (p.rawBySeason || {})[firstSeason] || [] };
@@ -3201,6 +3216,8 @@ async function packStatique(apiId){
 
 async function fetchPack(p, opts){
   opts = opts || {};
+  // Filet de sécurité : ce que la base statique a su fournir, même partiellement.
+  let secours = null;
 
   // On sert d'abord tout ce que la base statique possède. Si la demande est entièrement
   // couverte, aucun appel réseau vers l'API n'est fait du tout.
@@ -3230,6 +3247,15 @@ async function fetchPack(p, opts){
         return { premiere: preferee != null ? preferee : Math.max(...obtenues),
                  partiel: false, pack: local, statique: true };
       }
+      // Couverture incomplète : on va interroger l'API pour compléter, mais on garde
+      // sous le coude ce que la base statique a fourni. Si l'API ne répond pas ou
+      // revient les mains vides, afficher la saison la plus récente dont on dispose
+      // vaut infiniment mieux qu'un message d'erreur sur un joueur dont on a la carrière.
+      if(obtenues.length){
+        const preferee = REAL_DATA_CONFIG.seasons.find(sn => obtenues.includes(sn));
+        secours = { premiere: preferee != null ? preferee : Math.max(...obtenues),
+                    partiel: true, pack: local, statique: true };
+      }
     }
   } catch(e){ /* la base statique est un bonus, jamais un point de panne */ }
 
@@ -3237,9 +3263,21 @@ async function fetchPack(p, opts){
   if(opts.career) qs.set('career', '1');
   else if(opts.seasons && opts.seasons.length) qs.set('seasons', opts.seasons.join(','));
   else if(opts.season) qs.set('season', String(opts.season));
-  const { res, json } = await apiFetchJson(`${REAL_DATA_CONFIG.proxyUrl}/pack?${qs.toString()}`, opts.priority);
-  if(!res || !res.ok || !json) throw new Error(json && json.errors ? apiErrorMessage(json.errors) : 'Réponse du serveur invalide, réessayez.');
-  if(json.erreur) throw new Error(typeof json.erreur === 'string' ? json.erreur : apiErrorMessage(json.erreur));
+  let res, json;
+  try {
+    ({ res, json } = await apiFetchJson(`${REAL_DATA_CONFIG.proxyUrl}/pack?${qs.toString()}`, opts.priority));
+  } catch(e){
+    if(secours) return secours;
+    throw e;
+  }
+  if(!res || !res.ok || !json){
+    if(secours) return secours;
+    throw new Error(json && json.errors ? apiErrorMessage(json.errors) : 'Réponse du serveur invalide, réessayez.');
+  }
+  if(json.erreur){
+    if(secours) return secours;
+    throw new Error(typeof json.erreur === 'string' ? json.erreur : apiErrorMessage(json.erreur));
+  }
   if(Array.isArray(json.seasons) && json.seasons.length){
     p.seasonsAvailable = json.seasons.slice().sort((a,b)=>b-a);
   }
@@ -3261,8 +3299,12 @@ async function fetchPack(p, opts){
   const avecDonnees = Object.keys(json.data || {}).map(Number)
     .filter(sn => p.statsBySeason && p.statsBySeason[sn]).sort((a,b)=>b-a);
   const preferee = REAL_DATA_CONFIG.seasons.find(sn => avecDonnees.includes(sn));
-  return { premiere: preferee != null ? preferee : (avecDonnees[0] !== undefined ? avecDonnees[0] : premiere),
-           partiel: !!json.partiel, pack: json };
+  const choisie = preferee != null ? preferee
+                : (avecDonnees[0] !== undefined ? avecDonnees[0] : premiere);
+  // L'API a répondu, mais sans aucune statistique utilisable (quota épuisé, saison
+  // absente de son côté) : on retombe sur la base statique plutôt que d'échouer.
+  if(choisie == null && secours) return secours;
+  return { premiere: choisie, partiel: !!json.partiel, pack: json };
 }
 /* Préchargement : dès que des résultats de recherche s'affichent, on va chercher en tâche
  * de fond les statistiques des premiers de la liste. Quand l'utilisateur en choisit un,
