@@ -10,6 +10,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<!-- Les fichiers de police viennent de gstatic, pas de googleapis : sans cette
+     ligne le navigateur n'ouvre la connexion qu'après avoir lu la feuille de
+     style, ce qui retarde l'affichage du texte. -->
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script>
   // Génère une icône d'app (en vrai PNG, requis par iOS pour l'écran d'accueil) et un manifest PWA
@@ -3418,10 +3422,29 @@ const PLAYER_INDEX = { players: [], updatedAt: null, loaded: false };
 const INDEX_LS_KEY = 'duelio_index_v2';   // v2 : passage à l'index statique. Change de nom pour que
                                           // les appareils ayant l'ancien index (472 joueurs de Ligue 1)
                                           // l'abandonnent au lieu de le croire encore valable.
+/* Préparation d'une entrée d'index. Appelée 55 000 fois d'affilée, donc écrite pour
+ * le volume : normalizeSearch fait un normalize('NFD'), coûteux, et il y en avait
+ * trois par joueur. Le deuxième était inutile — les champs prénom et nom d'état
+ * civil sont vides dans notre index — et le troisième renormalisait un texte déjà
+ * normalisé. On garde une seule normalisation du nom, plus une par club, mise en
+ * cache : quelques milliers de clubs pour 55 000 joueurs. */
+const _normClub = new Map();
+function normClub(t){
+  if(!t) return '';
+  let v = _normClub.get(t);
+  if(v === undefined){ v = normalizeSearch(t); _normClub.set(t, v); }
+  return v;
+}
 function prepareIndexEntry(e){
-  e._nw = normalizeSearch(e.n || '').split(/[\s\-'.]+/).filter(Boolean);           // mots du nom connu (ex. « Ronaldinho Gaúcho »)
-  e._w = normalizeSearch(`${e.n||''} ${e.f||''} ${e.l||''}`).split(/[\s\-'.]+/).filter(Boolean); // + prénom et nom d'état civil
-  e._s = normalizeSearch(`${e.n||''} ${e.f||''} ${e.l||''} ${e.t||''}`);
+  const nom = normalizeSearch(e.n || '');
+  e._nw = nom.split(/[\s\-'.]+/).filter(Boolean);     // mots du nom connu
+  if(e.f || e.l){
+    e._w = normalizeSearch(`${e.n||''} ${e.f||''} ${e.l||''}`).split(/[\s\-'.]+/).filter(Boolean);
+    e._s = normalizeSearch(`${e.n||''} ${e.f||''} ${e.l||''} ${e.t||''}`);
+  } else {
+    e._w = e._nw;                                      // rien de plus à indexer
+    e._s = nom + ' ' + normClub(e.t);
+  }
   return e;
 }
 function applyPlayerIndex(data){
@@ -3457,18 +3480,30 @@ async function loadPlayerIndex(){
   // pendant 6 h sur la copie locale. Le fichier est servi avec des en-têtes de cache :
   // la requête revient en « non modifié » et ne coûte quasiment rien. Sans ce garde-fou,
   // une mise à jour de la base mettait jusqu'à 6 heures à atteindre un utilisateur.
-  if(!REAL_DATA_CONFIG.searchIndexUrl && stored && (Date.now() - stored.t) < REAL_DATA_CONFIG.indexRefreshHours*3600*1000) return;
-  try{
+  // Le grand index n'est plus chargé d'office : 1,3 Mo et 400 ms de calcul bloquant
+  // sur un téléphone, pour 55 000 joueurs dont on ne cherche presque jamais la
+  // plupart. Il est désormais demandé par chargerIndexComplet(), la première fois
+  // qu'une recherche ne trouve rien dans l'index court.
+  if(!REAL_DATA_CONFIG.searchIndexTopUrl) await chargerIndexComplet();
+}
+
+let _indexCompletEnCours = null;
+function indexCompletCharge(){ return PLAYER_INDEX.players.length > 20000; }
+async function chargerIndexComplet(){
+  if(indexCompletCharge()) return true;
+  if(_indexCompletEnCours) return _indexCompletEnCours;
+  _indexCompletEnCours = (async ()=>{
     const res = await fetch(REAL_DATA_CONFIG.searchIndexUrl || `${REAL_DATA_CONFIG.proxyUrl}/index.json`);
-    if(!res.ok) return; // index pas encore construit côté proxy : la recherche API seule continue
+    if(!res.ok) return false; // index pas encore construit côté proxy : la recherche API seule continue
     const data = await res.json();
-    // On ne range plus le grand index dans localStorage : 5,3 Mo dépassent le quota
+    // On ne range pas le grand index dans localStorage : 5,3 Mo dépassent le quota
     // du navigateur, l'écriture échouait silencieusement à chaque chargement. Le cache
     // HTTP de Cloudflare fait ce travail, et l'index court sert de secours hors ligne.
-    if(applyPlayerIndex(data) && currentScreen==='browse' && !browseDetailId && !browseSearch){
-      renderBrowse(); // met à jour la consigne « dès 2 lettres »
-    }
-  }catch(e){ /* hors ligne ou proxy indisponible : rien à faire, l'index déjà stocké reste utilisé */ }
+    const ok = applyPlayerIndex(data);
+    if(ok && currentScreen==='browse' && !browseDetailId && !browseSearch) renderBrowse();
+    return ok;
+  })().catch(()=>{ _indexCompletEnCours = null; return false; });
+  return _indexCompletEnCours;
 }
 function mapIndexEntryToLightPlayer(e){
   return {
@@ -5336,6 +5371,16 @@ document.getElementById('pickerSearch').addEventListener('input', e=>{
   // L'API n'est plus qu'un filet de sécurité : l'index local couvre 41 553 joueurs sur dix
   // saisons et douze compétitions. On ne la dérange que si la recherche locale n'a rien donné.
   if(pickerSearch.length>=REAL_DATA_CONFIG.searchMinChars && locauxPicker.length < REAL_DATA_CONFIG.seuilComplementApi && !correspondanceFranche(locauxPicker, pickerSearch)){
+    // L'index court ne porte que les 5 000 joueurs les plus capés. Quand il ne
+    // trouve rien, on va chercher le grand index — une fois pour la session — et
+    // on relance la recherche dès qu'il est là.
+    if(!locauxPicker.length && !indexCompletCharge()){
+      setPickerStatus('Recherche élargie…');
+      chargerIndexComplet().then(ok => {
+        const el = document.getElementById('pickerSearch');
+        if(ok && el && el.value === pickerSearch) el.dispatchEvent(new Event('input', {bubbles:true}));
+      });
+    }
     const cached = getCachedSearch(pickerSearch) || searchByPrefixCache(pickerSearch);
     if(cached){
       setCachedSearch(pickerSearch, cached);  // la prochaine lettre repartira de cette liste
@@ -5916,6 +5961,16 @@ function renderBrowse(){
     renderBrowseList();
     // 2. Complément API, uniquement si l'index local n'a presque rien trouvé (résultat mémorisé 24 h)
     if(browseSearch.length>=REAL_DATA_CONFIG.searchMinChars && locauxBrowse.length < REAL_DATA_CONFIG.seuilComplementApi && !correspondanceFranche(locauxBrowse, browseSearch)){
+    // L'index court ne porte que les 5 000 joueurs les plus capés. Quand il ne
+    // trouve rien, on va chercher le grand index — une fois pour la session — et
+    // on relance la recherche dès qu'il est là.
+    if(!locauxBrowse.length && !indexCompletCharge()){
+      setBrowseStatus('Recherche élargie…');
+      chargerIndexComplet().then(ok => {
+        const el = document.getElementById('browseSearchInput');
+        if(ok && el && el.value === browseSearch) el.dispatchEvent(new Event('input', {bubbles:true}));
+      });
+    }
       const cached = getCachedSearch(browseSearch) || searchByPrefixCache(browseSearch);
       if(cached){
         setCachedSearch(browseSearch, cached);  // la prochaine lettre repartira de cette liste
