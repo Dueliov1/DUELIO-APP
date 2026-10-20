@@ -4213,7 +4213,27 @@ function cleNomCourt(nom){
  * l'index). Leur version API ne peut donc qu'être partielle. */
 function legendePour(p){
   if(!p || !p.apiId || p.estLegende) return null;
-  return CLES_LEGENDES.get(cleNomCourt(p.name)) || null;
+  const l = CLES_LEGENDES.get(cleNomCourt(p.name)) || null;
+  if(!l) return null;
+  /* Avec cent légendes de plus, des homonymes bien vivants apparaissent : un
+   * « Cafú » de 33 ans, un « T. Adams » de 26 ans, un « Bebeto » de 36 ans.
+   * Ceux-là ne sont pas des jumeaux, ce sont d'autres joueurs. Un joueur de
+   * l'API n'est le double d'une légende que si son âge colle à sa naissance
+   * (à trois ans près, l'âge de la base datant de sa dernière saison) ou si
+   * l'API ne sait rien de lui. */
+  // Deux prénoms complets différents (« Ricardo Costa » / « Rui Costa ») : deux personnes.
+  const motsApi = normalizeSearch(p.name || '').split(/\s+/).filter(Boolean);
+  const motsLeg = normalizeSearch(l.name || '').split(/\s+/).filter(Boolean);
+  if(motsApi.length > 1 && motsLeg.length > 1 && motsApi[0].length > 2 && motsApi[0] !== motsLeg[0]) return null;
+  if(l.birthYear && p.age && (p.matchsIndex > 0 || (p.seasonsAvailable && p.seasonsAvailable.length))){
+    // L'âge de la base est celui de la dernière saison connue : un vrai jumeau
+    // retiré paraît plus JEUNE qu'il n'est, jamais plus vieux. On accepte donc
+    // jusqu'à vingt ans d'écart dans ce sens, trois dans l'autre.
+    const naissanceApi = (p.seasonsAvailable && p.seasonsAvailable.length ? Math.max(...p.seasonsAvailable) : currentSeasonYear()) - p.age;
+    const ecart = naissanceApi - l.birthYear;
+    if(ecart < -3 || ecart > 20) return null;
+  }
+  return l;
 }
 function jumeauVideDeLegende(p){ return !!legendePour(p); }
 const INDEX_LS_KEY = 'duelio_index_v2';   // v2 : passage à l'index statique. Change de nom pour que
