@@ -4231,7 +4231,10 @@ function loadRecentPlayers(){
       // Chiffres calculés par une ancienne version (amicaux inclus) : on les recalcule depuis le cache des saisons
       if(p.statsVersion !== STATS_VERSION){ p.needsStats = true; p.statsBySeason = {}; delete p.rawBySeason; p.seasonPinned = false; }
       return p;
-    });
+    // Une fiche vide consultée AVANT l'arrivée des légendes reste dans cet
+    // historique et continuerait de s'ouvrir sur rien : « W. Rooney » sans
+    // chiffres alors que « Wayne Rooney » existe désormais à côté.
+    }).filter(p => !jumeauVideDeLegende(p));
   }catch(e){ return []; }
 }
 function rememberRecentPlayer(p){
@@ -6617,6 +6620,7 @@ function renderBrowse(){
   function renderBrowseList(){
     const searchOnly = REAL_DATA_CONFIG.enabled && !REAL_DATA_CONFIG.preloadRoster;
     const filtered = PLAYERS.filter(p=>{
+      if(jumeauVideDeLegende(p)) return false;   // même règle que dans le sélecteur du comparatif
       if(browseSearch && p._q!==browseSearch && !(normalizeSearch(p.name).includes(normalizeSearch(browseSearch)) || normalizeSearch(p.club).includes(normalizeSearch(browseSearch)))) return false;
       return true;
     });
