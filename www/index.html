@@ -12,14 +12,14 @@
      au manifeste plus bas, ces balises doivent donc être écrites en dur dans la page.
      Sans elles, un lien Duelio partagé n'affiche rien du tout : pas d'image, pas de
      titre, pas de description. -->
-<link rel="canonical" href="https://duelio-app.bensouna-ahmed.workers.dev/">
+<link rel="canonical" href="https://dueliov2.pages.dev/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Duelio">
 <meta property="og:locale" content="fr_FR">
-<meta property="og:url" content="https://duelio-app.bensouna-ahmed.workers.dev/">
+<meta property="og:url" content="https://dueliov2.pages.dev/">
 <meta property="og:title" content="Duelio — Qui est le meilleur ?">
 <meta property="og:description" content="Deux joueurs face à face : les chiffres tranchent le débat. 55 000 joueurs, carrières complètes, et une image prête pour vos stories.">
-<meta property="og:image" content="https://duelio-app.bensouna-ahmed.workers.dev/og-image.png">
+<meta property="og:image" content="https://dueliov2.pages.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -27,7 +27,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Duelio — Qui est le meilleur ?">
 <meta name="twitter:description" content="Deux joueurs face à face : les chiffres tranchent le débat. 55 000 joueurs, carrières complètes.">
-<meta name="twitter:image" content="https://duelio-app.bensouna-ahmed.workers.dev/og-image.png">
+<meta name="twitter:image" content="https://dueliov2.pages.dev/og-image.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -235,6 +235,11 @@
   }
   *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
   html,body{ height:100%; }
+  /* Dans la coque Capacitor comme dans Safari, la page entière rebondissait
+   * au bout d'un défilement, et un panneau arrivé en bas transmettait le geste
+   * à l'écran derrière lui. Une application ne rebondit pas. */
+  html{ overscroll-behavior: none; }
+  .screens, .picker, .picker-list, .sheet-list, .browse-detail{ overscroll-behavior: contain; }
   body{
     background: radial-gradient(circle at 30% 15%, #1B2A5C 0%, #0B1730 55%, #050B18 100%);
     font-family:'Plus Jakarta Sans', sans-serif;
@@ -728,6 +733,10 @@
   }
   .palmares-row.total .palmares-comp{ color:var(--chalk-dim); font-size:10.5px; }
 
+  .lien-inline{
+    background:none; border:0; padding:0; color:var(--gold); font:inherit; font-weight:700;
+    text-decoration:underline; text-underline-offset:2px; cursor:pointer;
+  }
   .palmares-vide{
     margin-top:12px; padding:14px; border:1px dashed var(--line); border-radius:14px;
     color:var(--chalk-dim); font-size:11.5px; text-align:center;
@@ -3463,7 +3472,11 @@ function seasonLabel(season){
 }
 
 // Adresse de l'application, pour le texte qui accompagne une image partagée.
-const SITE_URL = 'https://duelio-app.bensouna-ahmed.workers.dev/';
+/* L'adresse publique : celle que portent les liens partagés et la prévisualisation.
+ * Les données, elles, restent sur workers.dev, qui n'est qu'un entrepôt.
+ * Le jour où duelio.app sera branché sur Pages, c'est ici que ça se change —
+ * et dans les balises og:url / canonical de l'en-tête, qui sont statiques. */
+const SITE_URL = 'https://dueliov2.pages.dev/';
 // Sans adresse, celui qui reçoit l'image n'a aucun moyen de retrouver Duelio : l'image
 // circule, l'application non. On nomme aussi les deux joueurs, parce qu'un duel nommé
 // donne envie de cliquer bien plus qu'un « mon duel ».
@@ -5142,7 +5155,17 @@ function trophyPlaceholder(fp, key){
   if(fp.estLegende) return '—';   // rien à charger : on sait déjà qu'on ne l'a pas
   const real = PLAYERS.find(x=>x.id===fp.id) || fp;
   if(key==='caps' || key==='intGoals') return (careerLoading[real.apiId] || !real.careerLoaded) && !real._careerFailed && !real.needsStats ? '…' : '—';
+  // Après un échec de chargement, « … » laisserait croire que ça charge encore :
+  // on montre « — », et la note sous le tableau explique que c'est temporaire.
+  if(real._trophyRetryAt && !trophyLoading[real.apiId]) return '—';
   return trophyLoading[real.apiId] || !real.trophiesLoaded ? '…' : '—';
+}
+// Vrai quand au moins un joueur du duel a vu son palmarès échouer au chargement.
+function palmaresEnEchec(filled){
+  return (filled || []).some(fp => {
+    const real = PLAYERS.find(x=>x.id===fp.id) || fp;
+    return real.apiId && !real.trophiesLoaded && real._trophyRetryAt && !trophyLoading[real.apiId];
+  });
 }
 // Sélections : matchs de l'équipe nationale A (officiels + amicaux internationaux) sur toutes les saisons de la base.
 // L'API ne donne pas de total de sélections : on l'additionne saison par saison (carrière chargée nécessaire).
@@ -5496,6 +5519,7 @@ function renderAll(){
       ${activeTab==='trophies' && filled.length>=2 && !compactView ? `
       <div class="browse-section-label" style="margin-top:18px;">Palmarès comparé</div>
       ${palmaresDuelHtml(filled)}` : ''}
+      ${activeTab==='trophies' && filled.length>=2 && palmaresEnEchec(filled) ? `<div class="palmares-vide">Le palmarès n'a pas pu être chargé pour le moment. <button type="button" class="lien-inline" id="palmaresRetry">Réessayer</button></div>` : ''}
       ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs de l'équipe nationale A trouvés dans la base API-Football (amicaux compris), parfois incomplet pour les anciennes saisons. Le tableau ne compte que les titres gagnés : ni les places de finaliste, ni les tournois amicaux de pré-saison. « — » = rien dans la base.</div>` : ''}
       ${activeTab==='stats' && filled.length>=2 && compareBasis!=='nation' && !compactView && !duelAvecLegende(filled) ? `
       <div class="radar-panel">
@@ -5519,6 +5543,12 @@ function renderAll(){
   wireRadars(content);
   wireCompareTutorial(content);
   if(activeTab==='trophies' && filled.length>=2){ ensureTrophiesLoaded(filled); ensureCareerForNation(filled, 'high'); }
+  const retry = content.querySelector('#palmaresRetry');
+  if(retry) retry.addEventListener('click', ()=>{
+    filled.forEach(fp=>{ const real = PLAYERS.find(x=>x.id===fp.id) || fp; delete real._trophyRetryAt; });
+    ensureTrophiesLoaded(filled);
+    renderAll();
+  });
 
   content.querySelectorAll('.tab-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -6337,9 +6367,22 @@ function loadStadiumBackground(){
   return _stadiumBgPromise;
 }
 async function generateShareImage(){
-  try{ await Promise.all([document.fonts.load("800 20px 'Unbounded'"), document.fonts.load("700 20px 'Unbounded'")]); }catch(e){}
   const btn = document.getElementById('shareGenerateBtn');
+  if(!btn) return;
   btn.disabled = true; btn.textContent = 'Génération…';
+  try{
+    await dessinerImageDePartage(btn);
+  }catch(e){
+    // Quoi qu'il se passe pendant le dessin, le bouton doit revenir : sans ce
+    // filet, une image qui échouait laissait « Génération… » grisé pour toujours.
+    console.warn('image de partage :', e && e.message);
+    btn.disabled = false; btn.textContent = "Générer l'image";
+    const area = document.getElementById('sharePreviewArea');
+    if(area) area.innerHTML = `<div class="palmares-vide">L'image n'a pas pu être créée. Réessayez — si ça persiste, choisissez moins de statistiques.</div>`;
+  }
+}
+async function dessinerImageDePartage(btn){
+  try{ await Promise.all([document.fonts.load("800 20px 'Unbounded'"), document.fonts.load("700 20px 'Unbounded'")]); }catch(e){}
 
   const filled = slots.map((id, idx) => id ? {...PLAYERS.find(p=>p.id===id), _idx: idx} : null).filter(Boolean);
   const list = (compareBasis==='nation' ? NATION_STATS : getActiveStatsList(filled)).filter(r=>shareSelectedStats.includes(r.key));
@@ -6653,10 +6696,16 @@ async function generateShareImage(){
   // circuler. Elle est maintenant lisible sans écraser le contenu.
   ctx.font = `700 ${11.5*S}px 'Plus Jakarta Sans', sans-serif`;
   ctx.fillStyle = '#A9CFC5'; ctx.textAlign='center';
-  ctx.fillText('D U E L I O . A P P', W/2, marqueY);
+  ctx.fillText('D U E L I O', W/2, marqueY);   // la marque seule : duelio.app ne répond pas encore, et l'adresse voyage dans le texte du partage
   ctx.textAlign = 'left';
 
   canvas.toBlob((blob)=>{
+    if(!blob){
+      btn.disabled = false; btn.textContent = "Générer l'image";
+      const area = document.getElementById('sharePreviewArea');
+      if(area) area.innerHTML = `<div class="palmares-vide">L'image n'a pas pu être créée. Réessayez.</div>`;
+      return;
+    }
     if(shareGeneratedBlobUrl) URL.revokeObjectURL(shareGeneratedBlobUrl);
     shareGeneratedBlobUrl = URL.createObjectURL(blob);
     const area = document.getElementById('sharePreviewArea');
@@ -7238,6 +7287,27 @@ function majVoilesTimeline(tl){
 }
 
 
+/* Le type de transfert arrive brut de l'API, en anglais et au format anglais :
+ * « € 12.24M », « Free », « Loan », « Swap », « N/A ». On le rend lisible en
+ * français : « 12,24 M€ », « Transfert libre », « Prêt », « Échange », et un
+ * montant inconnu se dit « Transfert » plutôt que « N/A ». */
+function libelleTransfert(type){
+  const t = (type || '').trim();
+  if(!t || /^n\/a$/i.test(t)) return 'Transfert';
+  if(/free/i.test(t)) return 'Transfert libre';
+  if(/end of loan|back from loan|return/i.test(t)) return 'Retour de prêt';
+  if(/^loan$|prêt/i.test(t)) return 'Prêt';
+  if(/swap|échange/i.test(t)) return 'Échange';
+  const m = t.match(/^€\s*([\d.,]+)\s*([MK])?$/i);
+  if(m){
+    const nombre = m[1].replace(',', '.');
+    const unite = (m[2] || '').toUpperCase();
+    const fr = String(parseFloat(nombre)).replace('.', ',');
+    return unite === 'K' ? `${fr} k€` : unite === 'M' ? `${fr} M€` : `${fr} €`;
+  }
+  return t;
+}
+
 // Charge le vrai parcours (transferts + palmarès) d'un joueur uniquement quand sa fiche est ouverte
 async function loadRealTimelineFor(p){
   const container = document.querySelector('.timeline-h');
@@ -7264,11 +7334,7 @@ async function loadRealTimelineFor(p){
     let events = [];
     transfers.forEach(t=>{
       const inTeam = t.teams && t.teams.in ? t.teams.in.name : '?';
-      let feeLabel;
-      if(!t.type || /free/i.test(t.type)) feeLabel = 'Transfert libre';
-      else if(/loan|prêt/i.test(t.type)) feeLabel = 'Prêt';
-      else feeLabel = t.type;
-      events.push({ club: inTeam, date: t.date || '', feeLabel, sortVal: rangDate(t.date) });
+      events.push({ club: inTeam, date: t.date || '', feeLabel: libelleTransfert(t.type), sortVal: rangDate(t.date) });
     });
     // Les trophées ne figurent plus ici : ils ont leur tableau dans le palmarès,
     // où ils se lisent d'un coup d'œil au lieu d'allonger le défilement.
@@ -7303,7 +7369,8 @@ async function loadRealTimelineFor(p){
     }).join('');
     fitTimeline();
   }catch(err){
-    if(container) container.innerHTML = `<div class="empty-state" style="padding:16px;">Parcours indisponible (${err.message}).</div>`;
+    console.warn('parcours :', err && err.message);
+    if(container) container.innerHTML = `<div class="empty-state" style="padding:16px;">Parcours indisponible pour le moment. Réessayez dans une minute.</div>`;
   }
 }
 
@@ -7823,7 +7890,8 @@ try{ console.log('%cDuelio', 'font-weight:bold;color:#2DD4BF',
   loadPlayerIndex(); // en arrière-plan : la recherche instantanée s'active dès que l'index est là
   if(FALLBACK_REASON){
     const banner = document.getElementById('globalFallbackBanner');
-    banner.innerHTML = `⚠️ <b>Données réelles indisponibles</b> — l'appli utilise des joueurs fictifs de démonstration.<br>Raison technique : <code>${escapeHtml(FALLBACK_REASON)}</code>`;
+    console.warn('mode démonstration :', FALLBACK_REASON);
+    banner.innerHTML = `<b>Mode démonstration</b> — les vraies données sont momentanément inaccessibles, les joueurs affichés sont fictifs. Réessayez dans quelques minutes.`;
     banner.style.display = 'block';
   }
   renderAll();
