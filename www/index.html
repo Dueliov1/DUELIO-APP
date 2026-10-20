@@ -3852,6 +3852,10 @@ async function chargerLegendes(){
     const doc = await r.json();
     LEGENDES.liste = (doc.legendes || []).map(construireLegende);
     LEGENDES.chargees = true;
+    for(const l of LEGENDES.liste){
+      const c = cleNomCourt(l.name);
+      if(c) CLES_LEGENDES.add(c);
+    }
     // Elles rejoignent la liste commune : la recherche du sélecteur balaie
     // PLAYERS, donc rien d'autre n'est à modifier pour qu'on les trouve.
     for(const l of LEGENDES.liste){
@@ -3864,6 +3868,34 @@ async function chargerLegendes(){
   return LEGENDES.liste;
 }
 function duelAvecLegende(filled){ return (filled || []).some(p => p && p.estLegende); }
+
+/* Dix-sept de ces légendes figuraient DÉJÀ dans l'index de recherche d'API-Football,
+ * mais sans la moindre statistique : « W. Rooney », « Francesco Totti », « Andrea
+ * Pirlo »… L'utilisateur tombait sur une fiche vide. Maintenant que la vraie
+ * carrière existe à côté, laisser les deux entrées est pire qu'avant : on cherche
+ * Rooney, on obtient deux lignes identiques, et une sur deux ne donne rien.
+ *
+ * On masque donc le jumeau de l'API — mais SEULEMENT s'il est vide. Si un jour la
+ * source se met à couvrir ce joueur, sa fiche réelle réapparaît d'elle-même et
+ * reprend le dessus.
+ *
+ * La clé rapproche « Wayne Rooney » de « W. Rooney » : initiale du prénom et nom
+ * de famille. Elle ne confond pas Zinédine Zidane avec ses fils Enzo et Luca, dont
+ * les initiales diffèrent. */
+const CLES_LEGENDES = new Set();
+function cleNomCourt(nom){
+  const mots = normalizeSearch(nom || '').split(/\s+/).filter(Boolean);
+  if(!mots.length) return '';
+  const famille = mots[mots.length - 1];
+  const initiale = mots.length > 1 ? mots[0][0] : '';
+  return `${initiale}|${famille}`;
+}
+function jumeauVideDeLegende(p){
+  if(!p || !p.apiId || p.estLegende) return false;
+  if(p.matchsIndex) return false;                  // l'API a une vraie carrière : on la garde
+  if(p.statsBySeason && Object.keys(p.statsBySeason).length) return false;
+  return CLES_LEGENDES.has(cleNomCourt(p.name));
+}
 const INDEX_LS_KEY = 'duelio_index_v2';   // v2 : passage à l'index statique. Change de nom pour que
                                           // les appareils ayant l'ancien index (472 joueurs de Ligue 1)
                                           // l'abandonnent au lieu de le croire encore valable.
@@ -4019,6 +4051,7 @@ function mapIndexEntryToLightPlayer(e){
     name: e.n || `${e.f||''} ${e.l||''}`.trim() || 'Joueur inconnu',
     pos: e.p || null, posLabel: e.p ? (POS_LABEL[e.p] || '') : '',
     club: e.t || null, clubLogo: e.ti ? apiTeamLogo({id: e.ti}) : null,
+    matchsIndex: e.m || 0,   // matchs de carrière connus de l'index : 0 = fiche vide
     age: e.a || null, height: null, preferredFoot: null,
     nation: nationFromApiName(e.c),
     caps: 0, intGoals: 0, titresNationaux: 0, titresContinentaux: 0, career: [],
@@ -4131,8 +4164,10 @@ function rankPlayer(p, q){
   const sN = normalizeSearch(`${p.name||''} ${p.fullName||''} ${p.club||''}`);
   const base = searchScore(nameWords, words, sN, qw, nq);
   if(!base) return 0;
-  // À pertinence égale, une fiche complète (nationalité, âge, club) passe devant une fiche vide ou doublon
-  return base + (p.nation && p.nation.iso!=='UN' ? 5 : 0) + (p.age ? 2 : 0) + (p.club ? 1 : 0);
+  // À pertinence égale, une fiche complète (nationalité, âge, club) passe devant une fiche vide ou doublon.
+  // Une légende passe devant tout le reste : qui tape « Zidane » cherche Zinédine avant ses fils.
+  return base + (p.estLegende ? 12 : 0)
+       + (p.nation && p.nation.iso!=='UN' ? 5 : 0) + (p.age ? 2 : 0) + (p.club ? 1 : 0);
 }
 
 /* ---------------- Mémoire des recherches API (24 h sur l'appareil) ---------------- */
@@ -6148,6 +6183,7 @@ function renderPickerList(){
   const usedApi = usedIds.map(id=>{ const p = PLAYERS.find(x=>x.id===id); return p && p.apiId; }).filter(Boolean);
   const searchOnly = REAL_DATA_CONFIG.enabled && !REAL_DATA_CONFIG.preloadRoster;
   const filtered = PLAYERS.filter(p=>{
+    if(jumeauVideDeLegende(p)) return false;   // « W. Rooney » sans chiffres, quand « Wayne Rooney » existe
     if(pickerSearch && p._q!==pickerSearch && !(normalizeSearch(p.name).includes(normalizeSearch(pickerSearch)) || normalizeSearch(p.club).includes(normalizeSearch(pickerSearch)))) return false;
     return true;
   });
