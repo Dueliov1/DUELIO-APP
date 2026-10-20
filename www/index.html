@@ -574,9 +574,64 @@
     padding:5px 11px; border-radius:16px; font-weight:600;
   }
 
-  /* Horizontal club career + transfer timeline */
+  /* Chronologie horizontale : parcours en club, transferts et trophées.
+   *
+   * Le défilement fait partie du dessin. La barre native — gouttière grise,
+   * flèches aux deux bouts — était le seul morceau d'habillage système resté
+   * visible dans l'application, et elle tranchait sur le bleu nuit. On la
+   * redessine dans le vocabulaire de la chronologie elle-même : un filet de la
+   * même couleur que le trait qui relie les clubs, et un curseur en pastille
+   * posé dessus, comme les pastilles d'étape. Les deux bouts s'estompent pour
+   * dire qu'il reste de la matière hors cadre, sans ajouter de flèche. Au
+   * doigt, le geste se suffit : la barre disparaît. */
+  .tlh-rail{ position:relative; }
+  .tlh-rail::before,
+  .tlh-rail::after{
+    content:''; position:absolute; top:0; bottom:14px; width:32px; z-index:2;
+    pointer-events:none; opacity:0; transition:opacity .22s ease;
+  }
+  .tlh-rail::before{ left:0;  background:linear-gradient(90deg,  var(--bg), rgba(11,23,48,0)); }
+  .tlh-rail::after{  right:0; background:linear-gradient(270deg, var(--bg), rgba(11,23,48,0)); }
+  .tlh-rail.peek-start::before{ opacity:1; }
+  .tlh-rail.peek-end::after{ opacity:1; }
+
   .timeline-h{ display:flex; align-items:flex-start; overflow-x:hidden; padding: 26px 6px 16px; }
-  .timeline-h.scrollable{ overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:thin; }
+  /* La barre native est masquée partout plutôt que rhabillée : depuis
+   * Chromium 121, déclarer scrollbar-width annule les règles ::-webkit-scrollbar,
+   * et selon la machine on héritait soit d'une gouttière grise à flèches, soit
+   * d'une barre flottante, soit de rien. Une barre dessinée ici rend le même
+   * objet sur PC, sur Android et sur iPhone. */
+  .timeline-h.scrollable{
+    overflow-x:auto; -webkit-overflow-scrolling:touch;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  .timeline-h.scrollable::-webkit-scrollbar{ width:0; height:0; }
+  .timeline-h.scrollable:focus-visible{
+    outline:2px solid var(--gold); outline-offset:3px; border-radius:10px;
+  }
+
+  /* Le filet reprend la couleur et l'épaisseur du trait qui relie les étapes,
+   * et le curseur la forme des pastilles : la commande appartient au dessin de
+   * la chronologie plutôt qu'au système. */
+  .tlh-scroll{
+    position:relative; height:3px; margin:2px 8px 0; border-radius:99px;
+    background:var(--line); display:none; touch-action:none;
+  }
+  .tlh-rail.defile .tlh-scroll{ display:block; }
+  .tlh-scroll-thumb{
+    position:absolute; top:-1px; height:5px; min-width:28px; border-radius:99px;
+    background:rgba(169,207,197,.45); transition:background-color .15s ease;
+  }
+  @media (pointer: fine){
+    .tlh-scroll{ cursor:pointer; }
+    .tlh-scroll:hover .tlh-scroll-thumb{ background:rgba(169,207,197,.72); }
+  }
+  .tlh-scroll.tire .tlh-scroll-thumb{ background:var(--gold); }
+
+  @media (pointer: coarse){ .tlh-rail::before, .tlh-rail::after{ bottom:8px; } }
+  @media (prefers-reduced-motion: reduce){
+    .tlh-rail::before, .tlh-rail::after{ transition:none; }
+  }
   .tlh-item{ position:relative; flex:0 0 118px; display:flex; flex-direction:column; align-items:center; text-align:center; padding:0 3px; box-sizing:border-box; min-width:0; }
   .tlh-item.compact .tlh-club{ font-size:10px; }
   .tlh-item.compact .tlh-years{ font-size:8.5px; }
@@ -594,9 +649,19 @@
   .tlh-club{
     font-weight:700; font-size:11.5px; color:var(--chalk); line-height:1.25; width:100%;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; overflow-wrap:break-word;
+    /* Réserve les deux lignes même quand le nom tient sur une : sans cela, un
+     * « Premier League » qui passe à la ligne décale sa pastille vers le bas et
+     * la rangée de badges part en escalier. */
+    min-height: 2.5em;
   }
   .tlh-item.current .tlh-club{ color: var(--win); }
-  .tlh-years{ font-size:9.5px; color:var(--chalk-dim); margin-top:3px; width:100%; box-sizing:border-box; overflow-wrap:break-word; }
+  .tlh-years{
+    font-size:9.5px; color:var(--chalk-dim); margin-top:3px; width:100%;
+    box-sizing:border-box; overflow-wrap:break-word;
+    /* Réservée même quand la date manque : une étape sans date remonterait d'un
+     * cran et toute la rangée de badges repartirait en escalier. */
+    min-height: 1.25em;
+  }
   .tlh-fee{ font-size:10px; color:var(--gold); font-weight:700; margin-top:4px; width:100%; box-sizing:border-box; overflow-wrap:break-word; }
   .tlh-fee.free{ color: var(--chalk-dim); font-weight:600; }
   .tlh-trophy{ margin-top:5px; display:flex; flex-direction:column; align-items:center; width:100%; box-sizing:border-box; }
@@ -6713,9 +6778,96 @@ function fitTimeline(){
     });
     // Si même à largeur minimale tout ne rentre pas, on active le défilement horizontal
     // plutôt que d'écraser le texte davantage.
-    tlWrap.classList.toggle('scrollable', (w * n) > available + 12);
+    const defile = (w * n) > available + 12;
+    tlWrap.classList.toggle('scrollable', defile);
+
+    // Un conteneur qui défile doit pouvoir se parcourir aussi au clavier : sans
+    // tabindex, Chromium ne le rend focusable que de façon inconstante, et les
+    // flèches n'atteignent jamais les dernières étapes.
+    if(defile){
+      tlWrap.tabIndex = 0;
+      tlWrap.setAttribute('role', 'group');
+      tlWrap.setAttribute('aria-label', 'Parcours en club et transferts, liste déroulante horizontale');
+    } else {
+      tlWrap.removeAttribute('tabindex');
+      tlWrap.removeAttribute('role');
+      tlWrap.removeAttribute('aria-label');
+    }
+
+    const rail = tlWrap.closest('.tlh-rail');
+    if(rail) rail.classList.toggle('defile', defile);
+
+    if(!tlWrap._voiles){
+      tlWrap.addEventListener('scroll', ()=>majVoilesTimeline(tlWrap), { passive:true });
+      brancherBarreTimeline(tlWrap);
+      tlWrap._voiles = true;
+    }
+    majVoilesTimeline(tlWrap);
   });
 }
+
+/* Barre de défilement dessinée. On la construit ici plutôt que dans le gabarit
+ * pour qu'elle suive la chronologie quelle que soit la façon dont celle-ci a
+ * été rendue, et pour qu'elle disparaisse d'elle-même si tout tient à l'écran. */
+function brancherBarreTimeline(tl){
+  const rail = tl.closest('.tlh-rail');
+  if(!rail || rail.querySelector('.tlh-scroll')) return;
+
+  const piste = document.createElement('div');
+  piste.className = 'tlh-scroll';
+  piste.setAttribute('aria-hidden', 'true');   // la chronologie elle-même porte déjà le rôle et l'étiquette
+  const curseur = document.createElement('span');
+  curseur.className = 'tlh-scroll-thumb';
+  piste.appendChild(curseur);
+  rail.appendChild(piste);
+
+  // Viser un point de la piste y amène la chronologie ; le curseur se traîne.
+  const allerA = (clientX)=>{
+    const r = piste.getBoundingClientRect();
+    const demi = curseur.offsetWidth / 2;
+    const utile = Math.max(1, r.width - curseur.offsetWidth);
+    const part = Math.min(1, Math.max(0, (clientX - r.left - demi) / utile));
+    tl.scrollLeft = part * (tl.scrollWidth - tl.clientWidth);
+  };
+  piste.addEventListener('pointerdown', e=>{
+    piste.setPointerCapture(e.pointerId);
+    piste.classList.add('tire');
+    allerA(e.clientX);
+    e.preventDefault();
+  });
+  piste.addEventListener('pointermove', e=>{
+    if(piste.hasPointerCapture(e.pointerId)) allerA(e.clientX);
+  });
+  const relacher = e=>{
+    if(piste.hasPointerCapture(e.pointerId)) piste.releasePointerCapture(e.pointerId);
+    piste.classList.remove('tire');
+  };
+  piste.addEventListener('pointerup', relacher);
+  piste.addEventListener('pointercancel', relacher);
+}
+
+/* Estompe le bord vers lequel il reste de la matière, et replace le curseur.
+ * Deux voiles plutôt qu'une paire de flèches : l'information est la même, elle
+ * ne coûte aucun pixel de chrome et elle s'efface d'elle-même en bout de course. */
+function majVoilesTimeline(tl){
+  const rail = tl.closest('.tlh-rail');
+  if(!rail) return;
+  const course = tl.scrollWidth - tl.clientWidth;
+  const x = tl.scrollLeft;
+  rail.classList.toggle('peek-start', course > 4 && x > 4);
+  rail.classList.toggle('peek-end',   course > 4 && x < course - 4);
+
+  const piste = rail.querySelector('.tlh-scroll');
+  const curseur = piste && piste.querySelector('.tlh-scroll-thumb');
+  if(!curseur) return;
+  const large = piste.clientWidth;
+  // Largeur du curseur = part visible de la chronologie, plancher à 28 px pour
+  // qu'il reste saisissable sur un parcours très long.
+  const l = Math.max(28, large * (tl.clientWidth / Math.max(1, tl.scrollWidth)));
+  curseur.style.width = `${Math.round(l)}px`;
+  curseur.style.left = `${Math.round((course > 0 ? x / course : 0) * (large - l))}px`;
+}
+
 
 // Charge le vrai parcours (transferts + palmarès) d'un joueur uniquement quand sa fiche est ouverte
 async function loadRealTimelineFor(p){
@@ -6758,7 +6910,7 @@ async function loadRealTimelineFor(p){
           <div class="tlh-item">
             <div class="tlh-dot trophy"></div>
             <div class="tlh-club">${ev.name}</div>
-            <div class="tlh-years">${ev.season}</div>
+            <div class="tlh-years">${ev.season ? (seasonLabel(parseInt(ev.season,10)) || ev.season) : ''}</div>
             <div class="tlh-trophy"><span class="tlh-trophy-name">${ev.place}</span></div>
           </div>`;
       }
@@ -6767,7 +6919,7 @@ async function loadRealTimelineFor(p){
         <div class="tlh-item ${isLast?'current':''}">
           <div class="tlh-dot"></div>
           <div class="tlh-club">${ev.club}</div>
-          <div class="tlh-years">${ev.date}</div>
+          <div class="tlh-years">${ev.date || ''}</div>
           <div class="tlh-fee ${ev.feeLabel==='Transfert libre'?'free':''}">${ev.feeLabel}</div>
           ${isLast ? '<span class="tlh-badge">Actuel</span>' : ''}
         </div>`;
@@ -6885,7 +7037,7 @@ function renderBrowse(){
             <div class="tlh-item ${ev.current?'current':''}">
               <div class="tlh-dot"></div>
               <div class="tlh-club">${ev.club}</div>
-              <div class="tlh-years">${ev.date}</div>
+              <div class="tlh-years">${ev.date || ''}</div>
               <div class="tlh-fee ${ev.feeLabel!=='Formation' && ev.feeLabel!=='Transfert libre' ? '' : 'free'}">${ev.feeLabel}</div>
               ${ev.current ? '<span class="tlh-badge">Actuel</span>' : ''}
             </div>`;
@@ -6894,7 +7046,7 @@ function renderBrowse(){
           <div class="tlh-item">
             <div class="tlh-dot trophy"></div>
             <div class="tlh-club">${ev.club}</div>
-            <div class="tlh-years">${ev.date}</div>
+            <div class="tlh-years">${ev.date || ''}</div>
             <div class="tlh-trophy"><span class="tlh-trophy-name">${ev.name}</span></div>
           </div>`;
       }).join('');
@@ -6914,7 +7066,7 @@ function renderBrowse(){
           <div class="career-progress" id="careerProgress">${careerProgressHtml()}</div>
         </div>
         <div class="browse-section-label">Parcours en club &amp; transferts</div>
-        <div class="timeline-h">${timeline}</div>
+        <div class="tlh-rail"><div class="timeline-h">${timeline}</div></div>
         ${statGroupsHtml}
         <div class="radar-panel">
           <div class="browse-section-label" style="text-align:center;">Profil d'attributs</div>
