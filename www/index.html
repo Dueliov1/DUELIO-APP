@@ -230,6 +230,9 @@
     --amber: #FFB020;
     --danger: #FF5A5A;
     --grad: linear-gradient(120deg, #2B2F77 0%, #3B5BA8 50%, #2A5F93 100%);
+    /* L'action principale : cyan vers bleu ciel. Pas de vert — le vert, dans
+     * cette application, veut dire « vainqueur », et il ne veut dire que ça. */
+    --grad-action: linear-gradient(120deg, #22D3EE 0%, #38BDF8 100%);
     --grad-soft: linear-gradient(120deg, rgba(43,47,119,.18), rgba(79,168,216,.18));
     --win: #2FE88A;
     --win-dim: rgba(47,232,138,.14);
@@ -266,10 +269,13 @@
     max-height: 92vh;
     position:relative;
   }
+  /* Le terrain en filigrane. À 0,16 ses lignes avaient la force des bordures de
+   * cartes et traversaient les valeurs comme des éléments cassés ; sous le
+   * contenu il s'efface, l'accueil garde sa pleine présence. */
   .phone::before{
     content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
     background-image: var(--pitch-bg); background-size:cover; background-position:center top; background-repeat:no-repeat;
-    opacity:.16;
+    opacity:.05;
   }
   .phone > *{ position:relative; z-index:1; }
   /* Sur téléphone, l'appli occupe tout l'écran (pas de maquette de téléphone dans le téléphone) */
@@ -385,9 +391,9 @@
   }
   .welcome-cta{
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:14.5px; color:#04231a;
-    background: linear-gradient(120deg, #22D3EE 0%, #3FE0C5 50%, #4ADE80 100%);
+    background: var(--grad-action);
     border:none; padding:15px 44px; border-radius:30px; cursor:pointer;
-    box-shadow: 0 8px 26px rgba(34,211,238,.4), 0 4px 14px rgba(74,222,128,.25); letter-spacing:.02em;
+    box-shadow: 0 8px 26px rgba(34,211,238,.35); letter-spacing:.02em;
     animation: welcomeIn .4s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.3s;
   }
   .welcome-cta:hover{ filter:brightness(1.08); transform:translateY(-1px); }
@@ -743,6 +749,7 @@
   }
   .palmares-row.total .palmares-comp{ color:var(--chalk-dim); font-size:10.5px; }
 
+  .tuto-lien{ display:block; margin:18px auto 4px; font-size:12.5px; }
   .lien-inline{
     background:none; border:0; padding:0; color:var(--gold); font:inherit; font-weight:700;
     text-decoration:underline; text-underline-offset:2px; cursor:pointer;
@@ -1049,7 +1056,7 @@
   .share-stat-check span{ font-size:12.5px; color:var(--chalk); font-weight:600; }
   .share-generate-btn{
     width:100%; padding:14px; border:none; border-radius:24px; color:#04231a;
-    background: linear-gradient(120deg, #22D3EE 0%, #3FE0C5 50%, #4ADE80 100%);
+    background: var(--grad-action);
     box-shadow: 0 8px 22px rgba(34,211,238,.28);
     font-weight:800; font-size:14px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif;
   }
@@ -1088,8 +1095,8 @@
     flex:1; padding:13px; border-radius:22px; border:none; cursor:pointer; font-weight:800; font-size:13px;
     font-family:'Plus Jakarta Sans',sans-serif;
   }
-  .share-download-btn.primary{ background:var(--win); color:#04231a; }
-  .share-download-btn.share{ background: linear-gradient(120deg, #22D3EE 0%, #3FE0C5 50%, #4ADE80 100%); color:#04231a; }
+  .share-download-btn.primary{ background:var(--grad-action); color:#04231a; }
+  .share-download-btn.share{ background: var(--grad-action); color:#04231a; }
   .share-ready{ font-size:12px; color:var(--chalk-dim); text-align:center; margin: 14px 0 4px; }
   .share-download-btn.secondary{ background:var(--surface-2); color:var(--chalk); border:1px solid var(--line); }
   .stat-row{
@@ -1169,8 +1176,8 @@
   .tart-story em{ position:absolute; right:-14px; top:-4px; font-style:normal; font-size:12px; color:var(--gold); font-weight:800; }
   .tuto-cta{
     display:block; width:100%; margin-top:14px; padding:14px; border:none; border-radius:14px; cursor:pointer;
-    background: var(--grad); color:#fff; font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:14px;
-    box-shadow: 0 8px 22px rgba(43,47,119,.45);
+    background: var(--grad-action); color:#04231a; font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:14px;
+    box-shadow: 0 8px 22px rgba(34,211,238,.28);
   }
   .tuto-cta:active{ transform: scale(.98); }
   .tuto-or{ text-align:center; font-size:11px; color:var(--chalk-dim); margin: 16px 0 9px; }
@@ -1725,6 +1732,7 @@ const FLAG_DATA = {
   NZ:{type:'ensign', c:["#00247D", "#012169", "#FFFFFF"]},
   SM:{type:'h2', c:["#FFFFFF", "#5EB6E4"]},
   GT:{type:'v3', c:["#4997D0", "#FFFFFF", "#4997D0"]},
+  SV:{type:'h3', c:["#0F47AF", "#FFFFFF", "#0F47AF"]},
   TH:{type:'h3big', c:["#A51931", "#2D2A4A", "#A51931"]},
   TT:{type:'diag', c:["#CE1126", "#FFFFFF", "#000000"]},
   HN:{type:'h3', c:["#0073CF", "#FFFFFF", "#0073CF"]},
@@ -2658,8 +2666,8 @@ function updateApiWaitNotice(){
   if(userWaiting && wait > 1500){
     const mine = apiQueue.sent.length >= 12; // c'est nous qui avons beaucoup demandé
     const txt = mine
-      ? `Beaucoup de demandes · reprise dans ${Math.ceil(wait/1000)} s`
-      : `L'API limite l'accès · nouvel essai dans ${Math.ceil(wait/1000)} s`;
+      ? `Trop de demandes, reprise dans ${Math.ceil(wait/1000)} s`
+      : `Service saturé, nouvel essai dans ${Math.ceil(wait/1000)} s`;
     el.innerHTML = `<span class="awn-spin"></span>${txt}`;
     el.hidden = false;
   } else el.hidden = true;
@@ -2747,7 +2755,7 @@ const NATIONALITY_MAP = {
   "Egypt":{code:'EGY',iso:'EG'},
   "Costa Rica":{code:'CRC',iso:'CR'},
   "Australia":{code:'AUS',iso:'AU'},
-  "El Salvador":{code:'SLV',iso:'GT'},
+  "El Salvador":{code:'SLV',iso:'SV'},
   "Burkina Faso":{code:'BFA',iso:'BF'},
   "Indonesia":{code:'IDN',iso:'ID'},
   "Iraq":{code:'IRQ',iso:'IQ'},
@@ -3103,7 +3111,8 @@ const NATIONALITY_FR = {
 function nationFromApiName(name){
   const hit = NATIONALITY_MAP[name];
   if(hit) return {name: NATIONALITY_FR[name] || name, code:hit.code, iso:hit.iso};
-  return {name: name || 'Inconnue', code:'INT', iso:'UN'}; // pas de drapeau si nationalité non répertoriée
+  // Pays non répertorié : nom tel quel, code tiré du nom — pas « INT », qui ne veut rien dire.
+  return {name: name || 'Inconnue', code: name ? name.replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase() || 'INT' : 'INT', iso:'UN'};
 }
 function posFromApi(apiPos){
   const p = (apiPos||'').toLowerCase();
@@ -3259,13 +3268,14 @@ function extractSeasonStats(entry, noSplit){
       const cid = st.league && st.league.id;
       if(cid == null) continue;
       const cle = String(cid);
-      if(!parComp[cle]) parComp[cle] = { nom: (st.league && st.league.name) || '', lignes: [] };
+      if(!parComp[cle]) parComp[cle] = { nom: (st.league && st.league.name) || '', pays: (st.league && st.league.country) || '', lignes: [] };
       parComp[cle].lignes.push(st);
     }
     const comps = {};
     for(const cle of Object.keys(parComp)){
       const bloc = extractSeasonStats({...entry, statistics: parComp[cle].lignes}, true);
       bloc.compNom = parComp[cle].nom;
+      bloc.compPays = parComp[cle].pays;
       comps[cle] = bloc;
     }
     base.split = {
@@ -3491,7 +3501,15 @@ function writeSeasonCache(apiId, season, entry){
 function pruneSeasonCache(){
   try{
     const keys = Object.keys(localStorage).filter(k=>k.startsWith(SEASON_CACHE_PREFIX));
-    keys.sort((a,b)=>{ try{ return JSON.parse(localStorage.getItem(a)).t - JSON.parse(localStorage.getItem(b)).t; }catch(e){ return 0; } });
+    // Un seul passage de lecture : le tri relisait et analysait chaque entrée à
+    // chaque comparaison — 274 ms de gel pour cinq cents clés.
+    const dates = new Map();
+    for(const k of keys){
+      let t = 0;
+      try{ const m = /"t":(\d+)/.exec(localStorage.getItem(k) || ''); t = m ? Number(m[1]) : 0; }catch(e){}
+      dates.set(k, t);
+    }
+    keys.sort((a,b)=> dates.get(a) - dates.get(b));
     keys.slice(0, Math.ceil(keys.length/2)).forEach(k=>localStorage.removeItem(k));
   }catch(e){}
 }
@@ -3680,6 +3698,12 @@ const carrieresEnCours = new Map();      // idJoueur -> promesse en vol
 function chargerCarriereComplete(apiId){
   if(carrieresCompletes.has(apiId)) return Promise.resolve(carrieresCompletes.get(apiId));
   if(carrieresEnCours.has(apiId)) return carrieresEnCours.get(apiId);
+  /* L'index sait quels joueurs ont une carrière complète en ligne : ceux dont
+   * le compte de matchs est non nul (vérifié : 5 000 sur 5 000). Pour les
+   * 50 000 autres, demander full/<id>.json valait un 404 systématique, un
+   * aller-retour perdu avant chaque sélection. */
+  const entree = PLAYER_INDEX.loaded ? PLAYER_INDEX.players.find(e => e.i === apiId) : null;
+  if(entree && !entree.m){ carrieresCompletes.set(apiId, null); return Promise.resolve(null); }
   const promesse = fetch(`${REAL_DATA_CONFIG.fullBase}/${apiId}.json`)
     .then(r => r.ok ? r.json() : null)
     .then(fiche => {
@@ -4567,8 +4591,12 @@ function correspondanceFranche(liste, q){
   if(!qw.length) return false;
   const mots = normalizeSearch(liste[0].name || '').split(/[\s\-'.]+/).filter(Boolean);
   if(!qw.every(x => mots.some(w => w.startsWith(x)))) return false;
-  // Un seul mot tapé : on n'est sûr que s'il est long et désigne un mot entier du nom.
-  return qw.length >= 2 || (qw[0].length >= 5 && mots.some(w => w === qw[0]));
+  // Un seul mot tapé : on est sûr s'il désigne un mot entier du nom (5 lettres),
+  // ou dès 4 lettres quand il ouvre un mot d'un joueur à carrière connue —
+  // « Mbap » n'a pas besoin de l'API pour trouver Mbappé.
+  if(qw.length >= 2) return true;
+  if(qw[0].length >= 5 && mots.some(w => w === qw[0])) return true;
+  return qw[0].length >= 4 && (liste[0].matchsIndex > 0 || liste[0].estLegende) && mots.some(w => w.startsWith(qw[0]));
 }
 function searchLocalIndex(q, limit=20){
   if(!PLAYER_INDEX.loaded) return [];
@@ -4670,7 +4698,21 @@ function toStoredLight(p){
 function fromStoredLight(x){
   return { ...x, preferredFoot:null, caps:0, intGoals:0, titresNationaux:0, titresContinentaux:0, career:[], statsBySeason:{}, needsStats:true };
 }
-function readQCache(){ try{ return JSON.parse(localStorage.getItem(QCACHE_KEY) || '{}'); }catch(e){ return {}; } }
+/* Le cache des recherches est lu une fois et gardé en mémoire : le relire
+ * depuis localStorage à chaque frappe, c'était quatre JSON.parse de 575 Ko
+ * — 20 à 35 ms de blocage par lettre une fois le cache plein. L'écriture
+ * part en différé, hors du chemin de la frappe. */
+let _qcache = null, _qcacheEcriture = null;
+function readQCache(){
+  if(_qcache) return _qcache;
+  try{ _qcache = JSON.parse(localStorage.getItem(QCACHE_KEY) || '{}'); }catch(e){ _qcache = {}; }
+  return _qcache;
+}
+function ecrireQCachePlusTard(){
+  if(_qcacheEcriture) return;
+  const ecrire = ()=>{ _qcacheEcriture = null; try{ localStorage.setItem(QCACHE_KEY, JSON.stringify(_qcache || {})); }catch(e){} };
+  _qcacheEcriture = window.requestIdleCallback ? requestIdleCallback(ecrire, { timeout: 2000 }) : setTimeout(ecrire, 500);
+}
 function getCachedSearch(q){
   const c = readQCache()[q];
   if(!c || (Date.now()-c.t) > QCACHE_TTL) return null;
@@ -4705,7 +4747,7 @@ function setCachedSearch(q, list){
     c[q] = { t: now, list: list.map(toStoredLight), cut: !!list._cut };
     const keys = Object.keys(c);
     if(keys.length > QCACHE_MAX) keys.sort((a,b)=>c[a].t-c[b].t).slice(0, keys.length-QCACHE_MAX).forEach(k=>delete c[k]);
-    localStorage.setItem(QCACHE_KEY, JSON.stringify(c));
+    ecrireQCachePlusTard();
   }catch(e){}
 }
 
@@ -5191,6 +5233,54 @@ const CONFED_FR = { 'World':'International', 'Europe':'Europe', 'South-America':
   'South America':'Amérique du Sud', 'North-America':'Amérique du Nord',
   'North America':'Amérique du Nord', 'Africa':'Afrique', 'Asia':'Asie',
   'Oceania':'Océanie', 'Concacaf':'CONCACAF' };
+/* Les noms de compétitions arrivent en anglais de l'API. Les plus courants
+ * ont un nom français que tout le monde connaît ; les autres restent tels
+ * quels plutôt que mal traduits. Le pays lève l'ambiguïté quand deux pays
+ * nomment leur championnat pareil : « Bundesliga (Autriche) ». */
+const COMPETITIONS_FR = [
+  [/^friendlies( clubs)?$/i, 'Amicaux'],
+  [/^world cup - qualification/i, 'Qualifications Coupe du monde'],
+  [/^world cup - u20$/i, 'Coupe du monde U20'],
+  [/^world cup - u17$/i, 'Coupe du monde U17'],
+  [/^(fifa )?world cup$/i, 'Coupe du monde'],
+  [/^fifa club world cup$/i, 'Coupe du monde des clubs'],
+  [/^fifa intercontinental cup$/i, 'Coupe intercontinentale'],
+  [/^euro championship - qualification/i, "Qualifications Euro"],
+  [/^euro championship$/i, 'Euro'],
+  [/^uefa u(\d+) championship$/i, 'Euro U$1'],
+  [/^uefa champions league$/i, 'Ligue des champions'],
+  [/^uefa europa league$/i, 'Ligue Europa'],
+  [/^uefa europa conference league$/i, 'Ligue Conférence'],
+  [/^uefa nations league$/i, 'Ligue des nations'],
+  [/^uefa super cup$/i, "Supercoupe d'Europe"],
+  [/^copa libertadores$/i, 'Copa Libertadores'],
+  [/^africa cup of nations( - qualification)?$/i, (m)=> m[1] ? 'Qualifications CAN' : "Coupe d'Afrique des nations"],
+  [/^copa del rey$/i, 'Coupe du Roi'],
+  [/^dfb pokal$/i, "Coupe d'Allemagne"],
+  [/^coppa italia$/i, "Coupe d'Italie"],
+  [/^league cup$/i, 'Coupe de la Ligue'],
+  [/^la liga$/i, 'Liga'],
+  [/^super cup$/i, 'Supercoupe'],
+  [/^community shield$/i, 'Community Shield'],
+  [/^national 2 - group [a-d]$/i, 'National 2'],
+  [/^1\. division$/i, 'Deuxième division'],
+  [/^cup$/i, 'Coupe nationale'],
+];
+function nomCompetitionFr(nom, pays){
+  const brut = String(nom || '');
+  let fr = brut;
+  for(const [re, rempl] of COMPETITIONS_FR){
+    const m = brut.match(re);
+    if(m){ fr = typeof rempl === 'function' ? rempl(m) : brut.replace(re, rempl); break; }
+  }
+  // « Cup », « Super Cup », « Bundesliga » existent dans plusieurs pays.
+  const generique = /^(coupe nationale|supercoupe|bundesliga|primera division|premier league|first division|deuxième division|coupe de la ligue)$/i.test(fr);
+  if(generique && pays && !INTL_COUNTRY_RE.test(pays)){
+    const pf = paysFr(pays);
+    if(pf && !/england/i.test(pays)) fr += ` (${pf})`;
+  }
+  return fr;
+}
 function paysFr(nom){
   if(!nom) return '';
   return CONFED_FR[nom] || NATIONALITY_FR[nom] || nom;
@@ -5368,6 +5458,7 @@ let browseDetailId = null;
 /* ---------------- Render everything: player columns with stats/trophies beneath ---------------- */
 function resetComparison(){
   slots = [null,null]; activeTab = 'stats'; compareBasis = 'current'; compareMode = 'shown'; teamScope = 'club'; compareAgeValue = null; compareSeasonValue = null;
+  compactView = false; periodeChoisie = false;   // oubliés jusqu'ici : en vue compacte, « Nouveau duel » laissait un écran sans cartes
   renderAll();
 }
 function getActiveStatsList(filled){
@@ -5572,13 +5663,17 @@ function renderAll(){
       // Une légende dont le découpage ne couvre pas toute la carrière — Zidane,
       // dont les quatre saisons à Cannes ne sont ventilées nulle part — sous-estime
       // forcément les cumuls. Le dire vaut mieux que de laisser croire au chiffre.
-      const tronques = filled.filter(p => p.estLegende && p.saisonsCompletes === false
-                                       && compareBasis !== 'career');
+      // …et seulement quand on cumule : sur une saison précise, rien n'est ignoré.
+      const cumule = compareBasis === 'ageCumul' || compareBasis === 'seasonCumul';
+      const tronques = filled.filter(p => p.estLegende && p.saisonsCompletes === false && cumule);
       const bouts = [];
-      if(manquantes) bouts.push(`À cette époque, on ne relevait que les matchs et les buts.`);
+      if(manquantes) bouts.push(`Pour cette époque, seuls les matchs et les buts sont connus.`);
       for(const p of tronques){
-        const quoi = p.saisonsNote ? p.saisonsNote.replace(/\s*non ventilé.*$/i, '') : 'une partie de sa carrière';
-        bouts.push(`Aucune source ne ventile ${escapeHtml(quoi)} par saison : ce cumul les ignore.`);
+        const brut = p.saisonsNote ? p.saisonsNote.replace(/\s*non ventilé.*$/i, '') : '';
+        const m = brut.match(/^(.+?)\s*\((\d+) matchs?, (\d+) buts?\)$/i);
+        bouts.push(m
+          ? `Les ${m[2]} matchs de ${escapeHtml(shortName(p))} à ${escapeHtml(m[1])} (${m[3]} buts) ne sont pas comptés : aucun détail par saison.`
+          : `Une partie de la carrière de ${escapeHtml(shortName(p))} n'est pas détaillée par saison et n'entre pas dans ce cumul.`);
       }
       if(bouts.length) avis = `<div class="duel-avis">${bouts.join(' ')}</div>`;
     }
@@ -5678,7 +5773,7 @@ function renderAll(){
       ${activeTab==='trophies' && filled.length>=2 && filled.some(p=>p.estLegende) ? `
       <div class="palmares-vide">Le palmarès des légendes n'est pas encore renseigné : seules leurs sélections et leurs buts en équipe nationale sont connus.</div>` : ''}
       ${activeTab==='trophies' && filled.length>=2 && palmaresEnEchec(filled) ? `<div class="palmares-vide">Le palmarès n'a pas pu être chargé pour le moment. <button type="button" class="lien-inline" id="palmaresRetry">Réessayer</button></div>` : ''}
-      ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs de l'équipe nationale A trouvés dans la base API-Football (amicaux compris), parfois incomplet pour les anciennes saisons. Le tableau ne compte que les titres gagnés : ni les places de finaliste, ni les tournois amicaux de pré-saison. « — » = rien dans la base.</div>` : ''}
+      ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs en équipe nationale A, amicaux compris ; peut être incomplet avant 2010. Seuls les titres gagnés comptent — ni finales perdues, ni tournois amicaux. «&nbsp;—&nbsp;»&nbsp;: donnée absente.</div>` : ''}
       ${activeTab==='stats' && filled.length>=2 && compareBasis!=='nation' && !compactView && !duelAvecLegende(filled) ? `
       <div class="radar-panel">
         <div class="browse-section-label" style="text-align:center;">Profil d'attributs${compareBasis==='age' ? ` — à ${compareAgeValue} ans` : compareBasis==='ageCumul' ? ` — cumul jusqu'à ${compareAgeValue} ans` : compareBasis==='seasonCumul' ? ` — cumul jusqu'à ${seasonLabel(compareSeasonValue)}` : compareBasis==='season' ? ` — saison ${seasonLabel(compareSeasonValue)}` : compareBasis==='career' ? ' — carrière' : ''}</div>
@@ -5730,7 +5825,7 @@ function renderAll(){
       if(mode==='shown' || mode==='career'){ compareMode = mode; renderAll(); return; }
       if(mode==='age'){
         const list = realMode ? ageCumulOptions : ageOptions;
-        openValueSheet('À quel âge ?', realMode ? 'On additionne tout ce que chacun avait fait jusqu\'à cet âge.' : 'Estimation des statistiques à cet âge.',
+        openValueSheet('À quel âge ?', realMode ? 'Cumul de toutes leurs saisons jusqu\'à cet âge.' : 'Estimation des statistiques à cet âge.',
           list.map(a=>({value:a, label:`${a} ans`})), compareMode==='age' ? compareAgeValue : null,
           v=>{ compareMode='age'; compareAgeValue=v; renderAll(); });
       }
@@ -5738,11 +5833,11 @@ function renderAll(){
   });
   const scopeChip = document.getElementById('scopeChip');
   if(scopeChip) scopeChip.addEventListener('click', ()=>{
+    const comps = competitionsDisponibles();
     openValueSheet('Quels matchs compter ?', 'Les matchs amicaux ne sont jamais mélangés aux matchs officiels.',
       [{value:'club', label:'Club seulement', meta:'Matchs officiels · par défaut'},{value:'all', label:'Club + sélection', meta:'Coupe du monde, Euro… comptés dans la saison qui suit'},{value:'nation', label:'Sélection seulement', meta:'Matchs officiels'},{value:'friendly', label:'Amicaux de club', meta:'Les amicaux en sélection comptent comme officiels'}]
-        // Pas de mention à côté du nom : « Cette compétition seulement » se répétait
-        // sur chaque ligne sans rien apprendre, le titre de la feuille le dit déjà.
-        .concat(competitionsDisponibles().map(c => ({ value:'comp:'+c[0], label:c[1] }))), teamScope,
+        .concat(comps.length ? [{ entete: true, label: 'Une seule compétition' }] : [])
+        .concat(comps.map(c => ({ value:'comp:'+c[0], label:c[1] }))), teamScope,
       v=>{ teamScope=v; renderAll(); });
   });
   content.querySelectorAll('.col-head.empty').forEach(el=>{
@@ -5822,27 +5917,41 @@ function compareTutorialHtml(filled, isDemo){
       art: `<div class="tart-rows"><i></i><i class="win"></i><i class="win"></i><i></i></div>` },
     { title: 'Changez d\'époque', text: 'Même saison, au même âge ou toute la carrière : un bouton suffit.',
       art: `<div class="tart-chips"><span>À 23 ans</span><span class="on">Carrière</span></div>` },
-    { title: 'Partagez le verdict', text: 'Onglet Générer : une image prête pour vos stories.',
+    { title: 'Partagez le verdict', text: 'Onglet Partager : une image prête pour vos stories.',
       art: `<div class="tart-story"><i></i><i class="w"></i><i></i><em>↗</em></div>` }
   ];
+  /* L'état vide ne répète plus trois fois la même invitation. Le titre
+   * « Qui est le meilleur ? » vient d'être lu sur l'accueil ; les deux cartes
+   * vides disent déjà « Joueur 1 », « Joueur 2 ». Reste : un bouton, les duels
+   * tout prêts, et le mode d'emploi — déplié à la première visite seulement,
+   * replié derrière un lien ensuite. */
+  let dejaVu = false;
+  try{ dejaVu = localStorage.getItem('duelio_tuto_vu') === '1'; }catch(e){}
+  const ouvert = tutoDeplie || !dejaVu;
   return `
     <section class="tuto ${anim}" aria-label="Comment ça marche">
-      <h3 class="tuto-title">Qui est le meilleur ?</h3>
-      <p class="tuto-sub">Mettez deux joueurs face à face : les chiffres tranchent le débat.</p>
+      ${n===0 ? `<p class="tuto-sub">Deux joueurs face à face, et les chiffres tranchent.</p>` : `<p class="tuto-sub">Il manque un adversaire.</p>`}
       <button class="tuto-cta" id="tutoCta" type="button" data-slot="${nextIdx}">${n===0 ? 'Choisir le joueur 1' : `Choisir le joueur ${nextIdx+1}`}</button>
       ${!isDemo && n===0 ? `
-      <div class="tuto-or">ou essayez un duel tout prêt</div>
+      <div class="tuto-or">Duels à essayer</div>
       <div class="duel-chips tuto-duels">
         ${SUGGESTED_DUELS.slice(0,4).map((d,i)=>`<button class="duel-chip" type="button" data-tduel="${i}" ${duelLoading ? 'disabled' : ''}>${d.a.label} <span class="vs">VS</span> ${d.b.label}</button>`).join('')}
       </div>
       <div class="tuto-status ${tutoStatus.err ? 'error' : ''}" id="tutoStatus">${escapeHtml(tutoStatus.msg)}</div>` : ''}
+      ${ouvert ? `
       <div class="tuto-kicker tuto-kicker-steps">Comment ça marche</div>
-      ${tutoStepsHtml(steps.map((st,i)=>({...st, current: i===0})))}
+      ${tutoStepsHtml(steps.map((st,i)=>({...st, current: i===0})))}`
+      : `<button type="button" class="lien-inline tuto-lien" id="tutoOuvrir">Comment ça marche ?</button>`}
     </section>`;
 }
+let tutoDeplie = false;
 function wireCompareTutorial(root){
   const cta = root.querySelector('#tutoCta');
   if(cta) cta.addEventListener('click', ()=> openPicker(parseInt(cta.dataset.slot,10) || 0));
+  const ouvrir = root.querySelector('#tutoOuvrir');
+  if(ouvrir) ouvrir.addEventListener('click', ()=>{ tutoDeplie = true; renderAll(); });
+  // Vu une fois, le mode d'emploi se replie aux visites suivantes.
+  if(root.querySelector('.tuto-kicker-steps')){ try{ localStorage.setItem('duelio_tuto_vu', '1'); }catch(e){} }
   const chips = root.querySelectorAll('[data-tduel]');
   chips.forEach(chip=>{
     chip.addEventListener('click', ()=>{
@@ -5948,7 +6057,7 @@ function openValueSheet(title, sub, items, selected, onPick){
   document.getElementById('valueSheetTitle').textContent = title;
   document.getElementById('valueSheetSub').textContent = sub || '';
   const list = document.getElementById('valueSheetList');
-  list.innerHTML = items.map(it=>`
+  list.innerHTML = items.map(it=> it.entete ? `<div class="list-section-title">${escapeHtml(it.label)}</div>` : `
     <button class="season-row ${String(it.value)===String(selected)?'current':''}" type="button" data-value="${it.value}">
       <span class="yr" style="min-width:0">${escapeHtml(it.label)}</span>
       <span class="meta"><span class="nums">${it.meta||''}</span></span>
@@ -6100,19 +6209,22 @@ function renderSeasonSheet(){
   const p = seasonSheetPlayer; if(!p) return;
   const list = document.getElementById('seasonSheetList');
   const seasons = (p.seasonsAvailable||[]).slice().sort((a,b)=>b-a);
-  document.getElementById('seasonSheetTitle').innerHTML = `Saison de <b>${escapeHtml(shortName(p))}</b>`;
+  document.getElementById('seasonSheetTitle').innerHTML = `Saisons de <b>${escapeHtml(shortName(p))}</b>`;
   const loadedCount = Object.keys(p.statsBySeason||{}).length;
   const pr = careerProgress[p.apiId];
+  const toutCharge = p.careerLoaded || loadedCount >= seasons.length;
+  /* Le sous-titre s'adresse à un fan, pas à celui qui a construit la base :
+   * ni « saisies à la main », ni « non ventilé », ni « chargée à la demande ». */
+  const noteLegende = p.saisonsCompletes === false && p.saisonsNote
+    ? ' ' + p.saisonsNote.replace(/\s*non ventilé.*$/i, '').replace(/^(.+?)\s*\((\d+) matchs?, (\d+) buts?\)$/i, 'Les $2 matchs à $1 ($3 buts) ne sont pas détaillés par saison.')
+    : '';
   document.getElementById('seasonSheetSub').textContent = p.estLegende
-    ? `${seasons.length} saison${seasons.length>1?'s':''}, saisies à la main et toutes compétitions`
-      + (p.saisonsCompletes === false
-         ? `. Attention : le découpage ne couvre pas toute sa carrière${p.saisonsNote ? ' — ' + p.saisonsNote : ''}.`
-         : `.`)
+    ? `${seasons.length} saison${seasons.length>1?'s':''}, toutes compétitions.${noteLegende}`
     : pr
     ? `Chargement de la carrière : ${pr.done}/${pr.total} saisons…`
-    : (p.careerLoaded ? `${seasons.length} saison${seasons.length>1?'s':''} dans la base API-Football${p.careerSpan ? ' ('+p.careerSpan[0]+'-'+p.careerSpan[1]+')' : ''}. La meilleure : buts + passes décisives, ou matchs joués pour un défenseur ou un gardien.`
-                      : `${loadedCount} saison${loadedCount>1?'s':''} chargée${loadedCount>1?'s':''} sur ${seasons.length} dans la base. Chaque saison choisie est chargée à la demande.`);
-  list.innerHTML = (!p.careerLoaded && !pr ? `<button class="sheet-action" id="loadCareerBtn" type="button">Charger toute la carrière et trouver sa meilleure saison</button>` : '')
+    : (toutCharge ? `${seasons.length} saison${seasons.length>1?'s':''} disponible${seasons.length>1?'s':''}${p.careerSpan ? ' ('+p.careerSpan[0]+'-'+p.careerSpan[1]+')' : ''}.`
+                  : `${seasons.length} saison${seasons.length>1?'s':''} disponible${seasons.length>1?'s':''}. Touchez-en une pour la charger.`);
+  list.innerHTML = (!toutCharge && !pr ? `<button class="sheet-action" id="loadCareerBtn" type="button">Trouver sa meilleure saison</button>` : '')
     + seasons.map(sn=>seasonRowHtml(p, sn)).join('');
   const lc = document.getElementById('loadCareerBtn');
   if(lc) lc.addEventListener('click', ()=>{
@@ -6311,7 +6423,11 @@ function competitionsDisponibles(){
         if(!comp) continue;
         for(const cle of Object.keys(comp)){
           const nom = comp[cle] && comp[cle].compNom;
-          if(nom && !vues.has(cle)) vues.set(cle, nom);
+          if(!nom || vues.has(cle)) continue;
+          // Les amicaux ont leur propre périmètre ; les catégories de jeunes et les
+          // qualifications n'ont rien à faire dans une liste de compétitions à comparer.
+          if(/friendl|\bu-?\d{2}\b|qualification|youth|reserve/i.test(nom)) continue;
+          vues.set(cle, nomCompetitionFr(nom, comp[cle].compPays));
         }
       }
     }
@@ -6321,9 +6437,9 @@ function competitionsDisponibles(){
 
 // Libellé affiché sur la pastille du menu
 function scopeLabel(){
-  if(teamScope === 'club') return 'Matchs en club';
-  if(teamScope === 'nation') return 'Sélection seule';
-  if(teamScope === 'friendly') return 'Amicaux seulement';
+  if(teamScope === 'club') return 'Club seulement';
+  if(teamScope === 'nation') return 'Sélection seulement';
+  if(teamScope === 'friendly') return 'Amicaux de club';
   if(typeof teamScope === 'string' && teamScope.indexOf('comp:') === 0){
     const trouve = competitionsDisponibles().find(c => c[0] === teamScope.slice(5));
     return trouve ? trouve[1] : 'Une compétition';
@@ -6361,8 +6477,16 @@ function getStatSource(fp){
         ? (fp.birthYear ? fp.birthYear + compareAgeValue : null)
         : compareSeasonValue;
       if(limite != null){
-        const prises = Object.keys(parSaison).map(Number)
-          .filter(sn => sn <= limite).sort((x, y) => x - y);
+        const toutes = Object.keys(parSaison).map(Number).sort((x, y) => x - y);
+        const prises = toutes.filter(sn => sn <= limite);
+        /* Un cumul qui couvre toutes ses saisons, c'est sa carrière : on rend
+         * alors le total validé — 681 matchs pour Zidane, Cannes compris — et
+         * non la somme des saisons détaillées (613), qui ignore ce qu'aucune
+         * source ne ventile. Sans ce garde, le même joueur totalisait 613 face
+         * à un adversaire et 681 face à un autre. */
+        if(prises.length && prises.length === toutes.length){
+          return { src: fp.statsLegende, legende: true, career: true };
+        }
         if(prises.length){
           const cumul = statsPourLegende({
             m: prises.reduce((t, sn) => t + (parSaison[sn].appearances || 0), 0),
@@ -6511,6 +6635,17 @@ function careerProgressHtml(){
 function playerContextLabel(p){
   const info = getStatSource(p);
   if(info.estimate) return `À ${compareAgeValue} ans (estimation)`;
+  if(p.estLegende){
+    // Même ligne sous les deux joueurs : une période vide d'un côté se lisait
+    // comme une donnée manquante.
+    const carriere = p.span ? `Carrière ${p.span[0]}-${p.span[1]}` : 'Carrière';
+    if(compareBasis==='career' || info.career) return carriere;
+    if(compareBasis==='ageCumul') return `Cumul jusqu'à ${compareAgeValue} ans`;
+    // Un cumul qui dépasse sa dernière saison, c'est sa carrière entière.
+    if(compareBasis==='seasonCumul') return (p.span && compareSeasonValue >= p.span[1]) ? carriere : `Cumul jusqu'à ${seasonLabel(compareSeasonValue)}`;
+    if(info.season) return `Saison ${seasonLabel(info.season)}`;
+    return '';
+  }
   if((compareBasis==='ageCumul' || compareBasis==='seasonCumul') && !p.apiId) return '';
   if(compareBasis==='career' && p.apiId) return p.careerSpan ? `Carrière ${p.careerSpan[0]}-${p.careerSpan[1]}` : 'Carrière';
   if(compareBasis==='age' && p.apiId) return `À ${compareAgeValue} ans · saison ${seasonLabel(info.season)}`;
@@ -6568,9 +6703,15 @@ async function dessinerImageDePartage(btn){
   const W = 1080, H = shareFormat==='story' ? 1920 : 1080;
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  const ctxFond = canvas.getContext('2d');
+  ctxFond.imageSmoothingEnabled = true;
+  ctxFond.imageSmoothingQuality = 'high';
+  /* Le fond se dessine sur la toile finale ; le contenu, sur une toile
+   * transparente de même taille, pour pouvoir le recentrer verticalement une
+   * fois sa hauteur connue — en story, il flottait dans le tiers supérieur. */
+  const calque = document.createElement('canvas');
+  calque.width = W; calque.height = H;
+  let ctx = ctxFond;
 
   const S = (W/440) * (shareFormat==='story' ? 1 : 0.56); // maquette de 440px de large, compressée en carré
 
@@ -6618,23 +6759,20 @@ async function dessinerImageDePartage(btn){
   vign.addColorStop(0,'rgba(0,0,0,0)'); vign.addColorStop(1,'rgba(2,6,12,.45)');
   ctx.fillStyle = vign; ctx.fillRect(0,0,W,H);
 
+  // À partir d'ici, tout va sur le calque de contenu.
+  ctx = calque.getContext('2d');
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   const padTop = H*(shareFormat==='story' ? 0.025 : 0.014);
   let y = padTop + 12*S;
 
-  // --- Repère coin haut-droit : petite barre dégradée + COMPARE / ANALYSE / DÉCIDE ---
+  // --- Repère coin haut-droit : la petite barre dégradée, seule. Le triptyque
+  // anglais qui l'accompagnait (COMPARE / ANALYSE / DÉCIDE) n'apprenait rien. ---
   const cornerRightX = W - 24*S;
   const barW = 44*S, barH = 3*S;
   const barGrad = ctx.createLinearGradient(cornerRightX-barW, 0, cornerRightX, 0);
   barGrad.addColorStop(0,'#2fe08a'); barGrad.addColorStop(1,'#4ad2f0');
   roundRect(ctx, cornerRightX-barW, y, barW, barH, barH/2);
   ctx.fillStyle = barGrad; ctx.fill();
-  ctx.font = `500 ${11*S}px 'Plus Jakarta Sans', sans-serif`;
-  ctx.fillStyle = '#8fa6c0'; ctx.textAlign = 'right'; ctx.textBaseline = 'alphabetic';
-  let cornerY = y + barH + 20*S;
-  ['C O M P A R E','A N A L Y S E','D É C I D E'].forEach(w=>{
-    ctx.fillText(w, cornerRightX, cornerY);
-    cornerY += 18*S;
-  });
   ctx.textAlign = 'left';
 
   // --- Logo : les deux ballons qui se chevauchent (vraie identité de marque) ---
@@ -6660,7 +6798,7 @@ async function dessinerImageDePartage(btn){
   ctx.font = `600 ${8*S}px 'Plus Jakarta Sans', sans-serif`;
   ctx.fillStyle = tagGrad;
   y += 12*S;
-  ctx.fillText(teamScope==='nation' ? 'S T A T S   S É L E C T I O N' : teamScope==='friendly' ? 'M A T C H S   A M I C A U X' : 'F O O T B A L L   S T A T S', W/2, y);
+  ctx.fillText(teamScope==='nation' ? 'S T A T S   S É L E C T I O N' : teamScope==='friendly' ? 'M A T C H S   A M I C A U X' : 'S T A T S   F O O T B A L L', W/2, y);
   ctx.textAlign = 'left';
 
   // --- Cartes joueurs (grille) + badge VS ---
@@ -6744,7 +6882,10 @@ async function dessinerImageDePartage(btn){
 
   // --- Statistiques : pilules blanches (valeur seule) de chaque côté, nom de la stat écrit une seule fois au centre ---
   const statsTop = cardTop + cardH + 18*S;
-  const pillH = (n===2 ? 44 : 40)*S, pillGap = (n===2 ? 12 : 6)*S;
+  // En story, le bloc n'occupait que les deux tiers supérieurs : des pilules
+  // plus hautes, et le tout est recentré verticalement à la fin.
+  const story = shareFormat==='story';
+  const pillH = (n===2 ? (story ? 60 : 44) : (story ? 52 : 40))*S, pillGap = (n===2 ? (story ? 18 : 12) : (story ? 10 : 6))*S;
   const labelBand = n===2 ? 0 : 26*S; // à 3-4 joueurs, le nom de la stat est écrit au-dessus de la rangée
   const rowPitch = pillH + pillGap + labelBand;
   const statsH = list.length*rowPitch - pillGap + 4*S;
@@ -6862,9 +7003,8 @@ async function dessinerImageDePartage(btn){
     const total = gagneesA + gagneesB;
     const score = Math.max(gagneesA, gagneesB);
     const phrase = gagneesA === gagneesB
-      ? `Égalité : ${gagneesA} statistique${gagneesA > 1 ? 's' : ''} chacun`
-      : `${shortName(gagneesA > gagneesB ? filled[0] : filled[1])} l'emporte `
-        + `sur ${score} statistique${score > 1 ? 's' : ''} sur ${total}`;
+      ? `Égalité : ${gagneesA} stat${gagneesA > 1 ? 's' : ''} partout`
+      : `${shortName(gagneesA > gagneesB ? filled[0] : filled[1])} gagne ${score} stat${score > 1 ? 's' : ''} sur ${total}`;
     ctx.font = `800 ${15.5*S}px 'Plus Jakarta Sans', sans-serif`;
     ctx.fillStyle = '#2FE88A'; ctx.textAlign = 'center';
     ctx.fillText(phrase, W/2, marqueY - 22*S);
@@ -6875,6 +7015,11 @@ async function dessinerImageDePartage(btn){
   ctx.fillStyle = '#A9CFC5'; ctx.textAlign='center';
   ctx.fillText('D U E L I O', W/2, marqueY);   // la marque seule : duelio.app ne répond pas encore, et l'adresse voyage dans le texte du partage
   ctx.textAlign = 'left';
+
+  // Composition : en story, le contenu est centré verticalement.
+  const basContenu = marqueY + 10*S;
+  const decalage = shareFormat==='story' ? Math.max(0, Math.round((H - basContenu - padTop) / 2)) : 0;
+  ctxFond.drawImage(calque, 0, decalage);
 
   canvas.toBlob((blob)=>{
     if(!blob){
@@ -6922,6 +7067,16 @@ async function dessinerImageDePartage(btn){
 
 let pickerListePlafond = 0, browseListePlafond = 0;   // 0 = plafond par défaut ; monte à chaque « Voir plus »
 document.addEventListener('click', e=>{
+  const r = e.target.closest && e.target.closest('[data-parcours-retry]');
+  if(r){
+    const p = PLAYERS.find(x=>x.id===parseInt(r.dataset.parcoursRetry,10));
+    if(p && browseDetailId === p.id){
+      const c = document.querySelector('.timeline-h');
+      if(c) c.innerHTML = `<div class="tlh-item" style="flex:1 1 auto;"><div class="empty-state" style="padding:10px;">Chargement du parcours…</div></div>`;
+      loadRealTimelineFor(p);
+    }
+    return;
+  }
   const b = e.target.closest && e.target.closest('[data-voir-plus]');
   if(!b) return;
   if(b.dataset.voirPlus === 'picker'){ pickerListePlafond = (pickerListePlafond || LISTE_VISIBLE) + 80; renderPickerList(); }
@@ -6968,7 +7123,12 @@ document.getElementById('pickerSearch').addEventListener('input', e=>{
       renderPickerList(); // lignes fantômes
       searchProfilesByName(query).then(found=>{
         setCachedSearch(query, found);
-        if(pickerSearch !== query) return; // recherche périmée entre-temps
+        if(pickerSearch !== query){
+          // Recherche périmée : on efface quand même la ligne fantôme qu'elle
+          // avait laissée, sinon un squelette restait sous les résultats suivants.
+          if(pickerSearchInFlight === query){ pickerSearchInFlight = ''; renderPickerList(); }
+          return;
+        }
         mergeSearchResults(found, query);
         pickerSearchInFlight = '';
         setPickerStatus('');
@@ -6982,7 +7142,7 @@ document.getElementById('pickerSearch').addEventListener('input', e=>{
         // tranche d'index arrivée entre-temps a pu trouver le joueur.
         if(pickerSearch !== query || document.querySelector('.picker-item:not(.disabled)')) setPickerStatus('');
         else setPickerStatus(apiErrorMessage(err && err.message || String(err)), true);
-      }).finally(()=>{ pickerSearchInFlight = ''; });
+      }).finally(()=>{ if(pickerSearchInFlight === query) pickerSearchInFlight = ''; });
     }, 120);   // la recherche locale coûte quelques millisecondes et n'appelle plus
                // l'API quand elle trouve : rien ne justifie d'attendre 220 ms.
   }
@@ -7238,7 +7398,7 @@ function palmaresTableHtml(p){
     return `
       <div class="palmares-row${i >= PALMARES_VISIBLES ? ' enplus' : ''}" role="row">
         <div role="cell">
-          <span class="palmares-comp">${escapeHtml(t.league)}</span>
+          <span class="palmares-comp">${escapeHtml(nomCompetitionFr(t.league))}</span>
           ${t.country ? `<span class="palmares-pays">${escapeHtml(paysFr(t.country))}</span>` : ''}
         </div>
         <div class="palmares-saison" role="cell">${saison}</div>
@@ -7314,7 +7474,7 @@ function palmaresDuelHtml(filled){
   const corps = rangees.map((c, i)=>`
     <div class="palmares-row${i >= PALMARES_VISIBLES ? ' enplus' : ''}" role="row">
       <div role="cell">
-        <span class="palmares-comp">${escapeHtml(c.nom)}</span>
+        <span class="palmares-comp">${escapeHtml(nomCompetitionFr(c.nom))}</span>
         ${c.pays ? `<span class="palmares-pays">${escapeHtml(paysFr(c.pays))}</span>` : ''}
       </div>
       ${cellule(c)}
@@ -7500,19 +7660,33 @@ function libelleTransfert(type){
 
 // Charge le vrai parcours (transferts + palmarès) d'un joueur uniquement quand sa fiche est ouverte
 async function loadRealTimelineFor(p){
-  const container = document.querySelector('.timeline-h');
-  if(!container) return;
+  if(!document.querySelector('.timeline-h')) return;
+  // On ne garde PAS le conteneur en main pendant l'attente : la fiche peut être
+  // redessinée entre-temps, et l'ancien arbre resterait retenu en mémoire
+  // (mesuré : 91 fiches retenues après 20 ouvertures). On le relit après.
+  const echec = (texte)=>{
+    if(browseDetailId !== p.id) return;
+    const c = document.querySelector('.timeline-h');
+    if(c) c.innerHTML = `<div class="empty-state" style="padding:16px;">${texte} <button type="button" class="lien-inline" data-parcours-retry="${p.id}">Réessayer</button></div>`;
+    const t = document.getElementById('detailTrophies');
+    if(t && !p.trophiesLoaded) t.innerHTML = `<div class="palmares-vide">Palmarès indisponible pour le moment.</div>`;
+  };
   try{
-    const { transfers: _tr, trophies } = await fetchRealCareer(p.apiId);
+    /* La fiche est à l'écran : ses appels passent en priorité haute. En basse
+     * priorité, ils attendaient derrière les chargements de fond — jusqu'à une
+     * minute de « Chargement du parcours… » dès la quatrième fiche ouverte. */
+    const { transfers: _tr, trophies } = await fetchRealCareer(p.apiId, 'high');
     if(trophies) applyRealTrophies(p, trophies);
     if(_tr === null && trophies === null){
-      if(browseDetailId === p.id){ const c = document.querySelector('.timeline-h'); if(c) c.innerHTML = `<div class="empty-state" style="padding:16px;">Parcours momentanément indisponible (limite de l'API). Réessayez dans une minute.</div>`; }
+      echec('Parcours indisponible pour le moment.');
       return;
     }
     const transfers = _tr || [];
     const tr = document.getElementById('detailTrophies');
     if(tr && browseDetailId === p.id) tr.innerHTML = detailTrophyRowsHtml(p);
     if(browseDetailId !== p.id) return; // l'utilisateur a changé d'écran entre-temps
+    const container = document.querySelector('.timeline-h');
+    if(!container) return;
 
     /* Rang d'un transfert, sur l'encodage déjà employé par la chronologie des
      * légendes : année × 372 + mois × 31 + jour. */
@@ -7560,7 +7734,7 @@ async function loadRealTimelineFor(p){
     fitTimeline();
   }catch(err){
     console.warn('parcours :', err && err.message);
-    if(container) container.innerHTML = `<div class="empty-state" style="padding:16px;">Parcours indisponible pour le moment. Réessayez dans une minute.</div>`;
+    echec('Parcours indisponible pour le moment.');
   }
 }
 
@@ -7647,7 +7821,7 @@ function renderBrowse(){
         const rowsHtml = rows.map(r=>r.html).join('');
         const nt = (p.apiId && g.label==='Sélection nationale') ? nationTotals(p) : null;
         const note = (p.apiId && g.label==='Sélection nationale')
-          ? `<div class="radar-note" style="text-align:left; margin:4px 2px 0;">Matchs de l'équipe nationale A trouvés dans la base API-Football${nt && nt.span ? ` (${nt.span[0]} → ${nt.span[1]})` : ''}, amicaux compris. Peut être incomplet pour les anciennes saisons.</div>` : '';
+          ? `<div class="radar-note" style="text-align:left; margin:4px 2px 0;">Matchs en équipe nationale A${nt && nt.span ? ` de ${nt.span[0]} à ${nt.span[1]}` : ''}, amicaux compris. Peut être incomplet pour les saisons anciennes.</div>` : '';
         return `<div class="browse-section-label">${g.label}</div>${rowsHtml}${note}`;
       }).join('');
     const trophyRows = `<div id="detailTrophies">${detailTrophyRowsHtml(p)}</div>`;
@@ -7818,7 +7992,10 @@ function renderBrowse(){
     renderBrowseList(); // affiche les lignes fantômes
     searchProfilesByName(query).then(found=>{
       setCachedSearch(query, found);
-      if(browseSearch !== query) return; // la recherche a changé entre-temps, on ignore ce résultat périmé
+      if(browseSearch !== query){
+        if(globalSearchInFlight === query){ globalSearchInFlight = ''; if(document.getElementById('browseList')) renderBrowseList(); }
+        return;
+      }
       mergeSearchResults(found, query);
       globalSearchInFlight = '';
       if(document.getElementById('browseList')) renderBrowseList(); else renderBrowse();
@@ -7828,7 +8005,7 @@ function renderBrowse(){
       if(document.getElementById('browseList')) renderBrowseList();
       if(browseSearch !== query || document.querySelector('.browse-item')) setBrowseStatus('');
       else setBrowseStatus(apiErrorMessage(err && err.message || String(err)), true);
-    }).finally(()=>{ globalSearchInFlight = ''; });
+    }).finally(()=>{ if(globalSearchInFlight === query) globalSearchInFlight = ''; });
   }
 
   const browseInput = document.getElementById('browseSearchInput');
@@ -7902,7 +8079,11 @@ function navPushHistory(){
 }
 function updateBackBtn(){
   const btn = document.getElementById('navBackBtn'); if(!btn) return;
-  const canGoBack = navStack.some(e=>e.type==='screen') || currentScreen!=='compare';
+  // La flèche n'a de sens qu'à l'intérieur d'un écran de premier niveau — une
+  // fiche ouverte depuis la liste. Sur un onglet, elle doublait la barre
+  // d'onglets et laissait croire à une hiérarchie qui n'existe pas. Le bouton
+  // Retour d'Android continue de suivre l'historique, lui.
+  const canGoBack = currentScreen === 'browse' && browseDetailId !== null;
   btn.classList.toggle('hidden', !canGoBack);
 }
 function navigateTo(screen, detailId){
@@ -8013,9 +8194,8 @@ function applyScreen(name){
 document.getElementById('tabCompare').addEventListener('click', ()=>{
   navigateTo('compare');
 });
-document.getElementById('tabCompare').addEventListener('dblclick', ()=>{
-  resetComparison();
-});
+// Le double-clic sur l'onglet vidait le duel sans confirmation ; sur un
+// téléphone, un double-tap impatient suffisait. « Nouveau duel » est là pour ça.
 document.getElementById('tabBrowse').addEventListener('click', ()=>{
   if(currentScreen==='browse' && browseDetailId!==null) navigateTo('browse', null);
   else navigateTo('browse');
