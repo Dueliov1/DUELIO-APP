@@ -4968,14 +4968,37 @@ const SELECTION_TROPHY_RE = /world cup|euro championship|european championship|^
  * qu'à cet état — les écarter ne perd donc aucun titre. Les garder gonflait
  * chaque compte d'une unité : Haaland affichait vingt-trois titres pour douze,
  * Mbappé vingt-neuf pour vingt et un. */
-function trophiesAvecSaison(trophies){
-  return (trophies || []).filter(t => t && t.season != null && String(t.season).trim() !== '');
+/* Tournois amicaux et matchs d'exhibition. L'API les renvoie comme n'importe
+ * quel titre, et rien dans sa structure ne les distingue : il faut les nommer.
+ * Le Trofeo Joan Gamper est le match de présentation du Barça, joué chaque août
+ * contre un adversaire que le club choisit lui-même ; l'Atlantic Cup et la
+ * J.League World Challenge sont du même ordre. Les compter revenait à offrir un
+ * titre par an à qui joue dans le bon club, et faussait toute comparaison.
+ *
+ * La liste est volontairement explicite plutôt que fondée sur un préfixe : un
+ * « Trofeo ... » n'est pas toujours amical — le Trofeo de Campeones argentin
+ * est un titre officiel — et la Supercoupe, le Trophée des Champions ou le
+ * Community Shield doivent rester comptés. */
+const TROPHEE_AMICAL_RE = new RegExp([
+  'joan gamper', 'santiago bernab', 'teresa herrera', 'ramón de carranza', 'ramon de carranza',
+  'villa de gij', 'trofeo tim', 'audi cup', 'emirates cup', 'international champions cup',
+  'atlantic cup', 'world challenge', 'florida cup', 'asia trophy', 'euroamericana',
+  'amsterdam tournament', 'peace cup', 'copa de la paz', 'telekom cup',
+  'soccer champions tour', 'summer series', 'mundialito', 'friendl', 'pre-?season'
+].join('|'), 'i');
+
+/* Les titres qu'on retient : datés, et disputés pour de bon.
+ * Sur l'absence de date, voir le commentaire ci-dessus. */
+function trophiesRetenus(trophies){
+  return (trophies || []).filter(t =>
+    t && t.season != null && String(t.season).trim() !== ''
+      && !TROPHEE_AMICAL_RE.test(t.league || ''));
 }
 
 function applyRealTrophies(p, trophies){
   let nat = 0, cont = 0, sel = 0;
   const seen = new Set();
-  const liste = trophiesAvecSaison(trophies);
+  const liste = trophiesRetenus(trophies);
   p.trophiesEmpty = !liste.length; // l'API n'a aucun palmarès pour ce joueur : on affiche « — », pas 0
   liste.forEach(t=>{
     if(!t || !/winner/i.test(t.place||'')) return;
@@ -5442,7 +5465,7 @@ function renderAll(){
       ${activeTab==='trophies' && filled.length>=2 && !compactView ? `
       <div class="browse-section-label" style="margin-top:18px;">Palmarès comparé</div>
       ${palmaresDuelHtml(filled)}` : ''}
-      ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs de l'équipe nationale A trouvés dans la base API-Football (amicaux compris), parfois incomplet pour les anciennes saisons. Le tableau ne compte que les titres gagnés ; les places de finaliste n'y figurent pas. « — » = rien dans la base.</div>` : ''}
+      ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs de l'équipe nationale A trouvés dans la base API-Football (amicaux compris), parfois incomplet pour les anciennes saisons. Le tableau ne compte que les titres gagnés : ni les places de finaliste, ni les tournois amicaux de pré-saison. « — » = rien dans la base.</div>` : ''}
       ${activeTab==='stats' && filled.length>=2 && compareBasis!=='nation' && !compactView && !duelAvecLegende(filled) ? `
       <div class="radar-panel">
         <div class="browse-section-label" style="text-align:center;">Profil d'attributs${compareBasis==='age' ? ` — à ${compareAgeValue} ans` : compareBasis==='ageCumul' ? ` — cumul jusqu'à ${compareAgeValue} ans` : compareBasis==='seasonCumul' ? ` — cumul jusqu'à ${seasonLabel(compareSeasonValue)}` : compareBasis==='season' ? ` — saison ${seasonLabel(compareSeasonValue)}` : compareBasis==='career' ? ' — carrière' : ''}</div>
