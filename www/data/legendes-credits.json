@@ -39,7 +39,8 @@
       "auteur": "Міністерство молоді та спорту України",
       "licence": "CC BY 4.0",
       "type": "CC BY",
-      "page": "https://commons.wikimedia.org/wiki/File:%D0%90%D0%BD%D0%B4%D1%80%D1%96%D0%B9_%D0%A8%D0%B5%D0%B2%D1%87%D0%B5%D0%BD%D0%BA%D0%BE_2024_(cropped).png"
+      "page": "https://commons.wikimedia.org/wiki/File:%D0%90%D0%BD%D0%B4%D1%80%D1%96%D0%B9_%D0%A8%D0%B5%D0%B2%D1%87%D0%B5%D0%BD%D0%BA%D0%BE_2024_(cropped).png",
+      "aVerifier": true
     },
     "bobby-charlton": {
       "nom": "Bobby Charlton",
@@ -87,7 +88,8 @@
       "auteur": "Unknown authorUnknown author",
       "licence": "Public domain",
       "type": "domaine public",
-      "page": "https://commons.wikimedia.org/wiki/File:Argentina_celebrando_copa_(cropped).jpg"
+      "page": "https://commons.wikimedia.org/wiki/File:Argentina_celebrando_copa_(cropped).jpg",
+      "aVerifier": true
     },
     "eusebio": {
       "nom": "Eusébio",
@@ -231,15 +233,17 @@
       "auteur": "AbolfaZl0990",
       "licence": "CC BY-SA 4.0",
       "type": "CC BY-SA",
-      "page": "https://commons.wikimedia.org/wiki/File:%D8%B1%D9%88%D8%A8%D8%B1%D8%AA%D9%88_%D8%A8%D8%A7%D8%AC%D9%88_(cropped).jpg"
+      "page": "https://commons.wikimedia.org/wiki/File:%D8%B1%D9%88%D8%A8%D8%B1%D8%AA%D9%88_%D8%A8%D8%A7%D8%AC%D9%88_(cropped).jpg",
+      "aVerifier": true
     },
     "roberto-carlos": {
       "nom": "Roberto Carlos",
-      "fichier": "File:Roberto Carlos Credicard Hall (44435767951).jpg",
-      "auteur": "Teca  Lamboglia from São Paulo, Brasil",
+      "fichier": "File:LS3 1288 (53332367864) (cropped).jpg",
+      "auteur": "Web Summit",
       "licence": "CC BY 2.0",
       "type": "CC BY",
-      "page": "https://commons.wikimedia.org/wiki/File:Roberto_Carlos_Credicard_Hall_(44435767951).jpg"
+      "page": "https://commons.wikimedia.org/wiki/File:LS3_1288_(53332367864)_(cropped).jpg",
+      "aVerifier": true
     },
     "romario": {
       "nom": "Romário",
@@ -247,15 +251,16 @@
       "auteur": "Agência Senado from Brasilia, Brazil",
       "licence": "CC BY 2.0",
       "type": "CC BY",
-      "page": "https://commons.wikimedia.org/wiki/File:Senadores_da_57%C2%AA_Legislatura_(52689451805).jpg"
+      "page": "https://commons.wikimedia.org/wiki/File:Senadores_da_57%C2%AA_Legislatura_(52689451805).jpg",
+      "aVerifier": true
     },
     "ronaldinho": {
       "nom": "Ronaldinho",
-      "fichier": "File:Ensaio da Acadêmicos do Salgueiro no Sambódromo 2008 04.jpg",
-      "auteur": "Ricardo Almeida Fotógrafo",
-      "licence": "CC BY-SA 4.0",
-      "type": "CC BY-SA",
-      "page": "https://commons.wikimedia.org/wiki/File:Ensaio_da_Acad%C3%AAmicos_do_Salgueiro_no_Samb%C3%B3dromo_2008_04.jpg"
+      "fichier": "File:Ronaldinho in 2019.jpg",
+      "auteur": "Marcos Corrêa/PR",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Ronaldinho_in_2019.jpg"
     },
     "ronaldo-nazario": {
       "nom": "Ronaldo Nazário",
@@ -263,7 +268,8 @@
       "auteur": "Web Summit",
       "licence": "CC BY 2.0",
       "type": "CC BY",
-      "page": "https://commons.wikimedia.org/wiki/File:051119SMcC0014.jpg"
+      "page": "https://commons.wikimedia.org/wiki/File:051119SMcC0014.jpg",
+      "aVerifier": true
     },
     "ryan-giggs": {
       "nom": "Ryan Giggs",
