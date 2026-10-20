@@ -670,6 +670,10 @@
   .season-pick.busy{ opacity:.65; }
   .season-pick.static{ cursor:default; background:none; border-style:dashed; color: var(--chalk-dim); font-weight:700; font-size:11px; text-align:center; }
   .season-pick-err{ margin-top:4px; font-size:10px; color: var(--danger); text-align:center; line-height:1.3; }
+  /* Mention de couverture : discrète, informative, jamais alarmante. */
+  .season-note{ margin-top:3px; font-size:9.5px; color: var(--chalk-dim); text-align:center;
+                line-height:1.25; letter-spacing:.01em; cursor:help; }
+  .compare-cols.count-3 .season-note, .compare-cols.count-4 .season-note{ font-size:8.5px; }
   .compare-cols.count-3 .season-pick, .compare-cols.count-4 .season-pick{ font-size:10.5px; padding:0 6px; min-height:34px; }
   .compare-cols.count-4 .season-pick.static{ font-size:8.5px; }
   .detail-season{ width:100%; max-width:260px; margin-top:8px; }
@@ -5066,6 +5070,42 @@ document.getElementById('valueSheet').addEventListener('click', (e)=>{ if(e.targ
    En mode « Même âge » ou « Carrière », elle laisse place à une étiquette qui dit quelles saisons sont comptées. */
 const seasonPickLoading = {};  // id joueur -> saison en cours de chargement
 const seasonPickError = {};    // id joueur -> message d'erreur à afficher
+
+/* La source ne couvre pas tous les championnats aussi loin dans le passé : avant
+   2010 environ, elle ignore des compétitions entières. Les totaux de carrière des
+   joueurs concernés sont donc inférieurs à la réalité, et sans mention l'utilisateur
+   prendrait la lacune pour une erreur de l'application.
+
+   Deux signes la révèlent, et il faut les deux. L'âge seul ne suffit pas :
+   Ibrahimović figure chez nous à partir de 2002, à dix-huit ans, ce qui paraît
+   normal — mais ses années à Malmö et à l'Ajax sont absentes parce que la source
+   ne remonte pas l'Allsvenskan ni l'Eredivisie jusque-là. D'où le second critère,
+   l'époque : toute carrière qui commence avant 2010 a sa fenêtre tronquée.
+
+   La mention reste factuelle — « Données depuis telle saison » — plutôt
+   qu'une accusation d'incomplétude qu'on ne saurait pas prouver joueur par joueur.
+   Elle n'apparaît qu'en mode carrière ou cumul, là où le total affiché est en jeu. */
+const AGE_DEBUT_SUSPECT = 20;      // première saison connue à vingt ans ou plus
+const EPOQUE_COUVERTURE = 2010;    // avant cette saison, la source est lacunaire
+function premiereSaisonTardive(p){
+  if(!p || !p.apiId) return null;
+  const dispo = p.seasonsAvailable;
+  if(!dispo || !dispo.length) return null;
+  const premiere = Math.min(...dispo);
+  if(premiere < EPOQUE_COUVERTURE) return premiere;
+  if(p.birthYear && (premiere - p.birthYear) >= AGE_DEBUT_SUSPECT) return premiere;
+  return null;
+}
+function noteCouvertureHtml(p){
+  const premiere = premiereSaisonTardive(p);
+  if(premiere == null) return '';
+  const age = p.birthYear ? premiere - p.birthYear : null;
+  const raison = age != null
+    ? `${escapeHtml(p.name)} avait ${age} ans en ${premiere}.`
+    : '';
+  return `<div class="season-note" title="Nos chiffres partent de la saison ${seasonLabel(premiere)}. ${raison} La source de données ne couvre pas tous les championnats avant 2010 environ, donc un début de carrière peut manquer et les totaux être inférieurs à la réalité.">Données depuis ${seasonLabel(premiere)}</div>`;
+}
+
 function seasonPickHtml(p, opts){
   opts = opts || {};
   if(!p || !p.apiId) return '';
@@ -5073,7 +5113,7 @@ function seasonPickHtml(p, opts){
     const info = getStatSource(p);
     const txt = info.cumul ? `${seasonLabel(info.cumul.span[0])} → ${seasonLabel(info.cumul.span[1])}`
       : info.pending ? 'Chargement…' : 'Rien dans la base';
-    return `<div class="season-pick static" title="Saisons additionnées">${txt}</div>`;
+    return `<div class="season-pick static" title="Saisons additionnées">${txt}</div>${noteCouvertureHtml(p)}`;
   }
   if(p.needsStats || !p.seasonsAvailable || !p.seasonsAvailable.length) return `<div class="season-pick static">Chargement…</div>`;
   const busy = seasonPickLoading[p.id];
@@ -5088,7 +5128,7 @@ function seasonPickHtml(p, opts){
   return `<button type="button" class="season-pick ${busy ? 'busy' : ''}" data-season-pick="${p.id}"
       aria-label="Choisir la saison de ${escapeHtml(p.name)}" ${busy ? 'disabled' : ''}>
       <span class="sp-txt">${shown}</span><span class="sp-arrow" aria-hidden="true">▾</span>
-    </button>${seasonPickError[p.id] ? `<div class="season-pick-err">${escapeHtml(seasonPickError[p.id])}</div>` : ''}`;
+    </button>${seasonPickError[p.id] ? `<div class="season-pick-err">${escapeHtml(seasonPickError[p.id])}</div>` : ''}${opts.detail ? noteCouvertureHtml(p) : ''}`;
 }
 function wireSeasonSelects(root, rerender){
   root.querySelectorAll('[data-season-pick]').forEach(btn=>{
