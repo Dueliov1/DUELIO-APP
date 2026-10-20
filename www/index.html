@@ -794,7 +794,7 @@
     display:block; margin-top:4px; padding:4px 6px; background:rgba(0,0,0,.25); border-radius:6px;
     font-size:10px; word-break:break-word; color:#fff; font-family:monospace;
   }
-  .toolbar{ display:flex; align-items:center; gap:8px; margin: 12px 16px 0; flex-shrink:0; }
+  .toolbar{ display:flex; align-items:center; gap:8px; margin: 8px 16px 0; flex-shrink:0; }
   .tab-switch{ display:flex; background:var(--surface); border:1px solid var(--line); border-radius:11px; padding:3px; gap:4px; flex:1; }
   .tab-btn{
     flex:1; text-align:center; padding:8px 4px; border-radius:8px; font-size:11.5px; font-weight:700;
@@ -826,7 +826,7 @@
   }
   .csel.open .csel-btn .csel-arrow{ transform:translateY(-50%) rotate(180deg); }
   .picker-empty small, .browse-empty small{ display:block; margin-top:6px; font-size:11px; color: var(--chalk-dim); opacity:.85; }
-  .season-picks{ padding: 8px 12px 0; flex-shrink:0; }
+  .season-picks{ padding: 6px 16px 0; flex-shrink:0; }
   .season-picks .player-col::after{ display:none; }
   .season-pick{
     position:relative; display:flex; align-items:center; justify-content:center; gap:6px; width:100%; min-height:38px;
@@ -844,7 +844,9 @@
   .season-pick-err{ margin-top:4px; font-size:10px; color: var(--danger); text-align:center; line-height:1.3; }
   /* Mention de couverture : discrète, informative, jamais alarmante. */
   .season-note{ margin-top:3px; font-size:9.5px; color: var(--chalk-dim); text-align:center;
-                line-height:1.25; letter-spacing:.01em; cursor:help; }
+                line-height:1.25; letter-spacing:.01em; cursor:pointer;
+                background:none; border:0; padding:4px 6px; font-family:inherit; font-weight:600; min-height:28px; }
+  .season-note:hover{ color: var(--gold); }
   /* Années de carrière d'une légende, accolées à sa ligne de description.
      Discret : c'est un repère, pas une décoration. */
   .marque-legende{ margin-left:7px; padding:1px 6px; border-radius:999px;
@@ -870,7 +872,7 @@
   .api-wait-notice[hidden]{ display:none; }
   .awn-spin{ width:12px; height:12px; border-radius:50%; border:2px solid rgba(255,176,32,.3); border-top-color: var(--amber); animation: spin .8s linear infinite; flex-shrink:0; }
   .solo-stat-row .v small.muted{ font-size:10px; font-weight:600; color: var(--chalk-dim); font-family:'Plus Jakarta Sans',sans-serif; }
-  .period-seg{ display:flex; gap:4px; margin: 12px 16px 0; padding:4px; border-radius:14px; background: var(--surface); border:1px solid var(--line); flex-shrink:0; }
+  .period-seg{ display:flex; gap:4px; margin: 8px 16px 0; padding:4px; border-radius:14px; background: var(--surface); border:1px solid var(--line); flex-shrink:0; }
   .period-btn{
     flex:1; min-width:0; padding:10px 6px; border:none; border-radius:10px; background:none; cursor:pointer;
     color: var(--chalk-dim); font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:13px; white-space:nowrap;
@@ -878,7 +880,7 @@
   }
   .period-btn.active{ background: var(--grad); color:#fff; box-shadow: 0 4px 12px rgba(43,47,119,.35); }
   .period-btn .chev{ margin-left:4px; font-size:9px; opacity:.85; }
-  .period-sub{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin: 7px 16px 0; font-size:11px; color: var(--chalk-dim); text-align:center; }
+  .period-sub{ display:flex; align-items:center; justify-content:center; gap:10px; flex-wrap:wrap; margin: 5px 16px 0; font-size:11px; color: var(--chalk-dim); text-align:center; }
   .scope-link{ background:none; border:none; padding:2px 0; cursor:pointer; color: var(--gold); font-family:inherit; font-size:11px; font-weight:700; white-space:nowrap; }
   .scope-link .chev{ margin-left:3px; font-size:8px; }
   .mode-row{ display:flex; flex-shrink:0; flex-wrap:wrap; justify-content:center; align-items:center; gap:7px; padding: 10px 14px 4px; }
@@ -913,7 +915,7 @@
   .radar-legend-item .dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 
   .compare-wrap{ padding: 10px 12px 20px; display:flex; flex-direction:column; align-items:center; }
-  .duel-heads{ padding: 12px 12px 0; display:flex; justify-content:center; position:relative; flex-shrink:0; }
+  .duel-heads{ padding: 10px 16px 0; display:flex; justify-content:center; position:relative; flex-shrink:0; }
   .duel-heads .player-col::after{ display:none; }
   .duel-vs{
     position:absolute; left:50%; top:44%; transform:translate(-50%,-50%); z-index:3;
@@ -981,11 +983,14 @@
 
   .col-head{
     background: var(--surface); border:1px solid var(--line); border-radius:16px;
-    padding: 14px 8px 10px; display:flex; flex-direction:column; align-items:center; gap:5px;
+    padding: 12px 8px 9px; display:flex; flex-direction:column; align-items:center; gap:4px;
     cursor:pointer; transition: border-color .15s, transform .15s; position:relative; text-align:center;
     text-decoration:none; color:inherit; box-sizing:border-box; overflow:hidden; width:100%;
   }
-  .col-head:not(.empty):not(.add-card){ min-height:158px; justify-content:flex-start; }
+  /* Sur un téléphone de 360 px, 73 % de l'écran passait avant la première
+   * valeur. Les cartes perdent 20 px, les réglages se resserrent : trois ou
+   * quatre lignes de chiffres entrent au premier regard. */
+  .col-head:not(.empty):not(.add-card){ min-height:138px; justify-content:flex-start; }
   .compare-cols.count-3 .col-head:not(.empty):not(.add-card){ min-height:150px; }
   .compare-cols.count-4 .col-head:not(.empty):not(.add-card){ min-height:132px; }
   .col-head .col-name{
@@ -1027,7 +1032,7 @@
     width:78px; height:78px;
   }
   .portrait.placeholder{ font-size:24px; color: var(--chalk-dim); background: var(--surface-2); border-radius:14px; box-shadow:none; }
-  .col-name{ font-weight:700; font-size:12.5px; line-height:1.2; color:var(--chalk); min-height:30px; }
+  .col-name{ font-weight:700; font-size:12.5px; line-height:1.2; color:var(--chalk); min-height:15px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .pos-lbl{ font-size:11.5px; color:var(--gold); font-weight:700; letter-spacing:0; }
   .col-club{ font-size:10.5px; color:var(--chalk-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; box-sizing:border-box; }
   .club-logo{ width:14px; height:14px; object-fit:contain; vertical-align:middle; display:inline-block; }
@@ -1574,7 +1579,7 @@
   </div>
 
   <!-- Picker overlay -->
-  <div class="picker" id="picker">
+  <div class="picker" id="picker" role="dialog" aria-modal="true" aria-labelledby="pickerTitle">
     <div class="picker-header">
       <button class="picker-close" id="pickerClose" type="button" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       <div class="picker-title" id="pickerTitle">Choisir un joueur</div>
@@ -1883,7 +1888,7 @@ function flagSVG(iso){
     case 'diag': inner = `<rect width="32" height="24" fill="${c1}"/><path d="M0 24L32 0h-7L0 18z" fill="${c3}" stroke="${c2}" stroke-width="1.5"/>`; break;
     default: inner = `<rect width="32" height="24" fill="${c1}"/>`;
   }
-  return `<svg width="15" height="11.5" viewBox="0 0 32 24" xmlns="http://www.w3.org/2000/svg" style="border-radius:2px; display:inline-block; vertical-align:middle; box-shadow:0 0 0 0.5px rgba(255,255,255,.25);">${inner}</svg>`;
+  return `<svg width="15" height="11.5" viewBox="0 0 32 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" style="border-radius:2px; display:inline-block; vertical-align:middle; box-shadow:0 0 0 0.5px rgba(255,255,255,.25);">${inner}</svg>`;
 }
 
 
@@ -1941,7 +1946,7 @@ function monogrammeSVG(p){
   const teinte = Math.round((graine * 137.508) % 360);
   const txt = initials(p.name);
   return `<svg class="monogramme" viewBox="0 0 80 80" role="img" aria-label="${escapeHtml(p.name || '')}">
-    <circle cx="40" cy="40" r="40" fill="hsl(${teinte} 42% 34%)"/>
+    <circle cx="40" cy="40" r="40" fill="hsl(${teinte} 48% 36%)"/>
     <text x="40" y="40" text-anchor="middle" dominant-baseline="central" font-family="'Unbounded','Plus Jakarta Sans',sans-serif" font-size="${txt.length > 2 ? 24 : 28}" font-weight="700" fill="rgba(255,255,255,.92)" letter-spacing="1">${escapeHtml(txt)}</text>
   </svg>`;
 }
@@ -2031,7 +2036,7 @@ function avatarSVG(id){
   }
 
   return `
-  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="720" height="720" preserveAspectRatio="xMidYMid meet">
+  <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" width="720" height="720" preserveAspectRatio="xMidYMid meet">
     <defs>
       <radialGradient id="skin-${uid}" cx="38%" cy="32%" r="75%">
         <stop offset="0%" stop-color="${skinHighlight}"/>
@@ -3634,19 +3639,30 @@ function loadPlayerStats(p){
       }
     }
     if(firstSeason == null) throw new Error("Aucune statistique trouvée pour ce joueur sur les saisons disponibles.");
-    const baseEntry = { player: (p.rawBySeason && p.rawBySeason[firstSeason] ? null : null), statistics: (p.rawBySeason || {})[firstSeason] || [] };
+    const baseEntry = { player: null, statistics: (p.rawBySeason || {})[firstSeason] || [] };
     const cached = readSeasonCache(p.apiId, firstSeason);
     const full = mapApiPlayerToDuelio(cached || baseEntry, 0);
+    /* Quand le cache de saison n'est pas relisible — quota du stockage atteint,
+     * stockage désactivé — l'entrée n'a pas de bloc « player » : la fiche
+     * tombait alors en « Joueur inconnu », nationalité « Inconnue », sans âge,
+     * et écrasait ce qu'on savait déjà. Ce qu'on savait reste. */
+    if(!cached || !cached.player){
+      full.name = p.name; full.fullName = p.fullName || full.fullName; full.nation = p.nation || full.nation;
+      full.age = p.age || full.age; full.birthYear = p.birthYear || full.birthYear;
+    }
     const keepSeasons = p.statsBySeason, keepRaw = p.rawBySeason;
     Object.assign(p, full, {
       id: p.id, apiId: p.apiId,
       photoUrl: p.photoUrl || full.photoUrl,
+      height: p.height != null ? p.height : full.height,
       statsBySeason: keepSeasons, rawBySeason: keepRaw,
       seasonsAvailable: available,
       seasonsNoData: p.seasonsNoData,
       needsStats: false
     });
-    applySeasonToPlayer(p, firstSeason, false);
+    // Une saison épinglée par l'utilisateur ne doit pas être remplacée par un
+    // simple rafraîchissement de métadonnées.
+    if(!(p.seasonPinned && p.statsBySeason && p.statsBySeason[p.seasonShown])) applySeasonToPlayer(p, firstSeason, false);
     rememberRecentPlayer(p);
     return p;
   })();
@@ -5491,7 +5507,7 @@ function renderAll(){
     const removeBtn = canRemove ? `<button class="slot-remove" data-remove="${idx}" type="button" aria-label="Retirer">×</button>` : '';
     if(!p){
       return `
-        <div class="col-head empty" data-slot="${idx}" data-empty="1">
+        <div class="col-head empty" data-slot="${idx}" data-empty="1" role="button" tabindex="0" aria-label="Choisir le joueur ${idx+1}">
           ${removeBtn}
           <div class="portrait placeholder ${filled.length<2 && slots.findIndex(id=>!id)===idx ? 'pulse' : ''}">+</div>
           <div class="placeholder-lbl">Joueur ${idx+1}</div>
@@ -5499,13 +5515,13 @@ function renderAll(){
     }
     const swapBtn = `<button class="slot-swap" data-swap="${idx}" type="button" aria-label="Changer de joueur">⇄</button>`;
     return `
-      <div class="col-head" data-slot="${idx}" style="--slot-color:${SLOT_COLORS[idx]}">
+      <div class="col-head" data-slot="${idx}" style="--slot-color:${SLOT_COLORS[idx]}" role="button" tabindex="0" aria-label="Fiche de ${escapeHtml(p.name)}">
         ${removeBtn}
         ${swapBtn}
         <div class="portrait">${portraitHtml(p)}</div>
         <div class="col-name">${escapeHtml(p.name)}</div>
         <div class="pos-lbl">${p.posLabel}</div>
-        <div class="col-club">${p.club ? clubHtml(p)+' · ' : ''}${flagSVG((p.nation||{}).iso)} ${escapeHtml((p.nation||{}).code || '')}</div>
+        <div class="col-club">${p.club ? clubHtml(p)+' · ' : ''}${flagSVG((p.nation||{}).iso)} ${escapeHtml((p.nation||{}).name || '')}</div>
       </div>`;
   }
 
@@ -5533,6 +5549,11 @@ function renderAll(){
   const seasonOptions = seasonSets.length ? [...seasonSets[0]].filter(sn => seasonSets.every(st=>st.has(sn))).sort((a,b)=>b-a) : [];
 
   const hasSplit = filled.some(p=>p.split || (p.statsBySeason && Object.values(p.statsBySeason).some(x=>x && x.split)));
+  // Un périmètre « une compétition » choisi pour d'autres joueurs survivait au
+  // changement de duel : la pastille disait « Une compétition » et toutes les
+  // valeurs tombaient. On revient au périmètre par défaut.
+  if(typeof teamScope === 'string' && teamScope.indexOf('comp:') === 0
+     && !competitionsDisponibles().some(c => 'comp:' + c[0] === teamScope)) teamScope = 'club';
   const showCapsBasis = filled.some(p=>(p.caps||0)>0 || (p.intGoals||0)>0); // données de sélection réelles absentes de l'API : option masquée
   // « Cumul jusqu'à une saison » : de la première saison du plus tardif à la dernière saison connue (un retraité y est alors complet)
   let seasonCumulOptions = [];
@@ -5736,7 +5757,7 @@ function renderAll(){
     ${!compactView && seasonPicksHtml ? `<div class="season-picks compare-cols count-${slots.length}">${seasonPicksHtml}</div>` : ''}
     ${filled.length>=2 ? `
     <div class="toolbar">
-      <div class="tab-switch">
+      <div class="tab-switch" role="tablist" aria-label="Statistiques ou trophées">
         <button class="tab-btn ${activeTab==='stats'?'active':''}" data-tab="stats" type="button" role="tab" aria-selected="${activeTab==='stats'}">Stats</button>
         <button class="tab-btn ${activeTab==='trophies'?'active':''}" data-tab="trophies" type="button" role="tab" aria-selected="${activeTab==='trophies'}">Trophées</button>
       </div>
@@ -5840,14 +5861,19 @@ function renderAll(){
         .concat(comps.map(c => ({ value:'comp:'+c[0], label:c[1] }))), teamScope,
       v=>{ teamScope=v; renderAll(); });
   });
+  // Entrée et Espace valent un clic sur les cartes, comme sur un vrai bouton.
+  const activer = (el, action)=>{
+    el.addEventListener('click', action);
+    el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); action(e); } });
+  };
   content.querySelectorAll('.col-head.empty').forEach(el=>{
-    el.addEventListener('click', (e)=>{
+    activer(el, (e)=>{
       if(e.target.closest('.slot-remove')) return;
       openPicker(parseInt(el.dataset.slot,10));
     });
   });
   content.querySelectorAll('.col-head:not(.empty):not(.add-card)').forEach(el=>{
-    el.addEventListener('click', (e)=>{
+    activer(el, (e)=>{
       if(e.target.closest('.slot-remove') || e.target.closest('.slot-swap')) return;
       const idx = parseInt(el.dataset.slot,10);
       const playerId = slots[idx];
@@ -6121,8 +6147,17 @@ function noteCouvertureHtml(p){
   const raison = age != null
     ? `${escapeHtml(p.name)} avait ${age} ans en ${premiere}.`
     : '';
-  return `<div class="season-note" title="Nos chiffres partent de la saison ${seasonLabel(premiere)}. ${raison} La source de données ne couvre pas tous les championnats avant 2010 environ, donc un début de carrière peut manquer et les totaux être inférieurs à la réalité.">Données à partir de ${seasonLabel(premiere)}</div>`;
+  /* Un « title » ne se voit qu'à la souris. Au doigt, l'explication — qui
+   * justifie des totaux inférieurs à la réalité — n'était jamais lue. Elle
+   * s'ouvre maintenant au toucher, dans une feuille. */
+  const texte = `Nos chiffres partent de la saison ${seasonLabel(premiere)}. ${raison} La source ne couvre pas tous les championnats avant 2010 environ : un début de carrière peut manquer, et les totaux être inférieurs à la réalité.`;
+  return `<button type="button" class="season-note" data-couverture="${escapeHtml(texte)}">Données à partir de ${seasonLabel(premiere)} <span aria-hidden="true">ⓘ</span></button>`;
 }
+document.addEventListener('click', e=>{
+  const n = e.target.closest && e.target.closest('[data-couverture]');
+  if(!n) return;
+  openValueSheet('D\'où viennent ces chiffres ?', n.dataset.couverture, [], null, ()=>{});
+});
 
 function seasonPickHtml(p, opts){
   opts = opts || {};
@@ -6545,7 +6580,11 @@ function statUnknown(fp, key){
   const info = getStatSource(fp);
   if(info.estimate) return false;
   if(info.pending || info.none) return true;
-  return !!info.src && isStatMissing(info.src, key);
+  // Aucune ligne pour ce périmètre (club, sélection, une compétition) sur la
+  // période : c'est une donnée absente, pas un zéro — un « 0 » pouvait même
+  // remporter la ligne des cartons.
+  if(!info.src) return true;
+  return isStatMissing(info.src, key);
 }
 function statPending(fp){ return !!getStatSource(fp).pending; }
 /* Un seul format pour tous les nombres affichés : virgule décimale, espace
@@ -7021,7 +7060,7 @@ async function dessinerImageDePartage(btn){
   const decalage = shareFormat==='story' ? Math.max(0, Math.round((H - basContenu - padTop) / 2)) : 0;
   ctxFond.drawImage(calque, 0, decalage);
 
-  canvas.toBlob((blob)=>{
+  canvas.toBlob((blob)=>{ try{
     if(!blob){
       btn.disabled = false; btn.textContent = "Générer l'image";
       const area = document.getElementById('sharePreviewArea');
@@ -7061,7 +7100,15 @@ async function dessinerImageDePartage(btn){
     const scr = document.getElementById('generateScreen');
     if(scr){ const top = area.getBoundingClientRect().top - scr.getBoundingClientRect().top + scr.scrollTop - 8; scr.scrollTo({top, behavior:'smooth'}); }
     btn.disabled = false; btn.textContent = "Générer l'image";
-  }, 'image/png');
+  }catch(e){
+    // Le rappel s'exécute hors de la pile du try/catch de generateShareImage :
+    // new File absent d'un vieux WebView, canShare qui lève… le bouton revenait
+    // grisé pour toujours.
+    console.warn('image de partage (rappel) :', e && e.message);
+    btn.disabled = false; btn.textContent = "Générer l'image";
+    const area = document.getElementById('sharePreviewArea');
+    if(area) area.innerHTML = `<div class="palmares-vide">L'image n'a pas pu être créée. Réessayez.</div>`;
+  } }, 'image/png');
 }
 
 
@@ -8112,7 +8159,11 @@ function fondInerte(actif){
     if(el) el.inert = actif;
   }
 }
+let _focusAvantCouche = null;
 function navOverlayOpened(id){
+  // On retient d'où l'on vient : à la fermeture, le focus y retourne au lieu
+  // de repartir du début du document.
+  if(!navStack.some(e => e.type === 'overlay')) _focusAvantCouche = document.activeElement;
   navStack.push({ type:'overlay', id });
   fondInerte(true);
   navPushHistory();
@@ -8125,7 +8176,11 @@ function navOverlayClosed(id){
     if(navHistoryOk){ navSuppress++; history.back(); }
   }
   // On ne réveille l'arrière-plan que s'il ne reste aucune couche par-dessus.
-  if(!navStack.some(e => e.type === 'overlay')) fondInerte(false);
+  if(!navStack.some(e => e.type === 'overlay')){
+    fondInerte(false);
+    const f = _focusAvantCouche; _focusAvantCouche = null;
+    if(f && f.isConnected && typeof f.focus === 'function') setTimeout(()=>{ try{ f.focus({ preventScroll: true }); }catch(e){} }, 0);
+  }
 }
 
 /* Échap ferme la couche du dessus. C'est le réflexe universel pour sortir
