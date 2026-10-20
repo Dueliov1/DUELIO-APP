@@ -3776,10 +3776,15 @@ const POSTE_VERS_CODE = { 'Gardien':'GK', 'Défenseur':'DEF', 'Milieu':'MID', 'A
  * zéro trompeur : un zéro dirait « il n'a jamais fait de passe décisive »,
  * alors que la vérité est « personne ne les a comptées à l'époque ». */
 const STATS_DE_LEGENDE = ['appearances', 'buts'];
+/* Construit un bloc de statistiques au format que l'application attend, à partir
+ * des seules valeurs qu'on possède. `pd` n'est renseigné que pour les rares
+ * joueurs dont les passes décisives ont été relevées — Gerrard pour l'instant —
+ * et reste absent partout ailleurs, où il s'affichera « — ». */
 function statsPourLegende(l){
+  const aPasses = l.pd != null;
   const s = {
     appearances: l.m || 0, buts: l.b || 0,
-    passesDec: 0, touches: 0, precisionTirs: 0, dribbles: 0, duelsAeriens: 0,
+    passesDec: aPasses ? l.pd : 0, touches: 0, precisionTirs: 0, dribbles: 0, duelsAeriens: 0,
     passesReussies: 0, tacles: 0, interceptions: 0, occasions: 0, distance: 0,
     cartonsJaunes: 0, lineups: 0, minutesPlayed: 0, rating: 0, overall: 60,
     shotsTotal: 0, shotsOnTarget: 0, passesTotal: 0, keyPasses: 0, clearances: 0,
@@ -3792,11 +3797,23 @@ function statsPourLegende(l){
     teamName: null, teamId: null, teamLogo: null, season: null,
     missing: {}
   };
+  const connues = aPasses ? STATS_DE_LEGENDE.concat('passesDec') : STATS_DE_LEGENDE;
   for(const k of Object.keys(s)){
-    if(k === 'missing' || k === 'radar' || STATS_DE_LEGENDE.includes(k)) continue;
+    if(k === 'missing' || k === 'radar' || connues.includes(k)) continue;
     if(typeof s[k] === 'number') s.missing[k] = true;
   }
   return s;
+}
+
+/* Les lignes qu'un duel contenant une légende peut honnêtement afficher : celles
+ * qu'aucun des joueurs en lice ne déclare manquantes. Avec Gerrard, les passes
+ * décisives s'ajoutent d'elles-mêmes ; avec Pelé, elles disparaissent. */
+function statsCommunesAvecLegende(filled){
+  return STATS_COMMON.filter(r => filled.every(p => {
+    if(!p.estLegende) return true;
+    const src = (getStatSource(p) || {}).src;
+    return !!src && !isStatMissing(src, r.key);
+  }));
 }
 
 function construireLegende(l, rang){
@@ -3805,6 +3822,22 @@ function construireLegende(l, rang){
   const premiere = l.clubs && l.clubs.length ? Math.min(...l.clubs.map(c => c.de)) : null;
   const derniere = l.clubs && l.clubs.length ? Math.max(...l.clubs.map(c => c.a)) : null;
   const stats = statsPourLegende(l);
+  // Les saisons, quand on les a : elles ouvrent les modes « Saison » et
+  // « Même âge », qui sont la comparaison la plus intéressante — Zidane à
+  // vingt-cinq ans contre Mbappé au même âge.
+  const parSaison = {};
+  for(const sn of (l.s || [])){
+    const bloc = statsPourLegende({ m: sn.m, b: sn.b, pd: sn.pd });
+    bloc.teamName = sn.c || null;
+    bloc.season = sn.a;
+    parSaison[sn.a] = bloc;
+  }
+  const annees = Object.keys(parSaison).map(Number).sort((a, b) => a - b);
+  // Saison mise en avant : la plus prolifique, à défaut la dernière jouée.
+  let vedette = null;
+  for(const a of annees){
+    if(!vedette || parSaison[a].buts > parSaison[vedette].buts) vedette = a;
+  }
   return {
     id: LEGENDE_ID_BASE + rang,
     apiId: null,
@@ -3838,12 +3871,15 @@ function construireLegende(l, rang){
       trophies: []
     })),
     photoUrl: `${REAL_DATA_CONFIG.legendesPhotos || 'legendes/photos'}/${l.id}.jpg`,
-    statsBySeason: {},
+    statsBySeason: parSaison,
     statsLegende: stats,
     careerStats: stats,
     careerLoaded: true,
     careerTried: true,
-    seasonsAvailable: [],
+    seasonsAvailable: annees,
+    seasonShown: vedette,
+    saisonsCompletes: l.sComplet !== false,
+    saisonsNote: l.sNote || '',
     span: (premiere != null && derniere != null) ? [premiere, derniere] : null,
     note: l.note || '',
     needsStats: false
@@ -3875,6 +3911,13 @@ async function chargerLegendes(){
   return LEGENDES.liste;
 }
 function duelAvecLegende(filled){ return (filled || []).some(p => p && p.estLegende); }
+/* Une légende dont la carrière n'a pas pu être découpée — Del Piero, dont la
+ * table de statistiques est introuvable — ne peut être comparée que sur sa
+ * carrière entière. Les autres ouvrent les modes Saison et Même âge. */
+function legendeSansSaisons(filled){
+  return (filled || []).some(p => p && p.estLegende
+    && !(p.seasonsAvailable && p.seasonsAvailable.length));
+}
 
 /* Masquer le jumeau de la recherche ne suffit pas : s'il occupe déjà une
  * colonne du comparatif — parce qu'on l'avait choisi avant l'arrivée des
@@ -4747,8 +4790,8 @@ function getActiveStatsList(filled){
   // afficheraient « — » du côté de la légende et la carte semblerait cassée,
   // alors que le problème n'est pas le joueur mais l'époque.
   if(duelAvecLegende(filled)){
-    const liste = STATS_COMMON.filter(r => STATS_DE_LEGENDE.includes(r.key));
-    return liste.length ? liste : STATS_COMMON;
+    const liste = statsCommunesAvecLegende(filled);
+    return liste.length ? liste : STATS_COMMON.filter(r => STATS_DE_LEGENDE.includes(r.key));
   }
   const uniquePositions = [...new Set(filled.map(p=>p.pos))];
   const samePos = uniquePositions.length===1 ? uniquePositions[0] : null;
@@ -4824,10 +4867,11 @@ function renderAll(){
   };
   if(!modeAvail[compareMode]) compareMode = 'shown';
   compareBasis = compareMode==='shown' ? 'current' : compareMode==='season' ? 'season' : compareMode==='age' ? (realMode ? 'ageCumul' : 'age') : 'seasonCumul';
-  // Une légende n'existe qu'en carrière entière. Laisser le duel sur « saison
-  // en cours » opposait les 681 matchs de Zidane aux 47 de la saison de Mbappé :
-  // un écart de comptage, pas de talent. On bascule donc d'office en carrière.
-  if(duelAvecLegende(filled) && compareMode !== 'career'){
+  // Une légende dont la carrière n'est pas découpée n'existe qu'en total : on
+  // bascule d'office en carrière, sinon le duel opposerait les 777 matchs de
+  // Del Piero aux 47 d'une saison de Mbappé — un écart de comptage, pas de
+  // talent. Quand le découpage existe, tous les modes restent ouverts.
+  if(legendeSansSaisons(filled) && compareMode !== 'career'){
     compareMode = 'career';
     compareBasis = 'career';
   }
@@ -4910,11 +4954,23 @@ function renderAll(){
     }).join('');
     // Quand le duel a été réduit, l'utilisateur doit savoir pourquoi : sinon il
     // croit à un bug ou à une fiche incomplète.
-    const avis = (activeTab === 'stats' && duelAvecLegende(filled))
-      ? `<div class="duel-avis">Comparaison limitée aux apparitions et aux buts :
-           les passes décisives, les minutes et les tirs n'ont pas été relevés à
-           l'époque des légendes.</div>`
-      : '';
+    let avis = '';
+    if(activeTab === 'stats' && duelAvecLegende(filled)){
+      const manquantes = list.length < STATS_COMMON.length;
+      // Une légende dont le découpage ne couvre pas toute la carrière — Zidane,
+      // dont les quatre saisons à Cannes ne sont ventilées nulle part — sous-estime
+      // forcément les cumuls. Le dire vaut mieux que de laisser croire au chiffre.
+      const tronques = filled.filter(p => p.estLegende && p.saisonsCompletes === false
+                                       && compareBasis !== 'career');
+      const bouts = [];
+      if(manquantes) bouts.push(`Comparaison limitée aux statistiques relevées à l'époque des légendes.`);
+      for(const p of tronques){
+        bouts.push(`Le détail par saison de ${escapeHtml(p.name)} ne couvre pas toute sa carrière`
+                   + (p.saisonsNote ? ` — ${escapeHtml(p.saisonsNote)}` : '')
+                   + ` : les cumuls sont sous-estimés.`);
+      }
+      if(bouts.length) avis = `<div class="duel-avis">${bouts.join(' ')}</div>`;
+    }
     return `${avis}<div class="duel-rows">${corps}</div>`;
   }
 
@@ -4976,10 +5032,10 @@ function renderAll(){
       ${activeTab==='stats' ? `<button class="icon-btn ${compactView?'active':''}" id="compactToggle" type="button" title="${compactView ? 'Vue détaillée' : 'Tout voir sur un écran'}" aria-label="${compactView ? 'Vue détaillée' : 'Tout voir sur un écran'}">${compactIcon}</button>` : ''}
     </div>` : ''}
     ${showControls && !compactView ? `
-    ${duelAvecLegende(filled) ? `
+    ${legendeSansSaisons(filled) ? `
     <div class="period-seg" role="tablist" aria-label="Période comparée">
       <button class="period-btn active" type="button" role="tab" disabled
-              title="Une légende n'existe que par sa carrière entière">Carrière</button>
+              title="Le détail par saison de cette légende n'a pas pu être établi">Carrière</button>
     </div>` : `
     <div class="period-seg" id="periodSeg" role="tablist" aria-label="Période comparée">
       <button class="period-btn ${compareMode==='shown'||compareMode==='season'||compareMode==='until'?'active':''}" data-mode="shown" type="button" role="tab">Saison</button>
@@ -4987,7 +5043,7 @@ function renderAll(){
       ${modeAvail.career ? `<button class="period-btn ${compareMode==='career'?'active':''}" data-mode="career" type="button" role="tab">Carrière</button>` : ''}
     </div>`}
     <div class="period-sub">
-      <span>${duelAvecLegende(filled) ? 'Carrières entières, toutes compétitions'
+      <span>${legendeSansSaisons(filled) ? 'Carrières entières, toutes compétitions'
         : compareMode==='age' ? (realMode ? `Tout ce qu'ils avaient accumulé à ${compareAgeValue} ans` : `Estimation à ${compareAgeValue} ans`)
         : compareMode==='career' ? 'Toutes leurs saisons additionnées'
         : (realMode ? 'Choisissez la saison sous chaque joueur' : 'Statistiques de la saison')}</span>
@@ -5625,9 +5681,52 @@ function scopeLabel(){
 //   pending  : la saison demandée n'est pas encore chargée (affiché « … »)
 //   none     : la base n'a rien pour cette demande (affiché « — »)
 function getStatSource(fp){
-  // Une légende n'a qu'un total de carrière : aucune base de comparaison par
-  // saison ou par âge n'a de sens pour elle, on renvoie toujours le même bloc.
-  if(fp.estLegende) return { src: fp.statsLegende, legende: true, career: true };
+  // Une légende a son total de carrière, et parfois le détail par saison.
+  if(fp.estLegende){
+    const parSaison = fp.statsBySeason || {};
+    const a = Object.keys(parSaison).length;
+    if(a && compareBasis === 'season' && compareSeasonValue){
+      return parSaison[compareSeasonValue]
+        ? { src: parSaison[compareSeasonValue], legende: true, season: compareSeasonValue }
+        : { src: null, none: true, legende: true };
+    }
+    if(a && compareBasis === 'age' && typeof compareAgeValue === 'number' && fp.birthYear){
+      const sn = fp.birthYear + compareAgeValue;
+      return parSaison[sn]
+        ? { src: parSaison[sn], legende: true, season: sn, atAge: true }
+        : { src: null, none: true, legende: true };
+    }
+    if(a && compareBasis === 'current' && fp.seasonShown && parSaison[fp.seasonShown]){
+      return { src: parSaison[fp.seasonShown], legende: true, season: fp.seasonShown };
+    }
+    // Cumuls : on additionne les saisons jusqu'à la limite demandée. C'est le
+    // mode le plus parlant — ce que Zidane avait accompli à vingt-cinq ans,
+    // face à ce que Mbappé avait accompli au même âge.
+    if(a && (compareBasis === 'ageCumul' || compareBasis === 'seasonCumul')){
+      const limite = compareBasis === 'ageCumul'
+        ? (fp.birthYear ? fp.birthYear + compareAgeValue : null)
+        : compareSeasonValue;
+      if(limite != null){
+        const prises = Object.keys(parSaison).map(Number)
+          .filter(sn => sn <= limite).sort((x, y) => x - y);
+        if(prises.length){
+          const cumul = statsPourLegende({
+            m: prises.reduce((t, sn) => t + (parSaison[sn].appearances || 0), 0),
+            b: prises.reduce((t, sn) => t + (parSaison[sn].buts || 0), 0),
+            pd: prises.every(sn => !isStatMissing(parSaison[sn], 'passesDec'))
+              ? prises.reduce((t, sn) => t + (parSaison[sn].passesDec || 0), 0) : null
+          });
+          return { src: cumul, legende: true, career: false,
+                   cumul: { span: [prises[0], prises[prises.length - 1]],
+                            seasonsCount: prises.length } };
+        }
+        return { src: null, none: true, legende: true };
+      }
+    }
+    // Cumuls et carrière : le total validé, qui reste la référence même quand
+    // le découpage par saison ne couvre pas toute la carrière.
+    return { src: fp.statsLegende, legende: true, career: true };
+  }
   const real = !!fp.apiId;
   if(compareBasis==='age' && typeof compareAgeValue==='number'){
     if(!real) return { src: scopedSrc(fp), estimate: true }; // joueur fictif : estimation par courbe d'âge
