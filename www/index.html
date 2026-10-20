@@ -3105,7 +3105,17 @@ function mapApiPlayerToDuelio(entry, idx, seasonLabel=REAL_DATA_CONFIG.seasons[0
   const height = (apiHeight && !isNaN(apiHeight)) ? apiHeight : null;
   // Pied fort : l'API ne le fournit pas -> inconnu, et non affiché
   const preferredFoot = null;
-  const birthYear = (pl.birth && pl.birth.date) ? parseInt(String(pl.birth.date).slice(0,4), 10) || null : null;
+  /* Année de naissance. L'API donne la date exacte, mais la base statique ne
+   * conserve que l'âge : sans ce repli, tout joueur servi hors ligne ou pendant
+   * une panne d'API perdait son année de naissance, et le mode « Même âge »
+   * disparaissait sans explication. On la déduit alors de l'âge, à un an près
+   * selon que l'anniversaire est passé ou non — assez juste pour comparer deux
+   * carrières, et infiniment mieux que de désactiver la comparaison. */
+  let birthYear = (pl.birth && pl.birth.date) ? parseInt(String(pl.birth.date).slice(0,4), 10) || null : null;
+  if(birthYear == null && pl.age){
+    const n = new Date().getFullYear() - parseInt(pl.age, 10);
+    if(n > 1900 && n < 2100) birthYear = n;
+  }
 
   const baseStats = extractSeasonStats(entry);
 
