@@ -3141,10 +3141,20 @@ function mapApiPlayerToDuelio(entry, idx, seasonLabel=REAL_DATA_CONFIG.seasons[0
   /* Année de naissance. L'API donne la date exacte, mais la base statique ne
    * conserve que l'âge : sans ce repli, tout joueur servi hors ligne ou pendant
    * une panne d'API perdait son année de naissance, et le mode « Même âge »
-   * disparaissait sans explication. On la déduit alors de l'âge, à un an près
-   * selon que l'anniversaire est passé ou non — assez juste pour comparer deux
-   * carrières, et infiniment mieux que de désactiver la comparaison. */
+   * disparaissait sans explication.
+   *
+   * Attention au piège : l'âge de la base est celui du joueur à sa DERNIÈRE
+   * saison connue, pas aujourd'hui. Casillas y figure à 38 ans, son âge en
+   * 2019 ; le compter depuis l'année courante le faisait naître en 1988 au lieu
+   * de 1981. packStatique fait donc le calcul depuis la dernière saison et le
+   * transmet dans _naissance — exact pour les retraités, à un an près pour les
+   * joueurs en activité, selon que l'anniversaire est passé ou non. Le repli sur
+   * l'année courante ne sert plus qu'aux fiches venues directement de l'API,
+   * où l'âge est bien l'âge du jour. */
   let birthYear = (pl.birth && pl.birth.date) ? parseInt(String(pl.birth.date).slice(0,4), 10) || null : null;
+  if(birthYear == null && pl._naissance && pl._naissance > 1900 && pl._naissance < 2100){
+    birthYear = pl._naissance;
+  }
   if(birthYear == null && pl.age){
     const n = new Date().getFullYear() - parseInt(pl.age, 10);
     if(n > 1900 && n < 2100) birthYear = n;
@@ -3545,10 +3555,24 @@ async function packStatique(apiId){
    * reversés dans la saison en cours : c'est là qu'il est entré sur le terrain. */
   const saisons = ramenerSaisonsFutures(nettoyerCarriere(fiche.s));
 
+  /* Année de naissance déduite de l'âge — et c'est plus subtil qu'il n'y paraît.
+   * L'âge que porte la fiche n'est PAS l'âge d'aujourd'hui : c'est celui du
+   * joueur à sa dernière saison connue. Casillas est enregistré à 38 ans, son
+   * âge en 2019 ; le compter depuis l'année courante le faisait naître en 1988
+   * au lieu de 1981, et toute comparaison « au même âge » se décalait de sept
+   * ans. On compte donc depuis sa dernière saison, ce qui tombe juste pour les
+   * joueurs retirés et à un an près pour les joueurs en activité. */
+  const annees = Object.keys(saisons).filter(c => (saisons[c] || []).length).map(Number);
+  const derniere = annees.length ? Math.max(...annees) : null;
+  const naissance = (fiche.a && derniere) ? derniere - fiche.a : null;
+
   const data = {};
   for(const cle of Object.keys(saisons)){
     const stats = saisons[cle];
-    if(stats && stats.length) data[cle] = { player: { name: fiche.n, age: fiche.a, nationality: fiche.c }, statistics: stats };
+    if(stats && stats.length) data[cle] = {
+      player: { name: fiche.n, age: fiche.a, nationality: fiche.c, _naissance: naissance },
+      statistics: stats
+    };
   }
   const seasons = Object.keys(data).map(Number).sort((a,b)=>b-a);
   return seasons.length ? { id: apiId, seasons, data, complet } : null;
@@ -6803,7 +6827,17 @@ function renderBrowse(){
           const suf = r.suffix || '';
           let val;
           if(r.key==='age' && p.estLegende) val = p.deces ? `${p.birthYear} – ${p.deces}` : (p.age ? `${p.age} ans` : '—');
-          else if(r.key==='age') val = (p.apiId && p.birthYear && p.seasonShown) ? `${p.seasonShown - p.birthYear} ans${p.age ? ` <small class="muted">(${p.age} aujourd'hui)</small>` : ''}` : (p.age ? p.age : '—');
+          else if(r.key==='age'){
+            /* L'âge affiché est celui de la saison montrée. Le rappel entre
+             * parenthèses se recalcule depuis l'année de naissance : le champ
+             * p.age est l'âge à la dernière saison connue, donc faux pour un
+             * joueur retiré depuis des années. */
+            if(p.apiId && p.birthYear && p.seasonShown){
+              const aSaison = p.seasonShown - p.birthYear;
+              const aujourd = currentSeasonYear() - p.birthYear;
+              val = `${aSaison} ans` + (aujourd > aSaison ? ` <small class="muted">(${aujourd} aujourd'hui)</small>` : '');
+            } else val = p.age ? p.age : '—';
+          }
           else if(p.apiId && (r.key==='caps' || r.key==='intGoals')){
             // Vrai joueur : total des matchs de l'équipe nationale A trouvés dans la base, toutes saisons confondues
             const v = trophyValue(p, r.key);
