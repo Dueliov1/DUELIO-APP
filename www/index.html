@@ -2437,6 +2437,7 @@ function apiErrorMessage(errors){
   const txt = typeof errors === 'string' ? errors : Object.values(errors||{}).join(' ');
   if(/too many requests|rate ?limit/i.test(txt)) return "Trop de recherches d'un coup. Réessayez dans une minute.";
   if(/token|api.?key|subscription/i.test(txt)) return "Accès à la base API-Football refusé (clé ou abonnement).";
+  if(/failed to fetch|networkerror|load failed|network request failed|abort/i.test(txt)) return "Connexion impossible. Vérifiez votre réseau et réessayez.";
   return txt || 'Erreur API';
 }
 /* ---------------- File d'attente des appels API ----------------
@@ -6717,7 +6718,7 @@ document.getElementById('pickerSearch').addEventListener('input', e=>{
       setPickerStatus('Recherche élargie…');
       chargerTranchesPour(pickerSearch).then(ok => {
         const el = document.getElementById('pickerSearch');
-        if(ok && el && el.value === pickerSearch) el.dispatchEvent(new Event('input', {bubbles:true}));
+        if(ok && el && el.value.trim().toLowerCase() === pickerSearch) el.dispatchEvent(new Event('input', {bubbles:true})); // comparer normalisé : « Mbappe » ≠ « mbappe » ne relançait jamais
       });
     }
     const cached = getCachedSearch(pickerSearch) || searchByPrefixCache(pickerSearch);
@@ -6743,8 +6744,10 @@ document.getElementById('pickerSearch').addEventListener('input', e=>{
         renderPickerList();
         // L'index local a peut-être déjà trouvé le joueur : dans ce cas l'échec du
         // complément API ne regarde pas l'utilisateur, inutile de l'alarmer.
-        if(locauxPicker.length) setPickerStatus('');
-        else setPickerStatus('Recherche impossible : '+(err && err.message || err), true);
+        // On juge sur l'état actuel, pas sur la liste capturée à la frappe : une
+        // tranche d'index arrivée entre-temps a pu trouver le joueur.
+        if(pickerSearch !== query || document.querySelector('.picker-item:not(.disabled)')) setPickerStatus('');
+        else setPickerStatus(apiErrorMessage(err && err.message || String(err)), true);
       }).finally(()=>{ pickerSearchInFlight = ''; });
     }, 120);   // la recherche locale coûte quelques millisecondes et n'appelle plus
                // l'API quand elle trouve : rien ne justifie d'attendre 220 ms.
@@ -6817,7 +6820,7 @@ function renderPickerList(){
           el.classList.add('loading');
           setPickerStatus(`Mise à jour de ${pl.name}…`);
           loadPlayerStats(pl).then(()=>{ if(pickerTarget!==target) return; slots[target] = id; closePicker(); })
-            .catch(err=>{ el.classList.remove('loading'); setPickerStatus((err && err.message) || String(err), true); });
+            .catch(err=>{ el.classList.remove('loading'); setPickerStatus(apiErrorMessage((err && err.message) || String(err)), true); });
           return;
         }
         slots[target] = id;
@@ -6857,7 +6860,7 @@ function renderPickerList(){
           closePicker();
         }).catch(err=>{
           el.classList.remove('loading');
-          setPickerStatus((err && err.message) || String(err), true);
+          setPickerStatus(apiErrorMessage((err && err.message) || String(err)), true);
         });
         return;
       }
@@ -7551,7 +7554,8 @@ function renderBrowse(){
     }).catch((err)=>{
       globalSearchInFlight = '';
       if(document.getElementById('browseList')) renderBrowseList();
-      setBrowseStatus('Recherche impossible : '+(err && err.message || err), true);
+      if(browseSearch !== query || document.querySelector('.browse-item')) setBrowseStatus('');
+      else setBrowseStatus(apiErrorMessage(err && err.message || String(err)), true);
     }).finally(()=>{ globalSearchInFlight = ''; });
   }
 
@@ -7574,7 +7578,7 @@ function renderBrowse(){
       setBrowseStatus('Recherche élargie…');
       chargerTranchesPour(browseSearch).then(ok => {
         const el = document.getElementById('browseSearchInput');
-        if(ok && el && el.value === browseSearch) el.dispatchEvent(new Event('input', {bubbles:true}));
+        if(ok && el && el.value.trim().toLowerCase() === browseSearch) el.dispatchEvent(new Event('input', {bubbles:true})); // même correction que le sélecteur
       });
     }
       const cached = getCachedSearch(browseSearch) || searchByPrefixCache(browseSearch);
