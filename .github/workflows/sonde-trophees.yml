@@ -11,16 +11,25 @@ on:
         required: false
         default: "1100,278"
 
+permissions:
+  contents: write
+
 jobs:
   sonde:
     runs-on: ubuntu-latest
     steps:
+      # Les journaux d'Actions sont servis depuis un hôte que le client GitHub
+      # d'ici ne contacte pas : le rapport revient donc par le dépôt.
+      - uses: actions/checkout@v4
       - name: Lire les palmarès bruts
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
           JOUEURS: ${{ github.event.inputs.joueurs }}
         run: |
           cat > sonde.mjs <<'EOF'
+          import { writeFileSync, mkdirSync } from "node:fs";
+          const sortie = [];
+          const dire = (t)=>{ sortie.push(t); console.log(t); };
           const key = process.env.API_FOOTBALL_KEY;
           if (!key) { console.log("ERREUR : secret API_FOOTBALL_KEY absent."); process.exit(1); }
           const ids = (process.env.JOUEURS || "1100,278").split(",").map(s=>s.trim()).filter(Boolean);
@@ -31,10 +40,10 @@ jobs:
             const j = await r.json().catch(()=>null);
             const errs = j && j.errors;
             const hasErr = errs && (Array.isArray(errs) ? errs.length : Object.keys(errs).length);
-            if (hasErr) { console.log(`joueur ${id} : REFUSE ${JSON.stringify(errs)}`); continue; }
+            if (hasErr) { dire(`joueur ${id} : REFUSE ${JSON.stringify(errs)}`); continue; }
 
             const lignes = j.response || [];
-            console.log(`\n=== joueur ${id} : ${lignes.length} entrées ===`);
+            dire(`\n=== joueur ${id} : ${lignes.length} entrées ===`);
 
             let sansSaison = 0;
             const parCle = new Map();
@@ -45,20 +54,29 @@ jobs:
               if (!parCle.has(cle)) parCle.set(cle, []);
               parCle.get(cle).push(JSON.stringify(saison));
             }
-            console.log(`  entrées sans saison exploitable : ${sansSaison}`);
+            dire(`  entrées sans saison exploitable : ${sansSaison}`);
 
-            console.log("  --- toutes les entrées, telles que l'API les renvoie ---");
+            dire("  --- toutes les entrées, telles que l'API les renvoie ---");
             for (const t of lignes) {
-              console.log(`    league=${JSON.stringify(t.league)} country=${JSON.stringify(t.country)} ` +
+              dire(`    league=${JSON.stringify(t.league)} country=${JSON.stringify(t.country)} ` +
                           `season=${JSON.stringify(t.season)} place=${JSON.stringify(t.place)}`);
             }
 
-            console.log("  --- regroupé par compétition + résultat ---");
+            dire("  --- regroupé par compétition + résultat ---");
             for (const [cle, saisons] of parCle) {
               const uniques = new Set(saisons);
               const marque = saisons.length !== uniques.size ? "  ← DOUBLONS" : "";
-              console.log(`    ${cle} : ${saisons.length} entrée(s) [${saisons.join(", ")}]${marque}`);
+              dire(`    ${cle} : ${saisons.length} entrée(s) [${saisons.join(", ")}]${marque}`);
             }
           }
+          mkdirSync("diagnostics", { recursive: true });
+          writeFileSync("diagnostics/palmares-brut.txt", sortie.join("\n") + "\n");
           EOF
           node sonde.mjs
+      - name: Déposer le rapport
+        run: |
+          git config user.name "sonde"
+          git config user.email "noreply@anthropic.com"
+          git add diagnostics/palmares-brut.txt
+          git commit -m "Sonde : palmarès bruts" || echo "rien à déposer"
+          git push
