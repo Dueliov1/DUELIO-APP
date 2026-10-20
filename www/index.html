@@ -1856,6 +1856,28 @@ function flagSVG(iso){
 
 function seededRandom(seed){ let s = seed; return function(){ s = (s*9301+49297)%233280; return s/233280; }; }
 function escapeHtml(s){ return String(s??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/* API-Football livre les apostrophes encodées : « D&apos;Ambrosio », « O&apos;Brien »
+ * — 161 joueurs dans l'index. Non décodées, elles s'affichent telles quelles
+ * sur l'image partagée et dans les titres, et « d'ambrosio » ne se trouve pas.
+ * On décode une fois, à l'entrée, et on échappe ensuite à l'affichage. */
+// Une adresse d'image venue de l'extérieur ne doit être que http(s) ou data:.
+function urlSure(u){ const t = String(u || ''); return /^(https?:\/\/|data:image\/)/i.test(t) ? t : ''; }
+function decodeApiText(s){
+  if(s == null) return s;
+  const t = String(s);
+  return t.indexOf('&') === -1 ? t
+    : t.replace(/&apos;/g, "'").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+}
+function decoderEntreeApi(entry){
+  if(!entry) return entry;
+  const pl = entry.player;
+  if(pl){ pl.name = decodeApiText(pl.name); pl.firstname = decodeApiText(pl.firstname); pl.lastname = decodeApiText(pl.lastname); }
+  for(const st of (entry.statistics || [])){
+    if(st && st.team && st.team.name) st.team.name = decodeApiText(st.team.name);
+    if(st && st.league && st.league.name) st.league.name = decodeApiText(st.league.name);
+  }
+  return entry;
+}
 // Normalise une chaîne pour une comparaison insensible aux accents (ex: "Mbappé" ~ "mbappe")
 /* NFD s\u00e9pare un accent de sa lettre (\u00e9 \u2192 e + \u0301) mais ne touche PAS aux lettres qui sont
  * des caract\u00e8res \u00e0 part enti\u00e8re dans leur alphabet : \u00f8, \u00e5, \u00e6, \u0142, \u0111, \u00df. Sans cette table,
@@ -1872,7 +1894,7 @@ function randf(rng,min,max,dec){ const v = rng()*(max-min)+min; const m = Math.p
 function initials(name){ return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
 function portraitHtml(p){
   if(p.photoUrl){
-    return `<img src="${p.photoUrl}" alt="${p.name}" loading="lazy" onerror="handlePhotoError(this, ${p.id})">`;
+    return `<img src="${escapeHtml(urlSure(p.photoUrl))}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="handlePhotoError(this, ${Number(p.id)||0})">`;
   }
   return avatarSVG(p.id);
 }
@@ -1889,7 +1911,10 @@ function playerMetaHtml(p){
   const bits = [];
   if(p.posLabel) bits.push(p.posLabel);
   if(p.club) bits.push(clubHtml(p));
-  bits.push(`${flagSVG(p.nation.iso)} ${p.nation.name}`);
+  // Une fiche relue du stockage peut arriver sans nationalité : une liste
+  // entière ne doit pas disparaître pour une clé manquante.
+  const nat = p.nation || { iso:'UN', name:'', code:'INT' };
+  bits.push(`${flagSVG(nat.iso)} ${escapeHtml(nat.name || '')}`.trim());
   // Un joueur retiré depuis longtemps n'a ni la même profondeur de données ni
   // le même statut qu'un joueur en activité : l'annoncer évite la surprise
   // devant une fiche qui n'affiche que des matchs et des buts.
@@ -1901,11 +1926,11 @@ function playerMetaHtml(p){
 function clubHtml(p){
   if(!p.club) return '';
   if(p.clubLogo){
-    return `<img class="club-logo" src="${p.clubLogo}" alt="${p.club}" title="${p.club}" onerror="clubLogoFail(this)"> ${p.club}`;
+    return `<img class="club-logo" src="${escapeHtml(urlSure(p.clubLogo))}" alt="" onerror="clubLogoFail(this)"> ${escapeHtml(p.club)}`;
   }
   const badge = clubBadgeSVG(p.club);
-  if(badge) return `${badge} ${p.club}`;
-  return p.club;
+  if(badge) return `${badge} ${escapeHtml(p.club)}`;
+  return escapeHtml(p.club);
 }
 
 /* ---------------- Procedural face avatars (fictional players, no real photos) ---------------- */
@@ -2441,6 +2466,14 @@ const REAL_DATA_CONFIG = {
 // Petite temporisation + relance automatique en cas de "429 / trop de requêtes",
 // pour ne jamais dépasser le quota par minute de l'abonnement API-Football.
 const sleep = ms => new Promise(r=>setTimeout(r, ms));
+// fetch avec délai d'expiration, pour les fichiers statiques : un silence du
+// réseau ne doit jamais bloquer une promesse qu'on attend avant d'afficher.
+function fetchBorne(url, ms, options){
+  const coupe = new AbortController();
+  const minuterie = setTimeout(()=> coupe.abort(), ms || 15000);
+  return fetch(url, Object.assign({}, options || {}, { signal: coupe.signal }))
+    .finally(()=> clearTimeout(minuterie));
+}
 // Transforme une erreur brute de l'API en phrase compréhensible
 function apiErrorMessage(errors){
   const txt = typeof errors === 'string' ? errors : Object.values(errors||{}).join(' ');
@@ -2502,10 +2535,18 @@ async function runApiJob(job){
   job.sentAt = Date.now() + Math.random()/1000; // valeur unique pour retrouver CET appel dans la fenêtre
   apiQueue.sent.push(job.sentAt); apiQueue.lastSentAt = Date.now();
   let res = null, json = null, netErr = null;
+  /* Un appel qui ne répond jamais — tunnel, 3G qui décroche — gardait sa
+   * place dans la file pour toujours ; au troisième, plus rien ne partait et
+   * toute l'application restait sur « … » jusqu'au rechargement. On coupe à
+   * vingt secondes : l'appel coupé passe en erreur réseau et profite du
+   * réessai existant, borné à trois tentatives. */
+  const coupe = new AbortController();
+  const minuterie = setTimeout(()=> coupe.abort(), 20000);
   try{
-    res = await fetch(job.url);
+    res = await fetch(job.url, { signal: coupe.signal });
     try{ json = await res.json(); }catch(e){ /* réponse non-JSON */ }
   }catch(e){ netErr = e; }
+  finally{ clearTimeout(minuterie); }
   apiQueue.active--;
   if(job.prio==='low') apiQueue.activeLow--;
   if(res && res.headers){
@@ -3151,6 +3192,7 @@ function statTeamKind(st, pl){
   return 'club';
 }
 function extractSeasonStats(entry, noSplit){
+  decoderEntreeApi(entry);   // noms de clubs et de compétitions : apostrophes décodées une fois pour toutes
   if(!noSplit && entry.statistics && entry.statistics.length){
     const list = entry.statistics;
     const kind = st => statTeamKind(st, entry.player);
@@ -3272,6 +3314,7 @@ function apiTeamLogo(team){
   return team.id ? `https://media.api-sports.io/football/teams/${team.id}.png` : null; // URL officielle des logos API-Football
 }
 function mapApiPlayerToDuelio(entry, idx, seasonLabel=REAL_DATA_CONFIG.seasons[0]){
+  decoderEntreeApi(entry);
   const pl = entry.player || {};
   const _stats = entry.statistics || [];
   const stat = _stats.find(st=>statTeamKind(st, pl)==='club') || _stats[0] || {};
@@ -3341,6 +3384,7 @@ function mapApiPlayerToDuelio(entry, idx, seasonLabel=REAL_DATA_CONFIG.seasons[0
 // limite de requêtes par minute de l'abonnement : la recherche échouait alors sans raison visible.
 
 function mapProfileToLightPlayer(pl){
+  pl.name = decodeApiText(pl.name); pl.firstname = decodeApiText(pl.firstname); pl.lastname = decodeApiText(pl.lastname);
   const pos = pl.position ? posFromApi(pl.position) : null;
   const apiHeight = pl.height ? parseInt(pl.height, 10) : null;
   return {
@@ -3946,8 +3990,10 @@ function loadPlayerCareer(p, onProgress, priority){
   if(!p || !p.apiId || p.needsStats) return Promise.resolve(p);
   if(p.careerLoaded) return Promise.resolve(p);
   if(careerLoading[p.apiId]){
-    // déjà en cours en tâche de fond : si l'utilisateur la demande maintenant, ses appels passent devant
-    if(priority !== 'low') (p.seasonsAvailable||[]).forEach(sn=>{ if(!seasonKnown(p, sn)) apiFetchJson(`${REAL_DATA_CONFIG.proxyUrl}/players?id=${p.apiId}&season=${sn}`, 'high').catch(()=>{}); });
+    // Déjà en cours en tâche de fond : on s'y rattache. L'ancienne « remontée en
+    // priorité » relançait un appel par saison — jusqu'à seize — vers une autre
+    // adresse que celle en vol, donc sans déduplication, et jetait les réponses :
+    // du quota consommé pour rien, devant la demande réelle de l'utilisateur.
     return careerLoading[p.apiId];
   }
   const run = (async ()=>{
@@ -4165,7 +4211,7 @@ function construireLegende(l, rang){
 async function chargerLegendes(){
   if(LEGENDES.chargees) return LEGENDES.liste;
   try {
-    const r = await fetch(REAL_DATA_CONFIG.legendesUrl || 'data/legendes.json');
+    const r = await fetchBorne(REAL_DATA_CONFIG.legendesUrl || 'data/legendes.json', 12000);
     if(!r.ok) throw new Error('HTTP ' + r.status);
     const doc = await r.json();
     LEGENDES.liste = (doc.legendes || []).map(construireLegende);
@@ -4265,6 +4311,10 @@ function normClub(t){
   return v;
 }
 function prepareIndexEntry(e){
+  if(e.n) e.n = decodeApiText(e.n);
+  if(e.f) e.f = decodeApiText(e.f);
+  if(e.l) e.l = decodeApiText(e.l);
+  if(e.t) e.t = decodeApiText(e.t);
   const nom = normalizeSearch(e.n || '');
   e._nw = nom.split(/[\s\-'.]+/).filter(Boolean);     // mots du nom connu
   if(e.f || e.l){
@@ -5004,6 +5054,7 @@ const TROPHEE_AMICAL_RE = new RegExp([
 /* Les titres qu'on retient : datés, et disputés pour de bon.
  * Sur l'absence de date, voir le commentaire ci-dessus. */
 function trophiesRetenus(trophies){
+  for(const t of (trophies || [])){ if(t && t.league) t.league = decodeApiText(t.league); }
   return (trophies || []).filter(t =>
     t && t.season != null && String(t.season).trim() !== ''
       && !TROPHEE_AMICAL_RE.test(t.league || ''));
@@ -5245,8 +5296,11 @@ function getActiveStatsList(filled){
 }
 function renderAll(){
   const content = document.getElementById('content');
+  // Un identifiant sans fiche dans PLAYERS donnait {_idx} — un objet « vrai »
+  // sans nom ni poste — et le rendu plantait sur la première photo. On le
+  // traite comme un emplacement vide.
   const chosen = slots
-    .map((id, idx)=> id ? {...PLAYERS.find(p=>p.id===id), _idx: idx} : null);
+    .map((id, idx)=>{ const src = id ? PLAYERS.find(p=>p.id===id) : null; return src ? {...src, _idx: idx} : null; });
   const filled = chosen.filter(Boolean);
   const uniquePositions = [...new Set(filled.map(p=>p.pos))];
   const samePos = uniquePositions.length===1 ? uniquePositions[0] : null;
@@ -5269,9 +5323,9 @@ function renderAll(){
         ${removeBtn}
         ${swapBtn}
         <div class="portrait">${portraitHtml(p)}</div>
-        <div class="col-name">${p.name}</div>
+        <div class="col-name">${escapeHtml(p.name)}</div>
         <div class="pos-lbl">${p.posLabel}</div>
-        <div class="col-club">${p.club ? clubHtml(p)+' · ' : ''}${flagSVG(p.nation.iso)} ${p.nation.code}</div>
+        <div class="col-club">${p.club ? clubHtml(p)+' · ' : ''}${flagSVG((p.nation||{}).iso)} ${escapeHtml((p.nation||{}).code || '')}</div>
       </div>`;
   }
 
@@ -5365,7 +5419,7 @@ function renderAll(){
       const mine = (unknown && statUnknown(p,r.key)) ? null : getVal(p,r.key);
       const isLead = mine!==null && best!==null && Number(mine)===best && !tie;
       const text = unknown ? fmtStat(p, r.key, r.suffix)
-        : (mine===null ? trophyPlaceholder(p, r.key) : `${mine}${r.suffix||''}`);
+        : (mine===null ? trophyPlaceholder(p, r.key) : `${fmtNombre(mine)}${fmtSuffixe(r.suffix)}`);
       return `
         <div class="stat-row ${isLead?'lead':''} ${mine===null?'unknown':''}">
           <span class="k">${r.label}</span>
@@ -5405,7 +5459,7 @@ function renderAll(){
         const lead = v !== null && best !== null && Number(v) === best && !tie;
         const txt = v === null
           ? (unknown ? fmtStat(filled[i], r.key, r.suffix) : trophyPlaceholder(filled[i], r.key))
-          : `${v}${r.suffix || ''}`;
+          : `${fmtNombre(v)}${fmtSuffixe(r.suffix)}`;
         return `<div class="dr-val${lead ? ' lead' : ''}${lead && net ? ' net' : ''}${v === null ? ' unknown' : ''}">${txt}</div>`;
       };
       return `<div class="dr-row">
@@ -5444,7 +5498,7 @@ function renderAll(){
     const headerCells = `<div class="ct-head-spacer"></div>` + filled.map(p=>`
       <div class="ct-head" style="--slot-color:${SLOT_COLORS[p._idx]}">
         <div class="ct-portrait">${portraitHtml(p)}</div>
-        <div class="ct-name">${shortName(p)}</div>
+        <div class="ct-name">${escapeHtml(shortName(p))}</div>
       </div>`).join('');
 
     const bodyRows = list.map(r=>{
@@ -5458,7 +5512,7 @@ function renderAll(){
         <div class="ct-row">
           <div class="ct-label">${r.label}</div>
           <div class="ct-vals">
-            ${vals.map((v,i)=>`<div class="ct-val ${v!==null && best!==null && Number(v)===best && !tie ? 'ct-lead':''} ${v===null?'ct-empty':''}">${v===null ? (unknown ? fmtStat(filled[i], r.key, suf) : trophyPlaceholder(filled[i], r.key)) : v+suf}</div>`).join('')}
+            ${vals.map((v,i)=>`<div class="ct-val ${v!==null && best!==null && Number(v)===best && !tie ? 'ct-lead':''} ${v===null?'ct-empty':''}">${v===null ? (unknown ? fmtStat(filled[i], r.key, suf) : trophyPlaceholder(filled[i], r.key)) : fmtNombre(v)+fmtSuffixe(suf)}</div>`).join('')}
           </div>
         </div>`;
     }).join('');
@@ -5479,6 +5533,11 @@ function renderAll(){
   const showControls = activeTab==='stats' && filled.length>=2;
   const compactIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>`;
 
+  /* Un chargement qui se termine en arrière-plan — carrière, palmarès —
+   * redessine l'écran. Sans ce garde, la position de défilement retombait en
+   * haut pendant que l'utilisateur lisait le bas de la page. navigateTo remet
+   * explicitement à zéro lors d'un vrai changement d'écran. */
+  const defilementGarde = content.scrollTop;
   content.innerHTML = `
     ${isDemo ? `<div class="note"><b>Démo</b> — joueurs et statistiques fictifs. Rien ici n'est réel.</div>` : ''}
     ${!compactView ? `<div class="duel-heads compare-cols count-${slots.length}">${headsHtml}${slots.length===2 ? '<div class="duel-vs">VS</div>' : ''}</div>` : ''}
@@ -5507,9 +5566,9 @@ function renderAll(){
         : compareMode==='age' ? (realMode ? `Tout ce qu'ils avaient accumulé à ${compareAgeValue} ans` : `Estimation à ${compareAgeValue} ans`)
         : compareMode==='career' ? 'Toutes leurs saisons additionnées'
         : (realMode ? 'Choisissez la saison sous chaque joueur' : 'Statistiques de la saison')}</span>
-      ${hasSplit && !duelAvecLegende(filled) ? `<button class="scope-link" id="scopeChip" type="button">${scopeLabel()}<span class="chev">▾</span></button>` : ''}
+      ${hasSplit && !duelAvecLegende(filled) ? `<button class="scope-link" id="scopeChip" type="button">${escapeHtml(scopeLabel())}<span class="chev">▾</span></button>` : ''}
     </div>
-    <div class="career-progress" id="careerProgress">${careerProgressHtml()}</div>` : ''}
+    <div class="career-progress">${careerProgressHtml()}</div>` : ''}
     <div class="compare-wrap ${compactView ? 'compact-view' : ''}">
       ${compactView && filled.length>=2 ? compactTableHtml()
         : (filled.length>=2
@@ -5532,7 +5591,7 @@ function renderAll(){
           return {...p, radar: info.src.radar};
         }), filled.map(p=>SLOT_COLORS[p._idx]), 'compare')}
         <div class="radar-legend">
-          ${filled.map(p=>`<span class="radar-legend-item"><span class="dot" style="background:${SLOT_COLORS[p._idx]}"></span>${shortName(p)}</span>`).join('')}
+          ${filled.map(p=>`<span class="radar-legend-item"><span class="dot" style="background:${SLOT_COLORS[p._idx]}"></span>${escapeHtml(shortName(p))}</span>`).join('')}
         </div>
       </div>` : ''}
       ${filled.length<2 ? compareTutorialHtml(filled, isDemo) : ''}
@@ -5540,6 +5599,7 @@ function renderAll(){
       ${filled.length>=2 && !compactView ? '<button class="reset-btn" id="resetBtn" type="button">Recommencer la comparaison</button>' : ''}
     </div>
   `;
+  content.scrollTop = defilementGarde;
   wireRadars(content);
   wireCompareTutorial(content);
   if(activeTab==='trophies' && filled.length>=2){ ensureTrophiesLoaded(filled); ensureCareerForNation(filled, 'high'); }
@@ -5791,7 +5851,7 @@ function openValueSheet(title, sub, items, selected, onPick){
   const list = document.getElementById('valueSheetList');
   list.innerHTML = items.map(it=>`
     <button class="season-row ${String(it.value)===String(selected)?'current':''}" type="button" data-value="${it.value}">
-      <span class="yr" style="min-width:0">${it.label}</span>
+      <span class="yr" style="min-width:0">${escapeHtml(it.label)}</span>
       <span class="meta"><span class="nums">${it.meta||''}</span></span>
       ${String(it.value)===String(selected) ? '<span class="tick">✓</span>' : ''}
     </button>`).join('');
@@ -5866,7 +5926,7 @@ function seasonPickHtml(p, opts){
     if(!annees.length || (!opts.detail && compareMode !== 'shown')){
       const s = p.span;
       return `<div class="season-pick static" title="Carrière entière, toutes compétitions">${
-        s ? `${s[0]} → ${s[1]}` : 'Carrière'}</div>`;
+        s ? `${seasonLabel(s[0])} → ${seasonLabel(s[1])}` : 'Carrière'}</div>`;   // même format que les joueurs de l'API, côte à côte
     }
     const court = slots.length > 2 && !opts.detail;
     const vu = `${court ? '' : 'Saison '}${seasonLabel(p.seasonShown)}${
@@ -5884,7 +5944,7 @@ function seasonPickHtml(p, opts){
     // « Rien dans la base » alors que les chiffres étaient bien là.
     const dispo = p.seasonsAvailable && p.seasonsAvailable.length ? p.seasonsAvailable : null;
     const txt = info.cumul ? `${seasonLabel(info.cumul.span[0])} → ${seasonLabel(info.cumul.span[1])}`
-      : (info.career && dispo) ? `${Math.min(...dispo)} → ${Math.max(...dispo)}`
+      : (info.career && dispo) ? `${seasonLabel(Math.min(...dispo))} → ${seasonLabel(Math.max(...dispo))}`
       : info.pending ? 'Chargement…' : 'Rien dans la base';
     return `<div class="season-pick static" title="Saisons additionnées">${txt}</div>${noteCouvertureHtml(p)}`;
   }
@@ -5925,8 +5985,8 @@ function seasonRowHtml(p, sn){
   let nums = '';
   if(st){
     const bits = [`${st.appearances||0} match${(st.appearances||0)>1?'s':''}`];
-    if(p.pos==='GK'){ if(!isStatMissing(st,'saves')) bits.push(`${st.saves||0} arrêts`); }
-    else { if(!isStatMissing(st,'buts')) bits.push(`${st.buts||0} but${(st.buts||0)>1?'s':''}`); if(!isStatMissing(st,'passesDec')) bits.push(`${st.passesDec||0} passe${(st.passesDec||0)>1?'s':''} D`); }
+    if(p.pos==='GK'){ if(!isStatMissing(st,'saves')) bits.push(`${st.saves||0} arrêt${(st.saves||0)>1?'s':''}`); }
+    else { if(!isStatMissing(st,'buts')) bits.push(`${st.buts||0} but${(st.buts||0)>1?'s':''}`); if(!isStatMissing(st,'passesDec')) bits.push(`${st.passesDec||0} passe${(st.passesDec||0)>1?'s':''} déc.`); }
     nums = bits.join(' · ');
   } else nums = noData ? 'Rien dans la base pour cette saison' : 'Touchez pour charger';
   return `
@@ -5945,13 +6005,13 @@ function renderSeasonSheet(){
   const loadedCount = Object.keys(p.statsBySeason||{}).length;
   const pr = careerProgress[p.apiId];
   document.getElementById('seasonSheetSub').textContent = p.estLegende
-    ? `${seasons.length} saisons, saisies à la main et toutes compétitions`
+    ? `${seasons.length} saison${seasons.length>1?'s':''}, saisies à la main et toutes compétitions`
       + (p.saisonsCompletes === false
          ? `. Attention : le découpage ne couvre pas toute sa carrière${p.saisonsNote ? ' — ' + p.saisonsNote : ''}.`
          : `.`)
     : pr
     ? `Chargement de la carrière : ${pr.done}/${pr.total} saisons…`
-    : (p.careerLoaded ? `${seasons.length} saisons dans la base API-Football${p.careerSpan ? ' ('+p.careerSpan[0]+'-'+p.careerSpan[1]+')' : ''}. La meilleure : buts + passes décisives, ou matchs joués pour un défenseur ou un gardien.`
+    : (p.careerLoaded ? `${seasons.length} saison${seasons.length>1?'s':''} dans la base API-Football${p.careerSpan ? ' ('+p.careerSpan[0]+'-'+p.careerSpan[1]+')' : ''}. La meilleure : buts + passes décisives, ou matchs joués pour un défenseur ou un gardien.`
                       : `${loadedCount} saison${loadedCount>1?'s':''} chargée${loadedCount>1?'s':''} sur ${seasons.length} dans la base. Chaque saison choisie est chargée à la demande.`);
   list.innerHTML = (!p.careerLoaded && !pr ? `<button class="sheet-action" id="loadCareerBtn" type="button">Charger toute la carrière et trouver sa meilleure saison</button>` : '')
     + seasons.map(sn=>seasonRowHtml(p, sn)).join('');
@@ -5965,13 +6025,19 @@ function renderSeasonSheet(){
     btn.addEventListener('click', async ()=>{
       const sn = parseInt(btn.dataset.season,10);
       btn.disabled = true; btn.querySelector('.nums').textContent = 'Chargement…';
+      // Le rappel est capturé AVANT l'attente : si l'utilisateur ferme la feuille
+      // ou l'ouvre pour l'autre joueur pendant le chargement, la saison doit
+      // quand même s'appliquer à l'écran, sans fermer la feuille de l'autre.
+      const rappel = seasonSheetOnChange;
       try{
         const st = await ensureSeasonLoaded(p, sn);
-        if(!st){ p.seasonsNoData = p.seasonsNoData||{}; p.seasonsNoData[sn] = true; renderSeasonSheet(); return; }
+        if(!st){ p.seasonsNoData = p.seasonsNoData||{}; p.seasonsNoData[sn] = true; if(seasonSheetPlayer===p) renderSeasonSheet(); return; }
         applySeasonToPlayer(p, sn, true);
-        closeSeasonSheet(true);
+        if(seasonSheetPlayer === p) closeSeasonSheet(true);
+        else if(rappel) rappel();
       }catch(err){
-        btn.disabled = false; btn.querySelector('.nums').textContent = (err && err.message) || 'Erreur de chargement';
+        btn.disabled = false;
+        const n = btn.querySelector('.nums'); if(n) n.textContent = apiErrorMessage((err && err.message) || 'Erreur de chargement');
       }
     });
   });
@@ -6259,10 +6325,20 @@ function statUnknown(fp, key){
   return !!info.src && isStatMissing(info.src, key);
 }
 function statPending(fp){ return !!getStatSource(fp).pending; }
+/* Un seul format pour tous les nombres affichés : virgule décimale, espace
+ * fine des milliers, et une espace avant « % » comme le veut le français.
+ * « 7.2/10 », « 2874 min » et « 85% » tranchaient sur une interface en français. */
+function fmtNombre(v){
+  if(v === null || v === undefined || v === '') return '';
+  const n = typeof v === 'number' ? v : Number(String(v).replace(',', '.'));
+  if(!isFinite(n)) return String(v);
+  return n.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+}
+function fmtSuffixe(suf){ return suf === '%' ? ' %' : (suf || ''); }
 function fmtStat(fp, key, suffix){
   if(statPending(fp)) return '…';
   if(statUnknown(fp, key)) return '—';
-  return `${getStatValue(fp, key)}${suffix||''}`;
+  return `${fmtNombre(getStatValue(fp, key))}${fmtSuffixe(suffix)}`;
 }
 
 // Charge en arrière-plan ce que la base de comparaison demande (saison à un âge, même saison, carrière),
@@ -6321,8 +6397,10 @@ function autoBestSeason(p, onDone){
 const careerProgress = {};
 function setCareerProgress(p, done, total){
   if(total) careerProgress[p.apiId] = {done, total}; else delete careerProgress[p.apiId];
-  const el = document.getElementById('careerProgress');
-  if(el) el.innerHTML = careerProgressHtml();
+  // Deux écrans portent ce compteur (comparatif et fiche) et coexistent dans le
+  // DOM : getElementById n'atteignait que le premier, la fiche restait figée.
+  const html = careerProgressHtml();
+  document.querySelectorAll('.career-progress').forEach(el=>{ el.innerHTML = html; });
 }
 function careerProgressHtml(){
   const parts = Object.entries(careerProgress).map(([apiId, pr])=>{
@@ -6384,7 +6462,7 @@ async function generateShareImage(){
 async function dessinerImageDePartage(btn){
   try{ await Promise.all([document.fonts.load("800 20px 'Unbounded'"), document.fonts.load("700 20px 'Unbounded'")]); }catch(e){}
 
-  const filled = slots.map((id, idx) => id ? {...PLAYERS.find(p=>p.id===id), _idx: idx} : null).filter(Boolean);
+  const filled = slots.map((id, idx) => { const src = id ? PLAYERS.find(p=>p.id===id) : null; return src ? {...src, _idx: idx} : null; }).filter(Boolean);
   const list = (compareBasis==='nation' ? NATION_STATS : getActiveStatsList(filled)).filter(r=>shareSelectedStats.includes(r.key));
   const n = filled.length;
 
@@ -6816,7 +6894,7 @@ function pickerItemHtml(p, disabled){
     <button type="button" class="picker-item ${disabled?'disabled':''}" data-id="${p.id}" data-api="${p.apiId||''}" ${disabled?'disabled':''}>
       <div class="portrait">${portraitHtml(p)}</div>
       <div class="info">
-        <div class="pname">${p.name}</div>
+        <div class="pname">${escapeHtml(p.name)}</div>
         <div class="pmeta">${playerMetaHtml(p)}</div>
       </div>
       <span class="row-spin" aria-hidden="true"></span>
@@ -6926,7 +7004,7 @@ function playerRowHtml(p, mode){
     <button type="button" class="browse-item" data-id="${p.id}" data-api="${p.apiId||''}">
       <div class="portrait">${portraitHtml(p)}</div>
       <div class="info">
-        <div class="pname">${p.name}</div>
+        <div class="pname">${escapeHtml(p.name)}</div>
         <div class="pmeta">${playerMetaHtml(p)}</div>
       </div>
       ${mode==='recent' ? '' : chev}
@@ -7055,11 +7133,11 @@ function palmaresTableHtml(p){
     return `
       <div class="palmares-row${i >= PALMARES_VISIBLES ? ' enplus' : ''}" role="row">
         <div role="cell">
-          <span class="palmares-comp">${t.league}</span>
-          ${t.country ? `<span class="palmares-pays">${paysFr(t.country)}</span>` : ''}
+          <span class="palmares-comp">${escapeHtml(t.league)}</span>
+          ${t.country ? `<span class="palmares-pays">${escapeHtml(paysFr(t.country))}</span>` : ''}
         </div>
         <div class="palmares-saison" role="cell">${saison}</div>
-        <div role="cell"><span class="palmares-res ${ton}">${mot}</span></div>
+        <div role="cell"><span class="palmares-res ${ton}">${escapeHtml(mot)}</span></div>
       </div>`;
   }).join('');
 
@@ -7131,8 +7209,8 @@ function palmaresDuelHtml(filled){
   const corps = rangees.map((c, i)=>`
     <div class="palmares-row${i >= PALMARES_VISIBLES ? ' enplus' : ''}" role="row">
       <div role="cell">
-        <span class="palmares-comp">${c.nom}</span>
-        ${c.pays ? `<span class="palmares-pays">${paysFr(c.pays)}</span>` : ''}
+        <span class="palmares-comp">${escapeHtml(c.nom)}</span>
+        ${c.pays ? `<span class="palmares-pays">${escapeHtml(paysFr(c.pays))}</span>` : ''}
       </div>
       ${cellule(c)}
     </div>`).join('');
@@ -7146,7 +7224,7 @@ function palmaresDuelHtml(filled){
     <div class="palmares duel ${filled.length > 2 ? 'serre' : ''}" style="--joueurs:${filled.length}" role="table" aria-label="Comparaison des palmarès">
       <div class="palmares-head" role="row">
         <div role="columnheader">Compétition</div>
-        ${filled.map(p=>`<div class="pd-head" style="--slot-color:${SLOT_COLORS[p._idx]}" role="columnheader">${shortName(p)}</div>`).join('')}
+        ${filled.map(p=>`<div class="pd-head" style="--slot-color:${SLOT_COLORS[p._idx]}" role="columnheader">${escapeHtml(shortName(p))}</div>`).join('')}
       </div>
       ${corps}
       <div class="palmares-row total" role="row">
@@ -7291,6 +7369,13 @@ function majVoilesTimeline(tl){
  * « € 12.24M », « Free », « Loan », « Swap », « N/A ». On le rend lisible en
  * français : « 12,24 M€ », « Transfert libre », « Prêt », « Échange », et un
  * montant inconnu se dit « Transfert » plutôt que « N/A ». */
+// « 2023-07-01 » s'écrit « 1 juillet 2023 » dans une interface en français.
+function fmtDateFr(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  if(isNaN(d)) return String(iso);
+  return `${d.getDate()}${d.getDate()===1 ? 'er' : ''} ${MONTHS_FR[d.getMonth()]} ${d.getFullYear()}`;
+}
 function libelleTransfert(type){
   const t = (type || '').trim();
   if(!t || /^n\/a$/i.test(t)) return 'Transfert';
@@ -7333,8 +7418,8 @@ async function loadRealTimelineFor(p){
     };
     let events = [];
     transfers.forEach(t=>{
-      const inTeam = t.teams && t.teams.in ? t.teams.in.name : '?';
-      events.push({ club: inTeam, date: t.date || '', feeLabel: libelleTransfert(t.type), sortVal: rangDate(t.date) });
+      const inTeam = decodeApiText(t.teams && t.teams.in && t.teams.in.name) || '?';   // name peut être null : « null » s'affichait
+      events.push({ club: inTeam, date: fmtDateFr(t.date), feeLabel: libelleTransfert(t.type), sortVal: rangDate(t.date) });
     });
     // Les trophées ne figurent plus ici : ils ont leur tableau dans le palmarès,
     // où ils se lisent d'un coup d'œil au lieu d'allonger le défilement.
@@ -7361,9 +7446,9 @@ async function loadRealTimelineFor(p){
       return `
         <div class="tlh-item ${isLast?'current':''}">
           <div class="tlh-dot"></div>
-          <div class="tlh-club">${ev.club}</div>
-          <div class="tlh-years">${ev.date || ''}</div>
-          <div class="tlh-fee ${ev.feeLabel==='Transfert libre'?'free':''}">${ev.feeLabel}</div>
+          <div class="tlh-club">${escapeHtml(ev.club)}</div>
+          <div class="tlh-years">${escapeHtml(ev.date || '')}</div>
+          <div class="tlh-fee ${ev.feeLabel==='Transfert libre'?'free':''}">${escapeHtml(ev.feeLabel)}</div>
           ${isLast ? '<span class="tlh-badge">Actuel</span>' : ''}
         </div>`;
     }).join('');
@@ -7441,7 +7526,7 @@ function renderBrowse(){
           }
           else if((p.apiId || p.estLegende) && isStatMissing(pv, r.key)) val = '—';
           else if(pv[r.key] === undefined || pv[r.key] === null) val = '—';
-          else val = (r.decimals!=null ? Number(pv[r.key]).toFixed(r.decimals) : pv[r.key]) + suf;
+          else val = fmtNombre(r.decimals!=null ? Number(Number(pv[r.key]).toFixed(r.decimals)) : pv[r.key]) + fmtSuffixe(suf);
           const lbl = (p.apiId && r.key==='age' && p.birthYear && p.seasonShown) ? `Âge en ${seasonLabel(p.seasonShown)}` : r.label;
           return `<div class="solo-stat-row"><span class="k">${lbl}</span><span class="v">${val}</span></div>`;
         }).join('');
@@ -7476,25 +7561,29 @@ function renderBrowse(){
       timeline = events.map(ev=>`
             <div class="tlh-item ${ev.current?'current':''}">
               <div class="tlh-dot"></div>
-              <div class="tlh-club">${ev.club}</div>
-              <div class="tlh-years">${ev.date || ''}</div>
-              <div class="tlh-fee ${ev.feeLabel!=='Formation' && ev.feeLabel!=='Transfert libre' ? '' : 'free'}">${ev.feeLabel}</div>
+              <div class="tlh-club">${escapeHtml(ev.club)}</div>
+              <div class="tlh-years">${escapeHtml(ev.date || '')}</div>
+              <div class="tlh-fee ${ev.feeLabel!=='Formation' && ev.feeLabel!=='Transfert libre' ? '' : 'free'}">${escapeHtml(ev.feeLabel)}</div>
               ${ev.current ? '<span class="tlh-badge">Actuel</span>' : ''}
             </div>`).join('');
     }
+    // Même garde que le comparatif : un palmarès qui arrive ne doit pas
+    // ramener la fiche en haut pendant qu'on lit ses statistiques.
+    const ancienDetail = el.querySelector('.browse-detail');
+    const defilementFiche = (ancienDetail && ancienDetail.dataset.pour === String(p.id)) ? ancienDetail.scrollTop : 0;
     el.innerHTML = `
-      <div class="browse-detail">
+      <div class="browse-detail" data-pour="${p.id}">
         <div class="browse-hero">
           <div class="portrait">${portraitHtml(p)}</div>
-          <div class="p-name">${p.name}</div>
+          <div class="p-name">${escapeHtml(p.name)}</div>
           <div class="p-pos">${p.posLabel}</div>
-          <div class="p-club">${p.club ? clubHtml(p)+' · ' : ''}${flagSVG(p.nation.iso)} ${p.nation.name}</div>
+          <div class="p-club">${p.club ? clubHtml(p)+' · ' : ''}${flagSVG((p.nation||{}).iso)} ${escapeHtml((p.nation||{}).name || '')}</div>
           ${(p.height || p.preferredFoot) ? `<div class="p-physique">
             ${p.height ? `<span class="p-physique-item">📏 ${p.height} cm</span>` : ''}
             ${p.preferredFoot ? `<span class="p-physique-item">🦵 ${p.preferredFoot}</span>` : ''}
           </div>` : ''}
           ${(p.apiId || p.estLegende) && p.seasonsAvailable ? `<div class="detail-season">${seasonPickHtml(p, { detail:true })}</div>` : ''}
-          <div class="career-progress" id="careerProgress">${careerProgressHtml()}</div>
+          <div class="career-progress">${careerProgressHtml()}</div>
         </div>
         <div class="browse-section-label">Parcours en club &amp; transferts</div>
         <div class="tlh-rail"><div class="timeline-h">${timeline}</div></div>
@@ -7515,6 +7604,8 @@ function renderBrowse(){
     wireSeasonSelects(el, ()=>{ if(browseDetailId===p.id) renderBrowse(); });
     autoBestSeason(p, ()=>{ if(browseDetailId===p.id) renderBrowse(); });
     if(p.apiId && !p.needsStats && !p.careerLoaded && !careerLoading[p.apiId]) ensureCareerForNation([p], 'low');
+    const nouveauDetail = el.querySelector('.browse-detail');
+    if(nouveauDetail && defilementFiche) nouveauDetail.scrollTop = defilementFiche;
 
     fitTimeline();
     return;
@@ -7886,7 +7977,14 @@ try{ console.log('%cDuelio', 'font-weight:bold;color:#2DD4BF',
   const content = document.getElementById('content');
   content.innerHTML = `<div class="empty-state">Chargement…</div>`;
   await bootstrapPlayers();
-  await chargerLegendes();   // 29 Ko : on attend, pour que « Zidane » réponde dès la première frappe
+  // 29 Ko : on les attend pour que « Zidane » réponde dès la première frappe —
+  // mais quatre secondes au plus. Si le réseau se tait, l'écran s'affiche quand
+  // même et les légendes rejoignent la liste à leur arrivée.
+  let premierRenduFait = false;
+  await Promise.race([
+    chargerLegendes().then(()=>{ if(LEGENDES.chargees && premierRenduFait) renderAll(); }),
+    sleep(4000)
+  ]);
   loadPlayerIndex(); // en arrière-plan : la recherche instantanée s'active dès que l'index est là
   if(FALLBACK_REASON){
     const banner = document.getElementById('globalFallbackBanner');
@@ -7895,6 +7993,7 @@ try{ console.log('%cDuelio', 'font-weight:bold;color:#2DD4BF',
     banner.style.display = 'block';
   }
   renderAll();
+  premierRenduFait = true;
 })();
 </script>
 
