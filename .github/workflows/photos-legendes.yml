@@ -109,15 +109,34 @@ jobs:
           const dessous = (s) => String(s || "").replace(/<[^>]*>/g, "").trim();
 
           // --- Trouver la photo d'un joueur ------------------------------------
+          // On passe par Wikidata et PAS par la recherche Wikipédia. La raison est
+          // concrète : Maradona, Cruyff, Puskás et Eusébio ont tous un stade à leur
+          // nom, et la recherche d'article renvoyait la photo du stade. Del Piero
+          // ramenait un tableau de la Renaissance. Wikidata permet d'exiger que
+          // l'entité soit un ÊTRE HUMAIN (P31 = Q5) avant de prendre son image (P18).
+          const Q_HUMAIN = "Q5";
           async function chercherPhoto(nom) {
-            // 1. L'article de Wikipédia et son image principale.
-            const rech = await api("en.wikipedia.org", {
-              action: "query", generator: "search", gsrsearch: `${nom} footballer`,
-              gsrlimit: "3", prop: "pageimages", piprop: "name",
+            const rech = await api("www.wikidata.org", {
+              action: "wbsearchentities", search: nom, language: "en",
+              uselang: "en", type: "item", limit: "6",
             });
-            const pages = (rech.query?.pages || []).filter((p) => p.pageimage);
-            if (!pages.length) return null;
-            const fichier = "File:" + pages[0].pageimage;
+            const candidats = (rech.search || []).map((x) => x.id);
+            if (!candidats.length) return null;
+
+            const ent = await api("www.wikidata.org", {
+              action: "wbgetentities", ids: candidats.join("|"), props: "claims",
+            });
+            let fichier = null;
+            for (const id of candidats) {           // on garde l'ordre de pertinence
+              const cl = ent.entities?.[id]?.claims;
+              if (!cl) continue;
+              const humain = (cl.P31 || []).some(
+                (c) => c.mainsnak?.datavalue?.value?.id === Q_HUMAIN);
+              if (!humain) continue;                // un stade, un tableau, un club : écarté
+              const img = (cl.P18 || [])[0]?.mainsnak?.datavalue?.value;
+              if (img) { fichier = "File:" + img; break; }
+            }
+            if (!fichier) return null;
 
             // 2. Sa licence et une miniature, sur Commons.
             const inf = await api("commons.wikimedia.org", {
