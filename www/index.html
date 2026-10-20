@@ -3028,7 +3028,13 @@ function missingFromPresent(present){
   return missing;
 }
 // Vrai si cette stat n'existe pas dans la base pour la source de données donnée
-function isStatMissing(src, key){ return !!(src && src.missing && src.missing[key]); }
+function isStatMissing(src, key){
+  if(!src) return false;
+  const m = src.missing || {};
+  // Buts / match se déduit de deux autres lignes : inconnu si l'une l'est, ou sans match joué.
+  if(key === 'butsParMatch') return !!(m.appearances || m.buts) || !(src.appearances > 0);
+  return !!m[key];
+}
 
 // Classe une ligne de statistiques API : 'nation' (équipe nationale A), 'youth' (équipes de jeunes) ou 'club'
 function _normTxt(t){ return (t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
@@ -4005,7 +4011,7 @@ const POSTE_VERS_CODE = { 'Gardien':'GK', 'Défenseur':'DEF', 'Milieu':'MID', 'A
  * manquant, ce qui fait afficher « — » par le mécanisme existant plutôt qu'un
  * zéro trompeur : un zéro dirait « il n'a jamais fait de passe décisive »,
  * alors que la vérité est « personne ne les a comptées à l'époque ». */
-const STATS_DE_LEGENDE = ['appearances', 'buts'];
+const STATS_DE_LEGENDE = ['appearances', 'buts', 'butsParMatch'];
 /* Construit un bloc de statistiques au format que l'application attend, à partir
  * des seules valeurs qu'on possède. `pd` n'est renseigné que pour les rares
  * joueurs dont les passes décisives ont été relevées — Gerrard pour l'instant —
@@ -4958,6 +4964,7 @@ let compareSeasonValue = null;
 const STATS_COMMON = [
   {key:'appearances', label:'Matchs joués'},
   {key:'buts', label:'Buts'},
+  {key:'butsParMatch', label:'Buts / match'},
   {key:'passesDec', label:'Passes décisives'},
   {key:'touches', label:'Passes / match'},
   {key:'precisionTirs', label:'Précision des tirs', suffix:'%'},
@@ -4992,6 +4999,7 @@ const STATS_BY_POS = {
     {key:'passesReussies', label:'Passes réussies', suffix:'%'},
     {key:'cartonsJaunes', label:'Cartons jaunes', lowerIsBetter:true},
     {key:'buts', label:'Buts'},
+    {key:'butsParMatch', label:'Buts / match'},
     {key:'passesDec', label:'Passes décisives'}
   ],
   MID: [
@@ -5003,11 +5011,13 @@ const STATS_BY_POS = {
     {key:'dribbles', label:'Dribbles réussis / match'},
     {key:'tacles', label:'Tacles / match'},
     {key:'interceptions', label:'Interceptions / match'},
-    {key:'buts', label:'Buts'}
+    {key:'buts', label:'Buts'},
+    {key:'butsParMatch', label:'Buts / match'}
   ],
   FWD: [
     {key:'appearances', label:'Matchs joués'},
     {key:'buts', label:'Buts'},
+    {key:'butsParMatch', label:'Buts / match'},
     {key:'shotsOnTarget', label:'Tirs cadrés'},
     {key:'precisionTirs', label:'Précision des tirs', suffix:'%'},
     {key:'occasions', label:'Passes clés'},
@@ -6448,6 +6458,7 @@ function getStatValue(fp, key){
   const info = getStatSource(fp);
   if(info.estimate) return statAtAge(fp,key,compareAgeValue);
   if(!info.src) return 0; // aucune donnée de ce type d'équipe sur la période : 0, pas d'invention
+  if(key === 'butsParMatch') return info.src.appearances > 0 ? Math.round(info.src.buts / info.src.appearances * 100) / 100 : 0;
   return info.src[key];
 }
 // Valeur inconnue : en cours de chargement, absente de la base, ou stat non couverte par la base pour cette saison
@@ -7222,6 +7233,7 @@ const BROWSE_STAT_GROUPS = [
     label: 'Buts & tirs',
     rows: [
       {key:'buts', label:'Buts'},
+      {key:'butsParMatch', label:'Buts / match'},
       {key:'shotsTotal', label:'Tirs tentés'},
       {key:'shotsOnTarget', label:'Tirs cadrés'},
       {key:'precisionTirs', label:'Précision des tirs', suffix:'%'}
@@ -7720,6 +7732,7 @@ function renderBrowse(){
             const v = trophyValue(p, r.key);
             val = v === null ? trophyPlaceholder(p, r.key) : v;
           }
+          else if(r.key==='butsParMatch') val = isStatMissing(pv, r.key) ? '—' : fmtNombre(Math.round(pv.buts / pv.appearances * 100) / 100);
           else if((p.apiId || p.estLegende) && isStatMissing(pv, r.key)) val = '—';
           else if(pv[r.key] === undefined || pv[r.key] === null) val = '—';
           else val = fmtNombre(r.decimals!=null ? Number(Number(pv[r.key]).toFixed(r.decimals)) : pv[r.key]) + fmtSuffixe(suf);
