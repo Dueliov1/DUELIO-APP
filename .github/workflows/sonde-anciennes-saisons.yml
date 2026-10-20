@@ -1,0 +1,188 @@
+name: Sonde des anciennes saisons
+
+# Le moissonnage n'interroge qu'un seul point d'entrée : /players/seasons, puis
+# /players pour chaque saison annoncée. Cette sonde demande la même chose
+# autrement, pour savoir si l'API détient des débuts de carrière qu'elle ne nous
+# annonce pas.
+#
+# Quatre voies sont essayées sur des joueurs dont on connaît le vrai début :
+#   1. /players/seasons      — ce que le moissonnage utilise (référence)
+#   2. /players?id&season=   — interrogé DIRECTEMENT sur une saison non annoncée
+#   3. /players/teams        — l'historique des clubs
+#   4. /transfers            — l'historique des transferts
+#
+# Le rapport est écrit dans rapports/sonde-anciennes.json, pas seulement dans le
+# résumé d'exécution, pour qu'il soit lisible hors de l'interface GitHub.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sonde-anciennes
+  cancel-in-progress: false
+
+jobs:
+  sonder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          sparse-checkout: |
+            rapports
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Se placer sur le dernier état de main
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+
+      - name: Sonder
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          mkdir -p rapports
+          cat > sonde.mjs <<'EOF'
+          import { writeFileSync, mkdirSync } from "node:fs";
+
+          const KEY  = process.env.API_FOOTBALL_KEY;
+          const BASE = "https://v3.football.api-sports.io";
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          let appels = 0;
+
+          async function get(chemin) {
+            appels++;
+            const r = await fetch(BASE + chemin, { headers: { "x-apisports-key": KEY } });
+            const corps = r.ok ? await r.json() : null;
+            await sleep(250);
+            return { ok: r.ok, statut: r.status, corps };
+          }
+
+          // Joueurs dont le vrai début de carrière est connu et vérifiable.
+          const CAS = [
+            { id: 51070, nom: "Z. Ibrahimović", vrai: 1999, ou: "Malmö puis Ajax" },
+            { id: 254,   nom: "G. Buffon",      vrai: 1995, ou: "Parme" },
+            { id: 516,   nom: "A. Robben",      vrai: 2000, ou: "Groningue puis PSV" },
+            { id: 754,   nom: "L. Modrić",      vrai: 2003, ou: "Zrinjski puis Dinamo Zagreb" },
+            { id: 515,   nom: "F. Ribéry",      vrai: 2002, ou: "Boulogne puis Metz" },
+            { id: 33243, nom: "A. Iniesta",     vrai: 2002, ou: "Barcelone" },
+            { id: 874,   nom: "Cristiano Ronaldo", vrai: 2002, ou: "Sporting" },
+            { id: 154,   nom: "L. Messi",       vrai: 2004, ou: "Barcelone" },
+          ];
+
+          const rapport = { quand: new Date().toISOString(), cas: [] };
+
+          for (const c of CAS) {
+            const fiche = { ...c };
+            console.log(`\n===== ${c.nom} (${c.id}) — vrai début ${c.vrai}, ${c.ou}`);
+
+            // 1. Ce que l'API annonce
+            const s = await get("/players/seasons?player=" + c.id);
+            const annoncees = ((s.corps || {}).response || []).map(Number).sort((a, b) => a - b);
+            fiche.annoncees = annoncees;
+            fiche.premiere_annoncee = annoncees[0] ?? null;
+            console.log(`  1. /players/seasons : ${annoncees.length} saisons, `
+                        + `de ${annoncees[0] ?? "?"} à ${annoncees.at(-1) ?? "?"}`);
+
+            // 2. Interrogation DIRECTE sur les années antérieures, même non annoncées.
+            //    C'est le test décisif : l'API répond-elle pour une saison qu'elle
+            //    ne liste pas ?
+            const debut = annoncees[0] ?? c.vrai;
+            fiche.direct = [];
+            for (let an = c.vrai; an < debut; an++) {
+              const j = await get(`/players?id=${c.id}&season=${an}`);
+              const row = ((j.corps || {}).response || [])[0];
+              const blocs = (row && row.statistics) ? row.statistics.filter(
+                (b) => ((b.games || {}).appearences || 0) > 0) : [];
+              const detail = {
+                annee: an, repond: !!row, blocs: blocs.length,
+                equipes: [...new Set(blocs.map((b) => (b.team || {}).name).filter(Boolean))],
+                matchs: blocs.reduce((t, b) => t + ((b.games || {}).appearences || 0), 0),
+                buts: blocs.reduce((t, b) => t + ((b.goals || {}).total || 0), 0),
+              };
+              fiche.direct.push(detail);
+              console.log(`  2. /players?season=${an} : `
+                          + (detail.blocs
+                             ? `TROUVÉ — ${detail.equipes.join(", ")}, ${detail.matchs} matchs, ${detail.buts} buts`
+                             : (detail.repond ? "répond mais aucun match" : "rien")));
+            }
+
+            // 3. L'historique des clubs
+            const t = await get("/players/teams?player=" + c.id);
+            const equipes = ((t.corps || {}).response || []).map((e) => ({
+              equipe: (e.team || {}).name,
+              saisons: (e.seasons || []).map(Number).sort((a, b) => a - b),
+            }));
+            fiche.clubs = equipes;
+            const plusVieux = Math.min(...equipes.flatMap((e) => e.saisons).filter(Number.isFinite));
+            fiche.club_plus_ancien = Number.isFinite(plusVieux) ? plusVieux : null;
+            console.log(`  3. /players/teams : ${equipes.length} clubs, `
+                        + `saison la plus ancienne ${fiche.club_plus_ancien ?? "?"}`);
+            for (const e of equipes.slice(0, 6)) {
+              console.log(`       ${e.equipe} : ${e.saisons.join(", ")}`);
+            }
+
+            // 4. Les transferts
+            const tr = await get("/transfers?player=" + c.id);
+            const mouvements = (((tr.corps || {}).response || [])[0] || {}).transfers || [];
+            fiche.transferts = mouvements.map((m) => ({
+              date: m.date,
+              de: (m.teams || {}).out && m.teams.out.name,
+              vers: (m.teams || {}).in && m.teams.in.name,
+            }));
+            const plusVieuxT = fiche.transferts.map((m) => m.date).filter(Boolean).sort()[0];
+            fiche.transfert_plus_ancien = plusVieuxT || null;
+            console.log(`  4. /transfers : ${mouvements.length} mouvements, `
+                        + `le plus ancien ${plusVieuxT || "aucun"}`);
+
+            rapport.cas.push(fiche);
+          }
+
+          // ---- Verdict --------------------------------------------------------
+          const gagnants = rapport.cas.filter(
+            (c) => (c.direct || []).some((d) => d.blocs > 0));
+          const clubsPlusTot = rapport.cas.filter(
+            (c) => c.club_plus_ancien != null && c.premiere_annoncee != null
+                   && c.club_plus_ancien < c.premiere_annoncee);
+          rapport.verdict = {
+            appels,
+            joueurs_testes: rapport.cas.length,
+            saisons_trouvees_en_direct: gagnants.length,
+            clubs_connus_plus_tot: clubsPlusTot.length,
+            conclusion: gagnants.length
+              ? "L'API répond pour des saisons qu'elle n'annonce pas : récupérable."
+              : (clubsPlusTot.length
+                 ? "Aucune statistique, mais l'API connaît des clubs plus anciens que nos données."
+                 : "Aucune voie ne donne les saisons antérieures : non récupérable sur cette source."),
+          };
+
+          mkdirSync("rapports", { recursive: true });
+          writeFileSync("rapports/sonde-anciennes.json", JSON.stringify(rapport, null, 2));
+
+          console.log("\n===== VERDICT =====");
+          console.log(JSON.stringify(rapport.verdict, null, 2));
+          EOF
+          node sonde.mjs
+
+      - name: Publier le rapport
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add --sparse -- rapports
+          if git diff --cached --quiet; then echo "rien a publier"; exit 0; fi
+          git commit -m "Rapport de sonde des anciennes saisons"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
