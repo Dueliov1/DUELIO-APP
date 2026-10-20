@@ -1,0 +1,223 @@
+name: Récupérer les saisons manquantes
+
+# Demande à API-Football, pour chaque joueur de www/data/full, la liste complète
+# des saisons qu'elle possède, et ajoute celles qui nous manquent.
+#
+# PUREMENT ADDITIF : une saison déjà présente dans un fichier n'est jamais
+# modifiée ni supprimée. Le workflow ne peut qu'ajouter.
+#
+# Deux causes de manque sont traitées d'un coup :
+#   - les trous au milieu de carrière (569 années repérées sur 451 joueurs) ;
+#   - les débuts de carrière, quand l'API connaît des saisons antérieures à
+#     notre première. Le plancher est abaissé à 1990 : le moissonnage d'origine
+#     coupait à 2000, ce qui était notre choix et non une limite de la source.
+#
+# Reprend là où il s'est arrêté : le curseur est dans rapports/recuperation.json.
+# Après ce workflow, relancez « Index par joueur » pour propager les nouveaux
+# totaux dans les fichiers de recherche.
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "Appels API maximum pour ce passage"
+        default: "20000"
+      depuis:
+        description: "Reprendre à partir de ce rang (vide = curseur enregistré)"
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: recuperer-saisons
+  cancel-in-progress: false
+
+jobs:
+  recuperer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          sparse-checkout: |
+            www/data/full
+            rapports
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Se placer sur le dernier état de main
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+          echo "Parti de $(git rev-parse --short HEAD)"
+
+      - name: Récupérer
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          BUDGET: ${{ inputs.budget || '20000' }}
+          DEPUIS: ${{ inputs.depuis }}
+        run: |
+          mkdir -p rapports
+          cat > recup.mjs <<'EOF'
+          import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+
+          const KEY    = process.env.API_FOOTBALL_KEY;
+          const BASE   = "https://v3.football.api-sports.io";
+          const BUDGET = parseInt(process.env.BUDGET || "20000", 10);
+          const DOSSIER = "www/data/full";
+          const RAPPORT = "rapports/recuperation.json";
+          const PLANCHER = 1990;
+          const PAUSE = 220;
+
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+          let appels = 0;
+
+          async function get(chemin, tries = 5) {
+            for (let i = 1; i <= tries; i++) {
+              appels++;
+              const r = await fetch(BASE + chemin, { headers: { "x-apisports-key": KEY } });
+              if (r.ok) return r.json();
+              if (i === tries) throw new Error(`${chemin} : HTTP ${r.status}`);
+              await sleep(1500 * i);
+            }
+          }
+
+          // ---- Curseur --------------------------------------------------------
+          mkdirSync("rapports", { recursive: true });
+          let etat = { curseur: 0, passages: [], cumul: {
+            joueurs_completes: 0, saisons_ajoutees: 0, blocs_ajoutes: 0,
+            joueurs_sans_manque: 0, echecs: 0 } };
+          if (existsSync(RAPPORT)) {
+            try { etat = { ...etat, ...JSON.parse(readFileSync(RAPPORT, "utf8")) }; }
+            catch { /* rapport illisible : on repart de zéro */ }
+          }
+          const depart = process.env.DEPUIS ? parseInt(process.env.DEPUIS, 10) : (etat.curseur || 0);
+
+          const fichiers = readdirSync(DOSSIER)
+            .filter((f) => /^\d+\.json$/.test(f))
+            .sort((a, b) => parseInt(a) - parseInt(b));
+          console.log(`carrieres : ${fichiers.length}, depart au rang ${depart}`);
+
+          // ---- Balayage -------------------------------------------------------
+          const passage = {
+            quand: new Date().toISOString(), depart,
+            joueurs_vus: 0, joueurs_completes: 0, saisons_ajoutees: 0,
+            blocs_ajoutes: 0, joueurs_sans_manque: 0, echecs: 0,
+            exemples: [], exemples_sans_suite: [],
+          };
+          let rang = depart;
+
+          for (; rang < fichiers.length; rang++) {
+            if (appels >= BUDGET) { console.log("\nBudget atteint."); break; }
+            const nom = fichiers[rang];
+            const chemin = `${DOSSIER}/${nom}`;
+            let f;
+            try { f = JSON.parse(readFileSync(chemin, "utf8")); }
+            catch (e) { passage.echecs++; console.log(`illisible ${nom}`); continue; }
+            passage.joueurs_vus++;
+
+            try {
+              const r = await get("/players/seasons?player=" + f.i);
+              await sleep(PAUSE);
+              const connues = (r.response || []).map(Number)
+                .filter((s) => s >= PLANCHER).sort((a, b) => a - b);
+              const presentes = new Set(Object.keys(f.s || {}).map(Number));
+              const manquantes = connues.filter((s) => !presentes.has(s));
+
+              if (!manquantes.length) {
+                passage.joueurs_sans_manque++;
+                continue;
+              }
+
+              // Les plus anciennes d'abord : c'est le début de carrière qui
+              // manque le plus souvent, et c'est lui qu'on veut si le budget
+              // s'épuise en cours de route.
+              let ajoutSaisons = 0, ajoutBlocs = 0, coupe = false;
+              const s = { ...(f.s || {}) };
+              for (const sn of manquantes) {
+                if (appels >= BUDGET) { coupe = true; break; }
+                const j = await get(`/players?id=${f.i}&season=${sn}`);
+                await sleep(PAUSE);
+                const row = (j.response || [])[0];
+                if (row && row.statistics && row.statistics.length) {
+                  s[sn] = row.statistics;          // additif : la clé n'existait pas
+                  ajoutSaisons++;
+                  ajoutBlocs += row.statistics.length;
+                }
+              }
+
+              if (ajoutSaisons) {
+                const sortie = {
+                  ...f, s,
+                  saisons: Object.keys(s).map(Number).sort((a, b) => b - a),
+                };
+                if (coupe) sortie.partiel = true; else delete sortie.partiel;
+                writeFileSync(chemin, JSON.stringify(sortie));
+                passage.joueurs_completes++;
+                passage.saisons_ajoutees += ajoutSaisons;
+                passage.blocs_ajoutes += ajoutBlocs;
+                if (passage.exemples.length < 25) {
+                  passage.exemples.push({ nom: f.n, id: f.i, ajoutees: ajoutSaisons,
+                    annees: manquantes.slice(0, 6) });
+                }
+                console.log(`+ ${f.n} (${f.i}) : ${ajoutSaisons} saisons, ${ajoutBlocs} blocs`);
+              } else {
+                // L'API annonce ces saisons mais ne renvoie aucune statistique.
+                if (passage.exemples_sans_suite.length < 25) {
+                  passage.exemples_sans_suite.push({ nom: f.n, id: f.i,
+                    annees: manquantes.slice(0, 6) });
+                }
+              }
+              if (coupe) { rang++; break; }
+            } catch (e) {
+              passage.echecs++;
+              console.log(`ECHEC ${f.n} (${f.i}) : ${e.message}`);
+            }
+          }
+
+          // ---- Rapport --------------------------------------------------------
+          passage.appels = appels;
+          passage.arrive_au_rang = rang;
+          passage.termine = rang >= fichiers.length;
+          etat.curseur = passage.termine ? 0 : rang;
+          etat.passages = [...(etat.passages || []), passage].slice(-12);
+          for (const k of Object.keys(etat.cumul)) {
+            if (passage[k] != null) etat.cumul[k] += passage[k];
+          }
+          writeFileSync(RAPPORT, JSON.stringify(etat, null, 2));
+
+          console.log("\n===== PASSAGE =====");
+          console.log(`joueurs vus          : ${passage.joueurs_vus}`);
+          console.log(`deja complets        : ${passage.joueurs_sans_manque}`);
+          console.log(`joueurs completes    : ${passage.joueurs_completes}`);
+          console.log(`saisons ajoutees     : ${passage.saisons_ajoutees}`);
+          console.log(`blocs ajoutes        : ${passage.blocs_ajoutes}`);
+          console.log(`echecs               : ${passage.echecs}`);
+          console.log(`appels API           : ${appels}`);
+          console.log(`arrive au rang       : ${rang} / ${fichiers.length}`
+                      + (passage.termine ? " (balayage termine)" : " (a reprendre)"));
+          EOF
+          node recup.mjs
+
+      - name: Publier
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add --sparse -- www/data/full rapports
+          if git diff --cached --quiet; then
+            echo "aucune saison recuperee, rien a publier"
+            exit 0
+          fi
+          git commit -m "Recuperer les saisons manquantes aupres de l'API"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            echo "nouvelle tentative $i"
+            sleep 5
+          done
+          exit 1

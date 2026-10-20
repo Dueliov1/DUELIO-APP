@@ -117,12 +117,24 @@ jobs:
             if (appels >= BUDGET) { console.log("\nBudget d'appels atteint."); break; }
 
             const chemin = SORTIE + "/" + p.i + ".json";
-            if (existsSync(chemin)) { sautes++; continue; }
+            // Un joueur déjà écrit est sauté — sauf si son fichier porte la marque
+            // « partiel », posée quand le budget d'appels a coupé sa carrière en
+            // cours de route. Comme les saisons sont parcourues de la plus récente
+            // à la plus ancienne, une coupure perdait son début de carrière, et le
+            // saut inconditionnel l'empêchait de revenir au passage suivant.
+            if (existsSync(chemin)) {
+              let dejaComplet = true;
+              try { dejaComplet = !JSON.parse(readFileSync(chemin, "utf8")).partiel; }
+              catch { dejaComplet = false; }   // fichier illisible : on le refait
+              if (dejaComplet) { sautes++; continue; }
+            }
 
             try {
               const sais = await get("/players/seasons?player=" + p.i);
               await sleep(PAUSE);
-              const saisons = (sais.response || []).filter(s => s >= 2000).sort((a, b) => b - a);
+              // Plancher à 1990 et non 2000 : la coupure à 2000 était notre choix,
+              // pas une limite de la source, et elle amputait les vétérans.
+              const saisons = (sais.response || []).filter(s => s >= 1990).sort((a, b) => b - a);
 
               if (!saisons.length) {
                 // On écrit quand même : le fichier sert de marque-page et évite de
@@ -134,9 +146,9 @@ jobs:
               }
 
               const parSaison = {};
-              let blocs = 0;
+              let blocs = 0, coupe = false;
               for (const sn of saisons) {
-                if (appels >= BUDGET) break;
+                if (appels >= BUDGET) { coupe = true; break; }
                 const j = await get("/players?id=" + p.i + "&season=" + sn);
                 await sleep(PAUSE);
                 const row = (j.response || [])[0];
@@ -146,11 +158,15 @@ jobs:
                 }
               }
 
-              writeFileSync(chemin, JSON.stringify({
+              // « partiel » dit au prochain passage de reprendre ce joueur : sa
+              // carrière a été écrite incomplète parce que le budget s'est épuisé.
+              const fiche = {
                 i: p.i, n: p.n, a: p.a, c: p.c,
                 saisons: Object.keys(parSaison).map(Number).sort((a, b) => b - a),
                 s: parSaison
-              }));
+              };
+              if (coupe) fiche.partiel = true;
+              writeFileSync(chemin, JSON.stringify(fiche));
               faits++;
               console.log("OK    " + p.n + " (" + p.i + ") — "
                           + Object.keys(parSaison).length + " saisons, " + blocs + " blocs");
