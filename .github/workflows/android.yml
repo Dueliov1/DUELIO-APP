@@ -39,6 +39,9 @@ jobs:
           CIBLE=android/app/src/main/assets/public
           echo "Avant : $(du -sh $CIBLE | cut -f1)"
           rm -rf "$CIBLE/data"
+          # Les photos des légendes aussi : l'application les appelle par leur
+          # adresse complète sur Cloudflare, jamais depuis l'APK (672 Ko).
+          rm -rf "$CIBLE/legendes"
           echo "Après : $(du -sh $CIBLE | cut -f1)"
           echo "Contenu embarqué :"
           ls -la "$CIBLE"

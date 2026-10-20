@@ -34,7 +34,7 @@
 <meta name="apple-mobile-web-app-title" content="Duelio">
 <!-- Repère de version : permet de vérifier d'un coup d'œil, dans le code source
      de la page en ligne, quelle version Cloudflare sert réellement. -->
-<meta name="duelio-version" content="2026-10-19-17h — selections nationales correctement reconnues">
+<meta name="duelio-version" content="2026-10-20-17h — audit complet : recherche, performance, robustesse, design">
 
 <!-- ====================== Mesure d'audience ======================
      Cloudflare Web Analytics : gratuit, sans cookie, sans identifiant individuel.
@@ -4654,6 +4654,9 @@ async function loadSuggestedDuel(duel, statusCb, opts){
   opts = opts || {};
   if(duelLoading) return;
   duelLoading = true;
+  // Ce que l'utilisateur avait choisi au moment du clic : s'il change de
+  // joueurs pendant le chargement (une à trois secondes), on ne lui écrase pas.
+  const slotsAuDepart = slots.slice();
   try{
     statusCb('Chargement du duel…');
 
@@ -4686,6 +4689,7 @@ async function loadSuggestedDuel(duel, statusCb, opts){
     const ids = trouves.map(ensurePlayerInList);
     await Promise.all(ids.map(id => loadPlayerStats(PLAYERS.find(x => x.id === id))));
 
+    if(slots.length !== slotsAuDepart.length || slots.some((id, i) => id !== slotsAuDepart[i])){ statusCb(''); return; }
     slots = [ids[0], ids[1]]; compareBasis = 'current'; compareMode = 'shown'; teamScope = 'club'; compactView = false;
     statusCb('');
     if(opts.stayOnGenerate && currentScreen==='generate'){ renderAll(); renderGenerate(); document.getElementById('generateScreen').scrollTop = 0; return; }
@@ -6132,7 +6136,12 @@ document.getElementById('seasonSheetClose').addEventListener('click', ()=>closeS
 document.getElementById('seasonSheet').addEventListener('click', (e)=>{ if(e.target.id==='seasonSheet') closeSeasonSheet(false); });
 
 /* ---------------- Picker ---------------- */
+/* Chaque ouverture du sélecteur porte un numéro : une réponse arrivée après
+ * une fermeture puis une réouverture pour le MÊME emplacement ne doit pas
+ * insérer le joueur d'avant ni refermer le sélecteur sous les doigts. */
+let pickerSession = 0;
 function openPicker(slotIdx){
+  pickerSession++;
   pickerTarget = slotIdx;
   pickerSearch = '';
   pickerPos = 'ALL';
@@ -6147,6 +6156,7 @@ function openPicker(slotIdx){
   document.getElementById('pickerSearch').focus({ preventScroll: true });
 }
 function closePicker(){
+  pickerSession++;
   const wasOpen = document.getElementById('picker').classList.contains('open');
   document.getElementById('picker').classList.remove('open');
   pickerTarget = null;
@@ -7055,14 +7065,14 @@ function renderPickerList(){
       el.addEventListener('click', ()=>{
         const p = recents.find(r=>r.apiId===parseInt(el.dataset.api,10));
         if(!p) return;
-        const target = pickerTarget;
+        const target = pickerTarget, session = pickerSession;
         const id = ensurePlayerInList(p);
         const pl = PLAYERS.find(x=>x.id===id);
         if(pl && pl.needsStats){
           // Récent enregistré par une ancienne version : on recharge ses saisons avant de l'ajouter
           el.classList.add('loading');
           setPickerStatus(`Mise à jour de ${pl.name}…`);
-          loadPlayerStats(pl).then(()=>{ if(pickerTarget!==target) return; slots[target] = id; closePicker(); })
+          loadPlayerStats(pl).then(()=>{ if(pickerTarget!==target || pickerSession!==session) return; slots[target] = id; closePicker(); })
             .catch(err=>{ el.classList.remove('loading'); setPickerStatus(apiErrorMessage((err && err.message) || String(err)), true); });
           return;
         }
@@ -7093,14 +7103,14 @@ function renderPickerList(){
   list.querySelectorAll('.picker-item:not(.disabled)').forEach(el=>{
     el.addEventListener('click', ()=>{
       const id = parseInt(el.dataset.id,10);
-      const target = pickerTarget;
+      const target = pickerTarget, session = pickerSession;
       const pl = PLAYERS.find(x=>x.id===id);
       if(pl && pl.needsStats){
         // Les statistiques ne sont chargées que maintenant : le joueur choisi, et lui seul
         el.classList.add('loading');
         setPickerStatus(`Chargement des statistiques de ${pl.name}…`);
         loadPlayerStats(pl).then(()=>{
-          if(pickerTarget !== target) return; // le sélecteur a été fermé entre-temps
+          if(pickerTarget !== target || pickerSession !== session) return; // fermé ou rouvert entre-temps
           slots[target] = id;
           closePicker();
         }).catch(err=>{

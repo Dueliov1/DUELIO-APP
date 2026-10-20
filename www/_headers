@@ -70,5 +70,5 @@
 
 # Portraits des légendes : ils ne changent jamais une fois choisis.
 /legendes/photos/*
-  Cache-Control: public, max-age=2592000, stale-while-revalidate=604800
+  Cache-Control: public, max-age=31536000, immutable
   Access-Control-Allow-Origin: *
