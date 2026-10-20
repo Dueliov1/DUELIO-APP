@@ -2233,6 +2233,12 @@ const REAL_DATA_CONFIG = {
   // permet d'afficher les 1 053 buts de Ronaldo sans le moindre appel API.
   // Mettre fullBase à null revient au comportement précédent.
   fullBase: 'https://duelio-app.bensouna-ahmed.workers.dev/data/full',
+  // Légendes saisies à la main. ADRESSE ABSOLUE, comme tout le reste : en
+  // relatif, le fichier était cherché sur l'origine de la page — donc
+  // introuvable depuis duelio.app et depuis l'application Android, qui sert
+  // la sienne depuis https://localhost.
+  legendesUrl: 'https://duelio-app.bensouna-ahmed.workers.dev/data/legendes.json',
+  legendesPhotos: 'https://duelio-app.bensouna-ahmed.workers.dev/legendes/photos',
   // Index de recherche fabriqué à partir de la base statique : 41 553 joueurs,
   // retraités compris. Remplace l'index KV du proxy, qui ne couvrait que la saison
   // en cours de 5 championnats et n'a jamais fini de se construire.
@@ -3831,7 +3837,7 @@ function construireLegende(l, rang){
       from: c.de, to: c.a,
       trophies: []
     })),
-    photoUrl: `legendes/photos/${l.id}.jpg`,
+    photoUrl: `${REAL_DATA_CONFIG.legendesPhotos || 'legendes/photos'}/${l.id}.jpg`,
     statsBySeason: {},
     statsLegende: stats,
     careerStats: stats,
@@ -3847,7 +3853,7 @@ function construireLegende(l, rang){
 async function chargerLegendes(){
   if(LEGENDES.chargees) return LEGENDES.liste;
   try {
-    const r = await fetch('data/legendes.json', { cache: 'force-cache' });
+    const r = await fetch(REAL_DATA_CONFIG.legendesUrl || 'data/legendes.json');
     if(!r.ok) throw new Error('HTTP ' + r.status);
     const doc = await r.json();
     LEGENDES.liste = (doc.legendes || []).map(construireLegende);
