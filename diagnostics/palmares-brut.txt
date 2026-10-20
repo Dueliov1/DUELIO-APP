@@ -1,0 +1,126 @@
+
+=== joueur 1100 : 38 entrées ===
+  entrées sans saison exploitable : 16
+  --- toutes les entrées, telles que l'API les renvoie ---
+    league="FA Cup" country="England" season="2024/2025" place="2nd Place"
+    league="Community Shield" country="England" season="2024" place="Winner"
+    league="FA Cup" country="England" season="2023/2024" place="2nd Place"
+    league="Premier League" country="England" season="2023/2024" place="Winner"
+    league="FIFA Intercontinental Cup" country="World" season="2023" place="Winner"
+    league="UEFA Super Cup" country="Europe" season="2023" place="Winner"
+    league="J.League World Challenge" country="World" season="2023" place="Winner"
+    league="Community Shield" country="England" season="2023" place="2nd Place"
+    league="UEFA Champions League" country="Europe" season="2022/2023" place="Winner"
+    league="FA Cup" country="England" season="2022/2023" place="Winner"
+    league="Premier League" country="England" season="2022/2023" place="Winner"
+    league="Community Shield" country="England" season="2022" place="2nd Place"
+    league="Bundesliga" country="Germany" season="2021/2022" place="2nd Place"
+    league="Super Cup" country="Germany" season="2021" place="2nd Place"
+    league="DFB Pokal" country="Germany" season="2020/2021" place="Winner"
+    league="Super Cup" country="Germany" season="2020" place="2nd Place"
+    league="Bundesliga" country="Germany" season="2019/2020" place="2nd Place"
+    league="The Atlantic Cup" country="World" season="2019" place="Winner"
+    league="Cup" country="Austria" season="2018/2019" place="Winner"
+    league="Bundesliga" country="Austria" season="2018/2019" place="Winner"
+    league="Eliteserien" country="Norway" season="2018" place="2nd Place"
+    league="Eliteserien" country="Norway" season="2017" place="2nd Place"
+    league="Premier League" country="England" season=null place="Winner"
+    league="Community Shield" country="England" season=null place="2nd Place"
+    league="FA Cup" country="England" season=null place="Winner"
+    league="Community Shield" country="England" season=null place="Winner"
+    league="Super Cup" country="Germany" season=null place="2nd Place"
+    league="FA Cup" country="England" season=null place="2nd Place"
+    league="DFB Pokal" country="Germany" season=null place="Winner"
+    league="The Atlantic Cup" country="World" season=null place="Winner"
+    league="Bundesliga" country="Germany" season=null place="2nd Place"
+    league="UEFA Champions League" country="Europe" season=null place="Winner"
+    league="Bundesliga" country="Austria" season=null place="Winner"
+    league="J.League World Challenge" country="World" season=null place="Winner"
+    league="Cup" country="Austria" season=null place="Winner"
+    league="UEFA Super Cup" country="Europe" season=null place="Winner"
+    league="Eliteserien" country="Norway" season=null place="2nd Place"
+    league="FIFA Intercontinental Cup" country="World" season=null place="Winner"
+  --- regroupé par compétition + résultat ---
+    FA Cup|2nd Place : 3 entrée(s) ["2024/2025", "2023/2024", null]
+    Community Shield|Winner : 2 entrée(s) ["2024", null]
+    Premier League|Winner : 3 entrée(s) ["2023/2024", "2022/2023", null]
+    FIFA Intercontinental Cup|Winner : 2 entrée(s) ["2023", null]
+    UEFA Super Cup|Winner : 2 entrée(s) ["2023", null]
+    J.League World Challenge|Winner : 2 entrée(s) ["2023", null]
+    Community Shield|2nd Place : 3 entrée(s) ["2023", "2022", null]
+    UEFA Champions League|Winner : 2 entrée(s) ["2022/2023", null]
+    FA Cup|Winner : 2 entrée(s) ["2022/2023", null]
+    Bundesliga|2nd Place : 3 entrée(s) ["2021/2022", "2019/2020", null]
+    Super Cup|2nd Place : 3 entrée(s) ["2021", "2020", null]
+    DFB Pokal|Winner : 2 entrée(s) ["2020/2021", null]
+    The Atlantic Cup|Winner : 2 entrée(s) ["2019", null]
+    Cup|Winner : 2 entrée(s) ["2018/2019", null]
+    Bundesliga|Winner : 2 entrée(s) ["2018/2019", null]
+    Eliteserien|2nd Place : 3 entrée(s) ["2018", "2017", null]
+
+=== joueur 278 : 46 entrées ===
+  entrées sans saison exploitable : 16
+  --- toutes les entrées, telles que l'API les renvoie ---
+    league="Super Cup" country="Spain" season="2025" place="2nd Place"
+    league="La Liga" country="Spain" season="2024/2025" place="2nd Place"
+    league="Copa del Rey" country="Spain" season="2024/2025" place="2nd Place"
+    league="FIFA Intercontinental Cup" country="World" season="2024" place="Winner"
+    league="UEFA Super Cup" country="Europe" season="2024" place="Winner"
+    league="Trophée des Champions" country="France" season="2024" place="Winner"
+    league="Ligue 1" country="France" season="2023/2024" place="Winner"
+    league="Coupe de France" country="France" season="2023/2024" place="Winner"
+    league="Ligue 1" country="France" season="2022/2023" place="Winner"
+    league="Trophée des Champions" country="France" season="2022" place="Winner"
+    league="FIFA World Cup" country="World" season="2022" place="2nd Place"
+    league="Ligue 1" country="France" season="2021/2022" place="Winner"
+    league="Trophée des Champions" country="France" season="2021" place="Winner"
+    league="Trophée des Champions" country="France" season="2021" place="2nd Place"
+    league="UEFA Nations League" country="Europe" season="2020/2022" place="Winner"
+    league="Ligue 1" country="France" season="2020/2021" place="2nd Place"
+    league="Coupe de France" country="France" season="2020/2021" place="Winner"
+    league="Ligue 1" country="France" season="2019/2020" place="Winner"
+    league="UEFA Champions League" country="Europe" season="2019/2020" place="2nd Place"
+    league="Coupe de France" country="France" season="2019/2020" place="Winner"
+    league="Trophée des Champions" country="France" season="2019" place="Winner"
+    league="Ligue 1" country="France" season="2018/2019" place="Winner"
+    league="Coupe de France" country="France" season="2018/2019" place="2nd Place"
+    league="Trophée des Champions" country="France" season="2018" place="Winner"
+    league="FIFA World Cup" country="World" season="2018" place="Winner"
+    league="Ligue 1" country="France" season="2017/2018" place="Winner"
+    league="Coupe de France" country="France" season="2017/2018" place="Winner"
+    league="Trophée des Champions" country="France" season="2017" place="2nd Place"
+    league="Ligue 1" country="France" season="2016/2017" place="Winner"
+    league="UEFA U19 Championship" country="Europe" season="2015/2016" place="Winner"
+    league="Copa del Rey" country="Spain" season=null place="2nd Place"
+    league="Super Cup" country="Spain" season=null place="2nd Place"
+    league="La Liga" country="Spain" season=null place="2nd Place"
+    league="UEFA U19 Championship" country="Europe" season=null place="Winner"
+    league="Coupe de France" country="France" season=null place="2nd Place"
+    league="FIFA World Cup" country="World" season=null place="Winner"
+    league="Coupe de France" country="France" season=null place="Winner"
+    league="FIFA World Cup" country="World" season=null place="2nd Place"
+    league="Trophée des Champions" country="France" season=null place="2nd Place"
+    league="UEFA Champions League" country="Europe" season=null place="2nd Place"
+    league="Trophée des Champions" country="France" season=null place="Winner"
+    league="UEFA Nations League" country="Europe" season=null place="Winner"
+    league="Ligue 1" country="France" season=null place="2nd Place"
+    league="UEFA Super Cup" country="Europe" season=null place="Winner"
+    league="Ligue 1" country="France" season=null place="Winner"
+    league="FIFA Intercontinental Cup" country="World" season=null place="Winner"
+  --- regroupé par compétition + résultat ---
+    Super Cup|2nd Place : 2 entrée(s) ["2025", null]
+    La Liga|2nd Place : 2 entrée(s) ["2024/2025", null]
+    Copa del Rey|2nd Place : 2 entrée(s) ["2024/2025", null]
+    FIFA Intercontinental Cup|Winner : 2 entrée(s) ["2024", null]
+    UEFA Super Cup|Winner : 2 entrée(s) ["2024", null]
+    Trophée des Champions|Winner : 6 entrée(s) ["2024", "2022", "2021", "2019", "2018", null]
+    Ligue 1|Winner : 8 entrée(s) ["2023/2024", "2022/2023", "2021/2022", "2019/2020", "2018/2019", "2017/2018", "2016/2017", null]
+    Coupe de France|Winner : 5 entrée(s) ["2023/2024", "2020/2021", "2019/2020", "2017/2018", null]
+    FIFA World Cup|2nd Place : 2 entrée(s) ["2022", null]
+    Trophée des Champions|2nd Place : 3 entrée(s) ["2021", "2017", null]
+    UEFA Nations League|Winner : 2 entrée(s) ["2020/2022", null]
+    Ligue 1|2nd Place : 2 entrée(s) ["2020/2021", null]
+    UEFA Champions League|2nd Place : 2 entrée(s) ["2019/2020", null]
+    Coupe de France|2nd Place : 2 entrée(s) ["2018/2019", null]
+    FIFA World Cup|Winner : 2 entrée(s) ["2018", null]
+    UEFA U19 Championship|Winner : 2 entrée(s) ["2015/2016", null]
