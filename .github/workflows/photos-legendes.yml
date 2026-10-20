@@ -114,11 +114,19 @@ jobs:
           // nom, et la recherche d'article renvoyait la photo du stade. Del Piero
           // ramenait un tableau de la Renaissance. Wikidata permet d'exiger que
           // l'entité soit un ÊTRE HUMAIN (P31 = Q5) avant de prendre son image (P18).
+          // Être humain ne suffit pas : « Roberto Carlos » a ramené le chanteur
+          // brésilien, qui est tout aussi humain que le défenseur. On exige donc
+          // aussi le MÉTIER : joueur ou entraîneur de football.
           const Q_HUMAIN = "Q5";
+          const METIERS_FOOT = new Set([
+            "Q937857",    // joueur de football
+            "Q628099",    // entraîneur de football
+            "Q13365117",  // arbitre de football
+          ]);
           async function chercherPhoto(nom) {
             const rech = await api("www.wikidata.org", {
               action: "wbsearchentities", search: nom, language: "en",
-              uselang: "en", type: "item", limit: "6",
+              uselang: "en", type: "item", limit: "8",
             });
             const candidats = (rech.search || []).map((x) => x.id);
             if (!candidats.length) return null;
@@ -126,17 +134,22 @@ jobs:
             const ent = await api("www.wikidata.org", {
               action: "wbgetentities", ids: candidats.join("|"), props: "claims",
             });
-            let fichier = null;
+            const retenus = [];
             for (const id of candidats) {           // on garde l'ordre de pertinence
               const cl = ent.entities?.[id]?.claims;
               if (!cl) continue;
               const humain = (cl.P31 || []).some(
                 (c) => c.mainsnak?.datavalue?.value?.id === Q_HUMAIN);
               if (!humain) continue;                // un stade, un tableau, un club : écarté
+              const footballeur = (cl.P106 || []).some(
+                (c) => METIERS_FOOT.has(c.mainsnak?.datavalue?.value?.id));
               const img = (cl.P18 || [])[0]?.mainsnak?.datavalue?.value;
-              if (img) { fichier = "File:" + img; break; }
+              if (img) retenus.push({ img, footballeur });
             }
-            if (!fichier) return null;
+            // Un footballeur d'abord ; à défaut seulement, le premier humain venu.
+            const choisi = retenus.find((x) => x.footballeur) || retenus[0];
+            if (!choisi) return null;
+            const fichier = "File:" + choisi.img;
 
             // 2. Sa licence et une miniature, sur Commons.
             const inf = await api("commons.wikimedia.org", {
@@ -146,11 +159,23 @@ jobs:
             const page = (inf.query?.pages || [])[0];
             const ii = page?.imageinfo?.[0];
             if (!ii) return null;
+            // Dernier garde-fou : le nom du fichier contient-il un morceau du nom
+            // du joueur ? Sinon on ne refuse pas, mais on le signale pour qu'un
+            // œil humain regarde l'image. C'est ainsi que « Roberto Carlos
+            // Credicard Hall » — le chanteur — avait été repéré.
+            const sansAccents = (s) => s.normalize("NFD")
+              .replace(/[̀-ͯ]/g, "").toLowerCase();
+            const morceaux = sansAccents(nom).split(/\s+/).filter((x) => x.length > 3);
+            const nomFichier = sansAccents(fichier);
+            const concorde = morceaux.some((x) => nomFichier.includes(x));
+
             return {
               fichier,
               meta: ii.extmetadata || {},
               miniature: ii.thumburl || ii.url,
               page: ii.descriptionurl,
+              footballeur: choisi.footballeur,
+              aVerifier: !concorde,
             };
           }
 
@@ -207,9 +232,13 @@ jobs:
                 licence: dessous(p.meta.LicenseShortName?.value) || lic.type,
                 type: lic.type,
                 page: p.page,
+                ...(p.aVerifier ? { aVerifier: true } : {}),
+                ...(p.footballeur ? {} : { metierNonConfirme: true }),
               };
               pris++;
-              console.log(`  ✓  ${l.n} : ${lic.type}`);
+              console.log(`  ✓  ${l.n} : ${lic.type}`
+                          + (p.aVerifier ? "  [NOM DE FICHIER À VÉRIFIER]" : "")
+                          + (p.footballeur ? "" : "  [MÉTIER NON CONFIRMÉ]"));
             } catch (e) {
               absents++;
               journal.push(`${l.n} : échec — ${e.message}`);
