@@ -3454,6 +3454,27 @@ function chargerCarriereComplete(apiId){
  *
  * On ne touche pas aux fichiers : le tri se fait à la lecture, donc si la source se
  * corrige un jour, il suffira de retirer ce bloc. */
+function ramenerSaisonsFutures(saisons){
+  const limite = currentSeasonYear();
+  const futures = Object.keys(saisons).map(Number).filter(a => a > limite);
+  if(!futures.length) return saisons;
+  const sortie = {};
+  for(const cle of Object.keys(saisons)){
+    if(Number(cle) > limite) continue;
+    sortie[cle] = (saisons[cle] || []).slice();
+  }
+  const cible = String(limite);
+  sortie[cible] = sortie[cible] || [];
+  for(const a of futures){
+    for(const bloc of (saisons[String(a)] || [])){
+      // On garde trace du tournoi d'origine : le nom de la compétition dit déjà
+      // « 2027 », rien n'est perdu pour qui lit le détail.
+      sortie[cible].push(bloc);
+    }
+  }
+  return sortie;
+}
+
 function scorePlausibilite(nomLigue, matchs){
   const n = normalizeSearch(nomLigue || '');
   let s = 0;
@@ -3514,8 +3535,15 @@ async function packStatique(apiId){
   }
   if(!fiche || !fiche.s) return null;
 
-  // Un seul point de passage pour les deux sources : carrière complète et paquet.
-  const saisons = nettoyerCarriere(fiche.s);
+  /* Les compétitions internationales portent le nom de l'année du TOURNOI, pas
+   * de celle où l'on joue. Les qualifications à la Coupe d'Afrique 2027 se
+   * disputent en 2025 et 2026 ; API-Football les range sous « 2027 ». Un joueur
+   * se retrouvait donc avec une saison à venir au milieu de sa carrière, et on
+   * lui attribuait des matchs dans un futur qui n'a pas eu lieu.
+   *
+   * Une saison, pour un joueur, c'est l'année où il a joué. Ces blocs sont donc
+   * reversés dans la saison en cours : c'est là qu'il est entré sur le terrain. */
+  const saisons = ramenerSaisonsFutures(nettoyerCarriere(fiche.s));
 
   const data = {};
   for(const cle of Object.keys(saisons)){
