@@ -703,6 +703,31 @@
     font-size:11px; font-weight:700; cursor:pointer;
   }
   .palmares-plus:hover{ background:var(--surface); }
+  /* Variante « duel » : la colonne compétition, puis une colonne par joueur. */
+  .palmares.duel .palmares-head,
+  .palmares.duel .palmares-row{
+    grid-template-columns: minmax(0,1.15fr) repeat(var(--joueurs,2), minmax(0,1fr));
+  }
+  .pd-head{
+    text-align:center; color:var(--slot-color, var(--chalk-dim));
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .pd-cell{ text-align:center; min-width:0; }
+  .pd-n{ display:block; font-family:'Unbounded',sans-serif; font-weight:700; font-size:14px; color:var(--chalk); }
+  .pd-cell.vide .pd-n{ color:var(--chalk-dim); opacity:.45; font-size:12px; }
+  .pd-cell.lead .pd-n{ color:var(--win); }
+  .pd-saisons{
+    display:block; font-size:8.5px; line-height:1.4; color:var(--chalk-dim);
+    margin-top:3px; overflow-wrap:break-word;
+  }
+  /* À trois ou quatre joueurs, les colonnes deviennent trop étroites pour une
+   * liste de saisons : on garde le compte, qui est ce qu'on vient comparer. */
+  .palmares.duel.serre .pd-saisons{ display:none; }
+  .palmares-row.total{
+    background:var(--surface-2); border-top:1px solid var(--line);
+  }
+  .palmares-row.total .palmares-comp{ color:var(--chalk-dim); font-size:10.5px; }
+
   .palmares-vide{
     margin-top:12px; padding:14px; border:1px dashed var(--line); border-radius:14px;
     color:var(--chalk-dim); font-size:11.5px; text-align:center;
@@ -4975,6 +5000,8 @@ function paysFr(nom){
   return CONFED_FR[nom] || NATIONALITY_FR[nom] || nom;
 }
 
+const PALMARES_VISIBLES = 8;   // au-delà, le tableau se replie pour ne pas noyer la fiche
+
 const RESULTAT_FR = [
   [/winner|vainqueur|champion/i, 'Vainqueur', 'or'],
   [/2nd|runner|finalist|finaliste/i, 'Finaliste', 'argent'],
@@ -4989,7 +5016,10 @@ function resultatTrophee(place){
  * Renvoie null quand il n'y a rien à montrer : pour une légende, dont le
  * palmarès n'a pas été saisi, et pour un joueur dont l'API n'a pas encore
  * répondu — deux cas que l'affichage distingue. */
-function palmaresDe(p){
+function palmaresDe(fp){
+  // Le palmarès est déposé sur l'entrée de PLAYERS par applyRealTrophies ;
+  // la colonne du duel, elle, travaille parfois sur une copie.
+  const p = (typeof PLAYERS !== 'undefined' && PLAYERS.find(x=>x.id===fp.id)) || fp;
   if(p.estLegende) return null;
   let brut;
   if(p.apiId){
@@ -5389,7 +5419,10 @@ function renderAll(){
             ? (slots.length===2 ? duelRowsHtml()
                                 : `<div class="compare-cols count-${slots.length}">${statsColsHtml}</div>`)
             : '')}
-      ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs de l'équipe nationale A trouvés dans la base API-Football (amicaux compris), parfois incomplet pour les anciennes saisons. Titres : titres gagnés selon l'API. « — » = rien dans la base.</div>` : ''}
+      ${activeTab==='trophies' && filled.length>=2 && !compactView ? `
+      <div class="browse-section-label" style="margin-top:18px;">Palmarès comparé</div>
+      ${palmaresDuelHtml(filled)}` : ''}
+      ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs de l'équipe nationale A trouvés dans la base API-Football (amicaux compris), parfois incomplet pour les anciennes saisons. Le tableau ne compte que les titres gagnés ; les places de finaliste n'y figurent pas. « — » = rien dans la base.</div>` : ''}
       ${activeTab==='stats' && filled.length>=2 && compareBasis!=='nation' && !compactView && !duelAvecLegende(filled) ? `
       <div class="radar-panel">
         <div class="browse-section-label" style="text-align:center;">Profil d'attributs${compareBasis==='age' ? ` — à ${compareAgeValue} ans` : compareBasis==='ageCumul' ? ` — cumul jusqu'à ${compareAgeValue} ans` : compareBasis==='seasonCumul' ? ` — cumul jusqu'à ${seasonLabel(compareSeasonValue)}` : compareBasis==='season' ? ` — saison ${seasonLabel(compareSeasonValue)}` : compareBasis==='career' ? ' — carrière' : ''}</div>
@@ -6867,8 +6900,6 @@ const BROWSE_STAT_GROUPS = [
   }
 ];
 const BROWSE_TROPHIES = TROPHIES.filter(r=>r.key.startsWith('titres')); // les sélections ont déjà leur rubrique dans la fiche
-const PALMARES_VISIBLES = 8;   // au-delà, le tableau se replie pour ne pas noyer la fiche
-
 function detailTrophyRowsHtml(p){
   const compteurs = BROWSE_TROPHIES.map(r=>{
     const v = trophyValue(p, r.key);
@@ -6925,6 +6956,87 @@ function palmaresTableHtml(p){
     </div>
     ${reste > 0 ? `<button type="button" class="palmares-plus" data-palmares-plus>
         Voir les ${reste} autre${reste > 1 ? 's' : ''} titre${reste > 1 ? 's' : ''}
+      </button>` : ''}`;
+}
+
+/* Comparaison des palmarès : une ligne par compétition, une colonne par joueur.
+ * Côte à côte, deux tableaux détaillés seraient illisibles sur un téléphone —
+ * et surtout ils ne comparent rien. Fusionnés, la question « qui a gagné quoi,
+ * et combien de fois » se lit d'un trait. */
+function palmaresDuelHtml(filled){
+  const listes = filled.map(p => palmaresDe(p));
+  if(listes.every(l => l === null)) return '';
+
+  const comps = new Map();
+  listes.forEach((lignes, i)=>{
+    (lignes || []).forEach(t=>{
+      // Seuls les titres gagnés comptent : une place de finaliste n'est pas un titre.
+      if(!/winner|vainqueur|champion/i.test(t.place || '')) return;
+      if(!comps.has(t.league)){
+        comps.set(t.league, { nom: t.league, pays: t.country || '', par: filled.map(()=>({ n:0, saisons:[] })) });
+      }
+      const c = comps.get(t.league);
+      if(!c.pays && t.country) c.pays = t.country;
+      c.par[i].n++;
+      const annee = t.rang == null ? null : t.rang - 1;
+      c.par[i].saisons.push(annee == null ? '?'
+        : (SELECTION_TROPHY_RE.test(t.league || '') ? String(annee) : (seasonLabel(annee) || t.season)));
+    });
+  });
+
+  if(!comps.size){
+    const enCours = filled.some(p => p.apiId && !p.trophiesLoaded && !p.estLegende);
+    return `<div class="palmares-vide">${enCours ? 'Chargement des palmarès…'
+      : 'Aucun titre enregistré pour ces joueurs.'}</div>`;
+  }
+
+  // Les compétitions les plus fournies d'abord ; à égalité, par ordre alphabétique.
+  const rangees = [...comps.values()].sort((a,b)=>{
+    const ta = a.par.reduce((s,x)=>s+x.n, 0), tb = b.par.reduce((s,x)=>s+x.n, 0);
+    return tb - ta || a.nom.localeCompare(b.nom, 'fr');
+  });
+
+  const cellule = (c, masquer)=>{
+    const meilleur = Math.max(...c.par.map(x=>x.n));
+    const exaequo = c.par.filter(x=>x.n === meilleur).length > 1;
+    return c.par.map(x=>{
+      const saisons = x.saisons.slice().sort((a,b)=> String(b).localeCompare(String(a)));
+      const montre = saisons.slice(0, 4).join(', ') + (saisons.length > 4 ? ` +${saisons.length - 4}` : '');
+      return `<div class="pd-cell ${x.n === 0 ? 'vide' : ''} ${x.n > 0 && x.n === meilleur && !exaequo ? 'lead' : ''}" role="cell">
+          <span class="pd-n">${x.n || '—'}</span>
+          ${x.n ? `<span class="pd-saisons">${montre}</span>` : ''}
+        </div>`;
+    }).join('');
+  };
+
+  const corps = rangees.map((c, i)=>`
+    <div class="palmares-row${i >= PALMARES_VISIBLES ? ' enplus' : ''}" role="row">
+      <div role="cell">
+        <span class="palmares-comp">${c.nom}</span>
+        ${c.pays ? `<span class="palmares-pays">${paysFr(c.pays)}</span>` : ''}
+      </div>
+      ${cellule(c)}
+    </div>`).join('');
+
+  const totaux = filled.map((_, i)=> rangees.reduce((s, c)=> s + c.par[i].n, 0));
+  const maxTotal = Math.max(...totaux);
+  const exaequoTotal = totaux.filter(t=>t === maxTotal).length > 1;
+
+  const reste = rangees.length - PALMARES_VISIBLES;
+  return `
+    <div class="palmares duel ${filled.length > 2 ? 'serre' : ''}" style="--joueurs:${filled.length}" role="table" aria-label="Comparaison des palmarès">
+      <div class="palmares-head" role="row">
+        <div role="columnheader">Compétition</div>
+        ${filled.map(p=>`<div class="pd-head" style="--slot-color:${SLOT_COLORS[p._idx]}" role="columnheader">${shortName(p)}</div>`).join('')}
+      </div>
+      ${corps}
+      <div class="palmares-row total" role="row">
+        <div role="cell"><span class="palmares-comp">Total des titres</span></div>
+        ${totaux.map(t=>`<div class="pd-cell ${t === maxTotal && !exaequoTotal && t > 0 ? 'lead' : ''}" role="cell"><span class="pd-n">${t}</span></div>`).join('')}
+      </div>
+    </div>
+    ${reste > 0 ? `<button type="button" class="palmares-plus" data-palmares-plus>
+        Voir les ${reste} autre${reste > 1 ? 's' : ''} compétition${reste > 1 ? 's' : ''}
       </button>` : ''}`;
 }
 
