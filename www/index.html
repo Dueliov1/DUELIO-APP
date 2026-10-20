@@ -5322,6 +5322,15 @@ function getActiveStatsList(filled){
   const samePos = uniquePositions.length===1 ? uniquePositions[0] : null;
   return (samePos && STATS_BY_POS[samePos]) ? STATS_BY_POS[samePos] : STATS_COMMON;
 }
+/* Lignes de l'onglet Trophées. Quand aucun des joueurs n'a de palmarès
+ * chargé — légendes, ou API muette — les trois lignes « Titres » n'afficheraient
+ * que des tirets face à des tirets : on garde les sélections, qui viennent des
+ * carrières, et la phrase sous le tableau explique le reste. */
+function listeTrophees(filled){
+  const unPalmares = (filled || []).some(p => { const r = PLAYERS.find(x=>x.id===p.id) || p; return r.apiId && r.trophiesLoaded && !r.trophiesEmpty; });
+  const enCours = (filled || []).some(p => { const r = PLAYERS.find(x=>x.id===p.id) || p; return r.apiId && !r.trophiesLoaded && !r._trophyRetryAt; });
+  return (unPalmares || enCours) ? TROPHIES : TROPHIES.filter(r => !r.key.startsWith('titres'));
+}
 function renderAll(){
   const content = document.getElementById('content');
   // Un identifiant sans fiche dans PLAYERS donnait {_idx} — un objet « vrai »
@@ -5433,7 +5442,7 @@ function renderAll(){
     if(!p || filled.length<2) return '';
 
     const isNation = activeTab==='stats' && compareBasis==='nation';
-    const list = activeTab==='trophies' ? TROPHIES : (isNation ? NATION_STATS : activeStats);
+    const list = activeTab==='trophies' ? listeTrophees(filled) : (isNation ? NATION_STATS : activeStats);
     const getVal = (fp,key) => {
       if(activeTab!=='stats') return trophyValue(fp, key);
       if(compareBasis==='nation') return fp[key];
@@ -5469,7 +5478,7 @@ function renderAll(){
    * la même ligne, et l'œil devait apparier les valeurs lui-même. Le libellé passe
    * au-dessus de la paire, les deux chiffres restent alignés sous leur joueur. */
   function duelRowsHtml(){
-    const list = activeTab==='trophies' ? TROPHIES : (compareBasis==='nation' ? NATION_STATS : activeStats);
+    const list = activeTab==='trophies' ? listeTrophees(filled) : (compareBasis==='nation' ? NATION_STATS : activeStats);
     const getVal = (fp,key) => {
       if(activeTab!=='stats') return trophyValue(fp, key);
       if(compareBasis==='nation') return fp[key];
@@ -5535,7 +5544,7 @@ function renderAll(){
   }
 
   function compactTableHtml(){
-    const list = activeTab==='trophies' ? TROPHIES : (compareBasis==='nation' ? NATION_STATS : activeStats);
+    const list = activeTab==='trophies' ? listeTrophees(filled) : (compareBasis==='nation' ? NATION_STATS : activeStats);
     const getVal = (fp,key) => {
       if(activeTab!=='stats') return trophyValue(fp, key);
       if(compareBasis==='nation') return fp[key];
