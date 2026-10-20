@@ -662,9 +662,51 @@
      * cran et toute la rangée de badges repartirait en escalier. */
     min-height: 1.25em;
   }
-  /* Un titre que l'API ne date pas est renvoyé en fin de parcours ; le dire
-   * évite de laisser croire qu'il s'est joué après les autres. */
+  /* Un titre que l'API ne date pas est renvoyé en fin de tableau ; le dire
+   * évite de laisser croire qu'il a été gagné après les autres. */
   .tlh-sansdate{ font-style:italic; opacity:.72; }
+
+  /* Palmarès détaillé. Trois colonnes plutôt qu'une frise : quarante titres se
+   * parcourent du regard, alors qu'ils noyaient la chronologie des clubs. */
+  .palmares{
+    margin-top:12px; border:1px solid var(--line); border-radius:14px;
+    overflow:hidden; background:var(--surface);
+  }
+  .palmares-head, .palmares-row{
+    display:grid; grid-template-columns: minmax(0,1fr) auto auto;
+    gap:10px; align-items:center; padding:9px 12px;
+  }
+  .palmares-head{
+    font-size:9.5px; font-weight:700; color:var(--chalk-dim);
+    background:var(--surface-2); border-bottom:1px solid var(--line);
+  }
+  .palmares-row + .palmares-row{ border-top:1px solid rgba(44,66,114,.55); }
+  .palmares-row.enplus{ display:none; }
+  .palmares-comp{
+    font-size:11.5px; font-weight:700; color:var(--chalk); line-height:1.3;
+    overflow-wrap:break-word;
+  }
+  .palmares-pays{ display:block; font-size:9px; color:var(--chalk-dim); font-weight:600; margin-top:2px; }
+  .palmares-saison{ font-size:10.5px; color:var(--chalk-dim); text-align:right; white-space:nowrap; }
+  .palmares-res{
+    justify-self:end; font-size:9px; font-weight:800;
+    padding:3px 8px; border-radius:20px; white-space:nowrap;
+  }
+  /* L'or est réservé au titre : une place d'honneur se lit, elle ne se célèbre pas. */
+  .palmares-res.or{ color:#2A1A00; background:#FFB020; }
+  .palmares-res.argent{ color:var(--chalk-dim); background:rgba(169,207,197,.12); border:1px solid rgba(169,207,197,.22); }
+  .palmares-res.bronze{ color:#E8B98A; background:rgba(232,185,138,.12); border:1px solid rgba(232,185,138,.25); }
+  .palmares-plus{
+    display:block; width:100%; margin-top:8px; padding:10px;
+    background:none; border:1px dashed var(--line); border-radius:12px;
+    color:var(--gold); font-family:'Plus Jakarta Sans',sans-serif;
+    font-size:11px; font-weight:700; cursor:pointer;
+  }
+  .palmares-plus:hover{ background:var(--surface); }
+  .palmares-vide{
+    margin-top:12px; padding:14px; border:1px dashed var(--line); border-radius:14px;
+    color:var(--chalk-dim); font-size:11.5px; text-align:center;
+  }
   .tlh-fee{ font-size:10px; color:var(--gold); font-weight:700; margin-top:4px; width:100%; box-sizing:border-box; overflow-wrap:break-word; }
   .tlh-fee.free{ color: var(--chalk-dim); font-weight:600; }
   .tlh-trophy{ margin-top:5px; display:flex; flex-direction:column; align-items:center; width:100%; box-sizing:border-box; }
@@ -4907,6 +4949,77 @@ function applyRealTrophies(p, trophies){
     else cont++;
   });
   p.titresNationaux = nat; p.titresContinentaux = cont; p.titresSelection = sel; p.trophiesLoaded = true;
+  p.trophiesRaw = (trophies || []).slice();   // liste intégrale, pour le tableau du palmarès
+}
+
+/* Rang chronologique d'une saison de palmarès. Un titre se gagne à la fin de sa
+ * saison : « 2009 » se conclut en 2010, et « 2016/2017 » en 2017. Renvoie null
+ * quand l'API ne date pas le titre — ces lignes vont en fin de tableau. */
+function rangFinSaison(saison){
+  if(saison == null) return null;
+  const txt = String(saison);
+  const paire = txt.match(/(\d{4})\s*[\/\-–]\s*(\d{2,4})/);
+  if(paire) return paire[2].length === 2 ? parseInt(paire[1].slice(0,2) + paire[2], 10) : parseInt(paire[2], 10);
+  const seul = txt.match(/(\d{4})/);
+  return seul ? parseInt(seul[1], 10) + 1 : null;
+}
+
+/* L'API nomme les pays en anglais ; la table de correspondance existe déjà pour
+ * les nationalités. Les confédérations, elles, n'y figurent pas. */
+const CONFED_FR = { 'World':'International', 'Europe':'Europe', 'South-America':'Amérique du Sud',
+  'South America':'Amérique du Sud', 'North-America':'Amérique du Nord',
+  'North America':'Amérique du Nord', 'Africa':'Afrique', 'Asia':'Asie',
+  'Oceania':'Océanie', 'Concacaf':'CONCACAF' };
+function paysFr(nom){
+  if(!nom) return '';
+  return CONFED_FR[nom] || NATIONALITY_FR[nom] || nom;
+}
+
+const RESULTAT_FR = [
+  [/winner|vainqueur|champion/i, 'Vainqueur', 'or'],
+  [/2nd|runner|finalist|finaliste/i, 'Finaliste', 'argent'],
+  [/3rd|third/i, '3ᵉ place', 'bronze']
+];
+function resultatTrophee(place){
+  for(const [re, mot, ton] of RESULTAT_FR) if(re.test(place || '')) return { mot, ton };
+  return { mot: place || '—', ton: 'argent' };
+}
+
+/* Palmarès intégral d'un joueur, prêt à mettre en tableau.
+ * Renvoie null quand il n'y a rien à montrer : pour une légende, dont le
+ * palmarès n'a pas été saisi, et pour un joueur dont l'API n'a pas encore
+ * répondu — deux cas que l'affichage distingue. */
+function palmaresDe(p){
+  if(p.estLegende) return null;
+  let brut;
+  if(p.apiId){
+    if(!p.trophiesLoaded) return null;
+    brut = p.trophiesRaw || [];
+  } else {
+    // Joueurs de démonstration : leur palmarès est porté par les étapes de carrière.
+    brut = [];
+    (p.career || []).forEach(st => (st.trophies || []).forEach(t => brut.push({
+      league: t.name, country: null, place: 'Winner',
+      season: (String(t.date || '').match(/(\d{4})/) || [])[1] || null
+    })));
+  }
+  const vus = new Set();
+  const lignes = [];
+  brut.forEach(t=>{
+    if(!t || !t.league) return;
+    const cle = `${t.league}|${t.country||''}|${t.season||''}|${t.place||''}`;
+    if(vus.has(cle)) return;
+    vus.add(cle);
+    lignes.push({ ...t, rang: rangFinSaison(t.season) });
+  });
+  // Du plus récent au plus ancien ; les titres non datés ferment la marche.
+  lignes.sort((a,b)=>{
+    if(a.rang == null && b.rang == null) return 0;
+    if(a.rang == null) return 1;
+    if(b.rang == null) return -1;
+    return b.rang - a.rang;
+  });
+  return lignes;
 }
 const trophyLoading = {};
 function trophyValue(fp, key){
@@ -6754,12 +6867,77 @@ const BROWSE_STAT_GROUPS = [
   }
 ];
 const BROWSE_TROPHIES = TROPHIES.filter(r=>r.key.startsWith('titres')); // les sélections ont déjà leur rubrique dans la fiche
+const PALMARES_VISIBLES = 8;   // au-delà, le tableau se replie pour ne pas noyer la fiche
+
 function detailTrophyRowsHtml(p){
-  return BROWSE_TROPHIES.map(r=>{
+  const compteurs = BROWSE_TROPHIES.map(r=>{
     const v = trophyValue(p, r.key);
-    return `<div class="solo-stat-row"><span class="k">${r.label}</span><span class="v">${v===null ? '…' : v}</span></div>`;
+    return `<div class="solo-stat-row"><span class="k">${r.label}</span><span class="v">${v===null ? trophyPlaceholder(p, r.key) : v}</span></div>`;
   }).join('');
+  return compteurs + palmaresTableHtml(p);
 }
+
+/* Le palmarès détaillé a quitté la frise chronologique, où il se mêlait aux
+ * transferts et allongeait le défilement sans qu'on puisse rien y comparer.
+ * Un tableau se lit d'un coup d'œil, se trie et supporte quarante lignes. */
+function palmaresTableHtml(p){
+  const lignes = palmaresDe(p);
+
+  if(lignes === null){
+    const enCours = p.apiId && !p.trophiesLoaded && !p.estLegende;
+    return `<div class="palmares-vide">${enCours
+      ? 'Chargement du palmarès…'
+      : 'Palmarès détaillé non disponible pour ce joueur.'}</div>`;
+  }
+  if(!lignes.length){
+    return `<div class="palmares-vide">Aucun titre enregistré dans la base.</div>`;
+  }
+
+  const corps = lignes.map((t, i)=>{
+    const { mot, ton } = resultatTrophee(t.place);
+    /* Un tournoi d'été se joue sur une seule année : « Euro 2016 », pas
+     * « Euro 2016-17 ». Même famille de confusion que les qualifications à la
+     * CAN, étiquetées à l'année du tournoi plutôt qu'à celle des matchs. */
+    const annee = t.rang == null ? null : t.rang - 1;
+    const saison = annee == null
+      ? '<span class="tlh-sansdate">inconnue</span>'
+      : (SELECTION_TROPHY_RE.test(t.league || '') ? String(annee) : (seasonLabel(annee) || t.season));
+    return `
+      <div class="palmares-row${i >= PALMARES_VISIBLES ? ' enplus' : ''}" role="row">
+        <div role="cell">
+          <span class="palmares-comp">${t.league}</span>
+          ${t.country ? `<span class="palmares-pays">${paysFr(t.country)}</span>` : ''}
+        </div>
+        <div class="palmares-saison" role="cell">${saison}</div>
+        <div role="cell"><span class="palmares-res ${ton}">${mot}</span></div>
+      </div>`;
+  }).join('');
+
+  const reste = lignes.length - PALMARES_VISIBLES;
+  return `
+    <div class="palmares" role="table" aria-label="Palmarès détaillé">
+      <div class="palmares-head" role="row">
+        <div role="columnheader">Compétition</div>
+        <div class="palmares-saison" role="columnheader">Saison</div>
+        <div style="justify-self:end;" role="columnheader">Résultat</div>
+      </div>
+      ${corps}
+    </div>
+    ${reste > 0 ? `<button type="button" class="palmares-plus" data-palmares-plus>
+        Voir les ${reste} autre${reste > 1 ? 's' : ''} titre${reste > 1 ? 's' : ''}
+      </button>` : ''}`;
+}
+
+/* Un seul écouteur délégué : le tableau est réécrit à chaque chargement de
+ * palmarès, et rebrancher un bouton qui vient d'être remplacé est la façon
+ * classique de perdre le clic. */
+document.addEventListener('click', e=>{
+  const btn = e.target.closest && e.target.closest('[data-palmares-plus]');
+  if(!btn) return;
+  const bloc = btn.previousElementSibling;
+  if(bloc) bloc.querySelectorAll('.palmares-row.enplus').forEach(r=>r.classList.remove('enplus'));
+  btn.remove();
+});
 // Ordre des catégories de statistiques adapté à chaque poste : la catégorie la plus
 // représentative du poste apparaît en premier dans la fiche détaillée du joueur.
 const GROUP_ORDER_BY_POS = {
@@ -6894,37 +7072,13 @@ async function loadRealTimelineFor(p){
     if(tr && browseDetailId === p.id) tr.innerHTML = detailTrophyRowsHtml(p);
     if(browseDetailId !== p.id) return; // l'utilisateur a changé d'écran entre-temps
 
-    /* Transferts et trophées doivent se ranger sur la MÊME échelle. Ils ne l'ont
-     * pas toujours été : un transfert valait new Date(...).getTime(), soit mille
-     * deux cent cinquante milliards, pendant qu'un trophée valait saison × 400,
-     * soit huit cent mille. Tout trophée passait donc avant tout transfert, et
-     * ceux sans saison, valant zéro, remontaient en tête de parcours.
-     * On réutilise ici l'encodage déjà employé par la chronologie des légendes :
-     * année × 372 + mois × 31 + jour. */
+    /* Rang d'un transfert, sur l'encodage déjà employé par la chronologie des
+     * légendes : année × 372 + mois × 31 + jour. */
     const rangDate = (iso)=>{
       const d = new Date(iso);
       if(isNaN(d)) return null;
       return d.getFullYear()*372 + d.getMonth()*31 + d.getDate();
     };
-    /* Un titre se gagne à la fin de sa saison, pas au début : la saison 2009
-     * se conclut en mai 2010, donc après un transfert de l'été 2009 et avant un
-     * transfert de l'été 2010. On date le trophée à la fin mai de l'année de
-     * clôture. Le reste de l'application lit déjà « 2009 » comme 2009-10. */
-    const rangSaison = (saison)=>{
-      if(saison == null) return null;
-      const txt = String(saison);
-      const paire = txt.match(/(\d{4})\s*[\/\-–]\s*(\d{2,4})/);
-      let fin;
-      if(paire){
-        fin = paire[2].length === 2 ? parseInt(paire[1].slice(0,2) + paire[2], 10) : parseInt(paire[2], 10);
-      } else {
-        const seul = txt.match(/(\d{4})/);
-        if(!seul) return null;
-        fin = parseInt(seul[1], 10) + 1;
-      }
-      return fin*372 + 4*31 + 31;   // fin mai de l'année de clôture
-    };
-
     let events = [];
     transfers.forEach(t=>{
       const inTeam = t.teams && t.teams.in ? t.teams.in.name : '?';
@@ -6934,9 +7088,8 @@ async function loadRealTimelineFor(p){
       else feeLabel = t.type;
       events.push({ club: inTeam, date: t.date || '', feeLabel, sortVal: rangDate(t.date) });
     });
-    (trophies||[]).forEach(tr=>{
-      events.push({ trophy: true, name: tr.league, place: tr.place, season: tr.season, sortVal: rangSaison(tr.season) });
-    });
+    // Les trophées ne figurent plus ici : ils ont leur tableau dans le palmarès,
+    // où ils se lisent d'un coup d'œil au lieu d'allonger le défilement.
     /* Un événement sans date ne peut pas prétendre ouvrir le parcours : on le
      * renvoie en fin de file, où son absence de date se lit comme telle. */
     events.sort((a,b)=>{
@@ -6946,10 +7099,9 @@ async function loadRealTimelineFor(p){
       return a.sortVal - b.sortVal;
     });
 
-    // Le club actuel est le dernier TRANSFERT, pas le dernier événement : un
-    // trophée en fin de liste lui volait son badge.
+    // Le club actuel est le dernier transfert daté.
     let dernierTransfert = -1;
-    events.forEach((ev,i)=>{ if(!ev.trophy && ev.sortVal != null) dernierTransfert = i; });
+    events.forEach((ev,i)=>{ if(ev.sortVal != null) dernierTransfert = i; });
 
     if(events.length===0){
       container.innerHTML = `<div class="empty-state" style="padding:16px;">Parcours non disponible pour ce joueur.</div>`;
@@ -6957,15 +7109,6 @@ async function loadRealTimelineFor(p){
     }
 
     container.innerHTML = events.map((ev,i)=>{
-      if(ev.trophy){
-        return `
-          <div class="tlh-item">
-            <div class="tlh-dot trophy"></div>
-            <div class="tlh-club">${ev.name}</div>
-            <div class="tlh-years">${ev.sortVal == null ? '<span class="tlh-sansdate">année inconnue</span>' : (seasonLabel(parseInt(ev.season,10)) || ev.season)}</div>
-            <div class="tlh-trophy"><span class="tlh-trophy-name">${ev.place}</span></div>
-          </div>`;
-      }
       const isLast = i === dernierTransfert;
       return `
         <div class="tlh-item ${isLast?'current':''}">
@@ -7065,43 +7208,30 @@ function renderBrowse(){
     if(isReal){
       timeline = `<div class="tlh-item" style="flex:1 1 auto;"><div class="empty-state" style="padding:10px;">Chargement du parcours…</div></div>`;
     } else {
-      // Construit une chronologie détaillée : chaque arrivée en club ET chaque trophée devient son propre événement daté
-      let events = [];
-      p.career.forEach((stint, idx)=>{
+      // Une étape par club. Les trophées ont quitté la frise pour le tableau du
+      // palmarès : mêlés aux transferts, ils doublaient la longueur du parcours
+      // sans rien dire de plus que le tableau ne dit mieux.
+      let events = p.career.map(stint=>{
         let feeLabel;
         if(stint.labelLibre){ feeLabel = stint.labelLibre; }   // légendes : bilan du passage
         else if(stint.fee===null || stint.fee===undefined){ feeLabel = 'Formation'; }
         else if(stint.fee===0){ feeLabel = 'Transfert libre'; }
         else { feeLabel = `${stint.fee.toString().replace('.',',')} M€`; }
-        events.push({
-          type: 'transfer', sortVal: stint.arrivalSort, date: stint.arrivalDate,
+        return {
+          sortVal: stint.arrivalSort, date: stint.arrivalDate,
           club: stint.club, feeLabel, current: stint.to===null
-        });
-        stint.trophies.forEach(t=>{
-          events.push({ type:'trophy', sortVal:t.sortVal, date:t.date, club:stint.club, name:t.name });
-        });
+        };
       });
       events.sort((a,b)=> a.sortVal - b.sortVal);
 
-      timeline = events.map(ev=>{
-        if(ev.type==='transfer'){
-          return `
+      timeline = events.map(ev=>`
             <div class="tlh-item ${ev.current?'current':''}">
               <div class="tlh-dot"></div>
               <div class="tlh-club">${ev.club}</div>
               <div class="tlh-years">${ev.date || ''}</div>
               <div class="tlh-fee ${ev.feeLabel!=='Formation' && ev.feeLabel!=='Transfert libre' ? '' : 'free'}">${ev.feeLabel}</div>
               ${ev.current ? '<span class="tlh-badge">Actuel</span>' : ''}
-            </div>`;
-        }
-        return `
-          <div class="tlh-item">
-            <div class="tlh-dot trophy"></div>
-            <div class="tlh-club">${ev.club}</div>
-            <div class="tlh-years">${ev.date || ''}</div>
-            <div class="tlh-trophy"><span class="tlh-trophy-name">${ev.name}</span></div>
-          </div>`;
-      }).join('');
+            </div>`).join('');
     }
     el.innerHTML = `
       <div class="browse-detail">
