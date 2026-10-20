@@ -3854,13 +3854,14 @@ async function chargerLegendes(){
     LEGENDES.chargees = true;
     for(const l of LEGENDES.liste){
       const c = cleNomCourt(l.name);
-      if(c) CLES_LEGENDES.add(c);
+      if(c) CLES_LEGENDES.set(c, l);
     }
     // Elles rejoignent la liste commune : la recherche du sélecteur balaie
     // PLAYERS, donc rien d'autre n'est à modifier pour qu'on les trouve.
     for(const l of LEGENDES.liste){
       if(!PLAYERS.some(p => p.id === l.id)) PLAYERS.push(l);
     }
+    remplacerJumeauxEnPlace();
   } catch(e){
     // Pas de légendes : l'application fonctionne exactement comme avant.
     console.warn('légendes indisponibles :', e && e.message);
@@ -3868,6 +3869,24 @@ async function chargerLegendes(){
   return LEGENDES.liste;
 }
 function duelAvecLegende(filled){ return (filled || []).some(p => p && p.estLegende); }
+
+/* Masquer le jumeau de la recherche ne suffit pas : s'il occupe déjà une
+ * colonne du comparatif — parce qu'on l'avait choisi avant l'arrivée des
+ * légendes — il y reste indéfiniment. On le remplace donc sur place, et on
+ * le retire de la liste pour qu'aucun autre écran ne puisse le ressortir. */
+function remplacerJumeauxEnPlace(){
+  const aRetirer = [];
+  for(const p of PLAYERS){
+    const l = legendePour(p);
+    if(!l) continue;
+    aRetirer.push(p.id);
+    for(let i = 0; i < slots.length; i++) if(slots[i] === p.id) slots[i] = l.id;
+    if(typeof browseDetailId !== 'undefined' && browseDetailId === p.id) browseDetailId = l.id;
+  }
+  if(!aRetirer.length) return;
+  const partis = new Set(aRetirer);
+  PLAYERS = PLAYERS.filter(p => !partis.has(p.id));
+}
 
 /* Dix-sept de ces légendes figuraient DÉJÀ dans l'index de recherche d'API-Football,
  * mais sans la moindre statistique : « W. Rooney », « Francesco Totti », « Andrea
@@ -3882,7 +3901,7 @@ function duelAvecLegende(filled){ return (filled || []).some(p => p && p.estLege
  * La clé rapproche « Wayne Rooney » de « W. Rooney » : initiale du prénom et nom
  * de famille. Elle ne confond pas Zinédine Zidane avec ses fils Enzo et Luca, dont
  * les initiales diffèrent. */
-const CLES_LEGENDES = new Set();
+const CLES_LEGENDES = new Map();   // clé -> légende
 function cleNomCourt(nom){
   const mots = normalizeSearch(nom || '').split(/\s+/).filter(Boolean);
   if(!mots.length) return '';
@@ -3890,12 +3909,20 @@ function cleNomCourt(nom){
   const initiale = mots.length > 1 ? mots[0][0] : '';
   return `${initiale}|${famille}`;
 }
-function jumeauVideDeLegende(p){
-  if(!p || !p.apiId || p.estLegende) return false;
-  if(p.matchsIndex) return false;                  // l'API a une vraie carrière : on la garde
-  if(p.statsBySeason && Object.keys(p.statsBySeason).length) return false;
-  return CLES_LEGENDES.has(cleNomCourt(p.name));
+/* Le masquage est SANS CONDITION, et c'est volontaire. Ma première version ne
+ * retirait le jumeau que s'il était complètement vide ; elle a laissé passer
+ * « W. Rooney », que l'API sait remplir — mais avec 172 matchs et 70 buts au
+ * lieu de 763 et 313. Une fiche à moitié fausse est pire qu'une fiche vide :
+ * elle a l'air vraie.
+ *
+ * C'est sans danger pour ces douze noms : aucun d'eux n'a de carrière
+ * moissonnée dans notre base (vérifié, les douze sont à zéro match dans
+ * l'index). Leur version API ne peut donc qu'être partielle. */
+function legendePour(p){
+  if(!p || !p.apiId || p.estLegende) return null;
+  return CLES_LEGENDES.get(cleNomCourt(p.name)) || null;
 }
+function jumeauVideDeLegende(p){ return !!legendePour(p); }
 const INDEX_LS_KEY = 'duelio_index_v2';   // v2 : passage à l'index statique. Change de nom pour que
                                           // les appareils ayant l'ancien index (472 joueurs de Ligue 1)
                                           // l'abandonnent au lieu de le croire encore valable.
