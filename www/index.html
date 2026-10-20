@@ -673,6 +673,10 @@
   /* Mention de couverture : discrète, informative, jamais alarmante. */
   .season-note{ margin-top:3px; font-size:9.5px; color: var(--chalk-dim); text-align:center;
                 line-height:1.25; letter-spacing:.01em; cursor:help; }
+  /* Pourquoi le duel est réduit quand une légende est en lice. */
+  .duel-avis{ margin:0 16px 10px; padding:8px 11px; border-radius:11px;
+              background: rgba(234,179,8,.08); border:1px solid rgba(234,179,8,.26);
+              color: var(--chalk-dim); font-size:11px; line-height:1.4; text-align:center; }
   .compare-cols.count-3 .season-note, .compare-cols.count-4 .season-note{ font-size:8.5px; }
   .compare-cols.count-3 .season-pick, .compare-cols.count-4 .season-pick{ font-size:10.5px; padding:0 6px; min-height:34px; }
   .compare-cols.count-4 .season-pick.static{ font-size:8.5px; }
@@ -3740,6 +3744,126 @@ function pruneLightPlayers(){
  * pour les joueurs hors index : retraités, autres championnats.
  */
 const PLAYER_INDEX = { players: [], updatedAt: null, loaded: false };
+
+/* ================== LÉGENDES ==================
+ * API-Football ne connaît ni Zidane, ni Maradona, ni Cruyff, ni Pelé : sa
+ * couverture des joueurs s'arrête aux carrières encore en cours vers 2008.
+ * Totti, Pirlo et Rooney figuraient bien dans la recherche, mais avec une fiche
+ * entièrement vide — l'utilisateur les trouvait et n'obtenait aucun chiffre.
+ *
+ * Ces quarante carrières sont donc saisies à la main, depuis des sources
+ * publiques recoupées deux à deux, en TOUTES COMPÉTITIONS pour rester
+ * comparables aux données modernes.
+ *
+ * Ce qu'on a : les clubs, les apparitions, les buts, les sélections.
+ * Ce qu'on n'a pas, et qu'aucune source ne détient pour ces époques : les
+ * passes décisives, les minutes, les tirs, les duels. Le comparatif s'y adapte
+ * de lui-même (voir statsPourLegende et getActiveStatsList) : plutôt que
+ * d'afficher dix lignes vides, il se réduit à ce que les deux joueurs ont
+ * réellement en commun. */
+const LEGENDE_ID_BASE = 9000000;       // hors d'atteinte des identifiants API
+const LEGENDES = { chargees: false, liste: [] };
+const POSTE_VERS_CODE = { 'Gardien':'GK', 'Défenseur':'DEF', 'Milieu':'MID', 'Attaquant':'FWD' };
+
+/* Les seules statistiques qu'une légende possède. Tout le reste est déclaré
+ * manquant, ce qui fait afficher « — » par le mécanisme existant plutôt qu'un
+ * zéro trompeur : un zéro dirait « il n'a jamais fait de passe décisive »,
+ * alors que la vérité est « personne ne les a comptées à l'époque ». */
+const STATS_DE_LEGENDE = ['appearances', 'buts'];
+function statsPourLegende(l){
+  const s = {
+    appearances: l.m || 0, buts: l.b || 0,
+    passesDec: 0, touches: 0, precisionTirs: 0, dribbles: 0, duelsAeriens: 0,
+    passesReussies: 0, tacles: 0, interceptions: 0, occasions: 0, distance: 0,
+    cartonsJaunes: 0, lineups: 0, minutesPlayed: 0, rating: 0, overall: 60,
+    shotsTotal: 0, shotsOnTarget: 0, passesTotal: 0, keyPasses: 0, clearances: 0,
+    duelsTotal: 0, duelsWon: 0, dribblesAttempts: 0, dribblesPast: 0,
+    foulsCommitted: 0, foulsDrawn: 0, cartonsRouges: 0,
+    penaltiesWon: 0, penaltiesCommitted: 0, penaltiesScored: 0,
+    penaltiesMissed: 0, penaltiesSaved: 0,
+    saves: 0, goalsConceded: 0, cleanSheets: 0,
+    radar: { attaque:0, passe:0, dribble:0, defense:0, physique:0, gardien:0 },
+    teamName: null, teamId: null, teamLogo: null, season: null,
+    missing: {}
+  };
+  for(const k of Object.keys(s)){
+    if(k === 'missing' || k === 'radar' || STATS_DE_LEGENDE.includes(k)) continue;
+    if(typeof s[k] === 'number') s.missing[k] = true;
+  }
+  return s;
+}
+
+function construireLegende(l, rang){
+  const code = POSTE_VERS_CODE[l.poste] || 'MID';
+  const dernier = l.clubs && l.clubs.length ? l.clubs[l.clubs.length - 1] : null;
+  const premiere = l.clubs && l.clubs.length ? Math.min(...l.clubs.map(c => c.de)) : null;
+  const derniere = l.clubs && l.clubs.length ? Math.max(...l.clubs.map(c => c.a)) : null;
+  const stats = statsPourLegende(l);
+  return {
+    id: LEGENDE_ID_BASE + rang,
+    apiId: null,
+    estLegende: true,
+    legendeId: l.id,
+    fullName: l.n,
+    name: l.n,
+    pos: code,
+    posLabel: POS_LABEL[code] || '',
+    club: dernier ? dernier.club : null,
+    clubLogo: null,
+    age: l.deces ? null : (new Date().getFullYear() - l.naissance),
+    birthYear: l.naissance,
+    deces: l.deces || null,
+    height: null, preferredFoot: null,
+    nation: nationFromApiName(l.c),
+    caps: (l.sel && l.sel.m) || 0,
+    intGoals: (l.sel && l.sel.b) || 0,
+    titresNationaux: 0, titresContinentaux: 0,
+    // Au format attendu par la chronologie de la fiche. Les montants de transfert
+    // n'existent pas pour ces époques : la place est prise par ce qu'on sait
+    // vraiment, le bilan du passage.
+    career: (l.clubs || []).map(c => ({
+      club: c.club,
+      fee: null,
+      labelLibre: `${c.m} match${c.m > 1 ? 's' : ''} · ${c.b} but${c.b > 1 ? 's' : ''}`
+                  + (c.partiel ? ' (championnat seul)' : ''),
+      arrivalDate: String(c.de),
+      arrivalSort: c.de,
+      from: c.de, to: c.a,
+      trophies: []
+    })),
+    photoUrl: `legendes/photos/${l.id}.jpg`,
+    statsBySeason: {},
+    statsLegende: stats,
+    careerStats: stats,
+    careerLoaded: true,
+    careerTried: true,
+    seasonsAvailable: [],
+    span: (premiere != null && derniere != null) ? [premiere, derniere] : null,
+    note: l.note || '',
+    needsStats: false
+  };
+}
+
+async function chargerLegendes(){
+  if(LEGENDES.chargees) return LEGENDES.liste;
+  try {
+    const r = await fetch('data/legendes.json', { cache: 'force-cache' });
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    const doc = await r.json();
+    LEGENDES.liste = (doc.legendes || []).map(construireLegende);
+    LEGENDES.chargees = true;
+    // Elles rejoignent la liste commune : la recherche du sélecteur balaie
+    // PLAYERS, donc rien d'autre n'est à modifier pour qu'on les trouve.
+    for(const l of LEGENDES.liste){
+      if(!PLAYERS.some(p => p.id === l.id)) PLAYERS.push(l);
+    }
+  } catch(e){
+    // Pas de légendes : l'application fonctionne exactement comme avant.
+    console.warn('légendes indisponibles :', e && e.message);
+  }
+  return LEGENDES.liste;
+}
+function duelAvecLegende(filled){ return (filled || []).some(p => p && p.estLegende); }
 const INDEX_LS_KEY = 'duelio_index_v2';   // v2 : passage à l'index statique. Change de nom pour que
                                           // les appareils ayant l'ancien index (472 joueurs de Ligue 1)
                                           // l'abandonnent au lieu de le croire encore valable.
@@ -4547,6 +4671,14 @@ function resetComparison(){
   renderAll();
 }
 function getActiveStatsList(filled){
+  // Dès qu'une légende entre dans le duel, le comparatif se réduit à ce que les
+  // deux joueurs possèdent réellement. Sans cela, dix lignes sur douze
+  // afficheraient « — » du côté de la légende et la carte semblerait cassée,
+  // alors que le problème n'est pas le joueur mais l'époque.
+  if(duelAvecLegende(filled)){
+    const liste = STATS_COMMON.filter(r => STATS_DE_LEGENDE.includes(r.key));
+    return liste.length ? liste : STATS_COMMON;
+  }
   const uniquePositions = [...new Set(filled.map(p=>p.pos))];
   const samePos = uniquePositions.length===1 ? uniquePositions[0] : null;
   return (samePos && STATS_BY_POS[samePos]) ? STATS_BY_POS[samePos] : STATS_COMMON;
@@ -4621,6 +4753,13 @@ function renderAll(){
   };
   if(!modeAvail[compareMode]) compareMode = 'shown';
   compareBasis = compareMode==='shown' ? 'current' : compareMode==='season' ? 'season' : compareMode==='age' ? (realMode ? 'ageCumul' : 'age') : 'seasonCumul';
+  // Une légende n'existe qu'en carrière entière. Laisser le duel sur « saison
+  // en cours » opposait les 681 matchs de Zidane aux 47 de la saison de Mbappé :
+  // un écart de comptage, pas de talent. On bascule donc d'office en carrière.
+  if(duelAvecLegende(filled) && compareMode !== 'career'){
+    compareMode = 'career';
+    compareBasis = 'career';
+  }
   if(compareMode==='career') compareSeasonValue = seasonCumulOptions[0];
   if(compareBasis==='age' && (!compareAgeValue || !ageOptions.includes(compareAgeValue))) compareAgeValue = ageOptions.length ? ageOptions[ageOptions.length-1] : null;
   if(compareBasis==='ageCumul' && (!compareAgeValue || !ageCumulOptions.includes(compareAgeValue))) compareAgeValue = ageCumulOptions.length ? ageCumulOptions[ageCumulOptions.length-1] : null;
@@ -4698,7 +4837,14 @@ function renderAll(){
           <div class="dr-vals">${cellule(vals[0], 0)}${cellule(vals[1], 1)}</div>
         </div>`;
     }).join('');
-    return `<div class="duel-rows">${corps}</div>`;
+    // Quand le duel a été réduit, l'utilisateur doit savoir pourquoi : sinon il
+    // croit à un bug ou à une fiche incomplète.
+    const avis = (activeTab === 'stats' && duelAvecLegende(filled))
+      ? `<div class="duel-avis">Comparaison limitée aux apparitions et aux buts :
+           les passes décisives, les minutes et les tirs n'ont pas été relevés à
+           l'époque des légendes.</div>`
+      : '';
+    return `${avis}<div class="duel-rows">${corps}</div>`;
   }
 
   function compactTableHtml(){
@@ -4759,16 +4905,22 @@ function renderAll(){
       ${activeTab==='stats' ? `<button class="icon-btn ${compactView?'active':''}" id="compactToggle" type="button" title="${compactView ? 'Vue détaillée' : 'Tout voir sur un écran'}" aria-label="${compactView ? 'Vue détaillée' : 'Tout voir sur un écran'}">${compactIcon}</button>` : ''}
     </div>` : ''}
     ${showControls && !compactView ? `
+    ${duelAvecLegende(filled) ? `
+    <div class="period-seg" role="tablist" aria-label="Période comparée">
+      <button class="period-btn active" type="button" role="tab" disabled
+              title="Une légende n'existe que par sa carrière entière">Carrière</button>
+    </div>` : `
     <div class="period-seg" id="periodSeg" role="tablist" aria-label="Période comparée">
       <button class="period-btn ${compareMode==='shown'||compareMode==='season'||compareMode==='until'?'active':''}" data-mode="shown" type="button" role="tab">Saison</button>
       ${modeAvail.age ? `<button class="period-btn ${compareMode==='age'?'active':''}" data-mode="age" type="button" role="tab">${compareMode==='age' ? `À ${compareAgeValue} ans<span class="chev">▾</span>` : 'Même âge'}</button>` : ''}
       ${modeAvail.career ? `<button class="period-btn ${compareMode==='career'?'active':''}" data-mode="career" type="button" role="tab">Carrière</button>` : ''}
-    </div>
+    </div>`}
     <div class="period-sub">
-      <span>${compareMode==='age' ? (realMode ? `Tout ce qu'ils avaient accumulé à ${compareAgeValue} ans` : `Estimation à ${compareAgeValue} ans`)
+      <span>${duelAvecLegende(filled) ? 'Carrières entières, toutes compétitions'
+        : compareMode==='age' ? (realMode ? `Tout ce qu'ils avaient accumulé à ${compareAgeValue} ans` : `Estimation à ${compareAgeValue} ans`)
         : compareMode==='career' ? 'Toutes leurs saisons additionnées'
         : (realMode ? 'Choisissez la saison sous chaque joueur' : 'Statistiques de la saison')}</span>
-      ${hasSplit ? `<button class="scope-link" id="scopeChip" type="button">${scopeLabel()}<span class="chev">▾</span></button>` : ''}
+      ${hasSplit && !duelAvecLegende(filled) ? `<button class="scope-link" id="scopeChip" type="button">${scopeLabel()}<span class="chev">▾</span></button>` : ''}
     </div>
     <div class="career-progress" id="careerProgress">${careerProgressHtml()}</div>` : ''}
     <div class="compare-wrap ${compactView ? 'compact-view' : ''}">
@@ -4778,7 +4930,7 @@ function renderAll(){
                                 : `<div class="compare-cols count-${slots.length}">${statsColsHtml}</div>`)
             : '')}
       ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs de l'équipe nationale A trouvés dans la base API-Football (amicaux compris), parfois incomplet pour les anciennes saisons. Titres : titres gagnés selon l'API. « — » = rien dans la base.</div>` : ''}
-      ${activeTab==='stats' && filled.length>=2 && compareBasis!=='nation' && !compactView ? `
+      ${activeTab==='stats' && filled.length>=2 && compareBasis!=='nation' && !compactView && !duelAvecLegende(filled) ? `
       <div class="radar-panel">
         <div class="browse-section-label" style="text-align:center;">Profil d'attributs${compareBasis==='age' ? ` — à ${compareAgeValue} ans` : compareBasis==='ageCumul' ? ` — cumul jusqu'à ${compareAgeValue} ans` : compareBasis==='seasonCumul' ? ` — cumul jusqu'à ${seasonLabel(compareSeasonValue)}` : compareBasis==='season' ? ` — saison ${seasonLabel(compareSeasonValue)}` : compareBasis==='career' ? ' — carrière' : ''}</div>
         <div class="radar-note">Indice calculé d'après les statistiques, pas une note officielle</div>
@@ -5108,10 +5260,22 @@ function noteCouvertureHtml(p){
 
 function seasonPickHtml(p, opts){
   opts = opts || {};
+  // Une légende n'a pas de saisons à choisir : on affiche l'étendue de sa
+  // carrière, à la place du sélecteur, dans le même cadre.
+  if(p && p.estLegende){
+    const s = p.span;
+    return `<div class="season-pick static" title="Carrière entière, toutes compétitions">${
+      s ? `${s[0]} → ${s[1]}` : 'Carrière'}</div>`;
+  }
   if(!p || !p.apiId) return '';
   if(!opts.detail && compareMode !== 'shown'){
     const info = getStatSource(p);
+    // En mode carrière il n'y a pas d'étendue cumulée à afficher, mais les
+    // saisons connues la donnent : sans ce cas, la colonne affichait
+    // « Rien dans la base » alors que les chiffres étaient bien là.
+    const dispo = p.seasonsAvailable && p.seasonsAvailable.length ? p.seasonsAvailable : null;
     const txt = info.cumul ? `${seasonLabel(info.cumul.span[0])} → ${seasonLabel(info.cumul.span[1])}`
+      : (info.career && dispo) ? `${Math.min(...dispo)} → ${Math.max(...dispo)}`
       : info.pending ? 'Chargement…' : 'Rien dans la base';
     return `<div class="season-pick static" title="Saisons additionnées">${txt}</div>${noteCouvertureHtml(p)}`;
   }
@@ -5390,6 +5554,9 @@ function scopeLabel(){
 //   pending  : la saison demandée n'est pas encore chargée (affiché « … »)
 //   none     : la base n'a rien pour cette demande (affiché « — »)
 function getStatSource(fp){
+  // Une légende n'a qu'un total de carrière : aucune base de comparaison par
+  // saison ou par âge n'a de sens pour elle, on renvoie toujours le même bloc.
+  if(fp.estLegende) return { src: fp.statsLegende, legende: true, career: true };
   const real = !!fp.apiId;
   if(compareBasis==='age' && typeof compareAgeValue==='number'){
     if(!real) return { src: scopedSrc(fp), estimate: true }; // joueur fictif : estimation par courbe d'âge
@@ -6283,7 +6450,10 @@ function renderBrowse(){
     }
     const groupOrder = GROUP_ORDER_BY_POS[p.pos] || GROUP_ORDER_BY_POS.MID;
     // Vrai joueur : chiffres de la saison en club (comme le libellé « Saison 2005-06 · FC Barcelona »)
-    const pv = (p.apiId && p.split && p.split.club) ? { ...p, ...p.split.club } : p;
+    // Une légende porte ses chiffres dans statsLegende, pas à la racine : sans ce
+    // cas, la fiche affichait « undefined » sur chaque ligne.
+    const pv = p.estLegende ? { ...p, ...p.statsLegende }
+             : (p.apiId && p.split && p.split.club) ? { ...p, ...p.split.club } : p;
     const statGroupsHtml = BROWSE_STAT_GROUPS
       .filter(g => g.label !== 'Gardien' || p.pos === 'GK')
       .slice()
@@ -6292,13 +6462,15 @@ function renderBrowse(){
         const rows = g.rows.map(r=>{
           const suf = r.suffix || '';
           let val;
-          if(r.key==='age') val = (p.apiId && p.birthYear && p.seasonShown) ? `${p.seasonShown - p.birthYear} ans${p.age ? ` <small class="muted">(${p.age} aujourd'hui)</small>` : ''}` : (p.age ? p.age : '—');
+          if(r.key==='age' && p.estLegende) val = p.deces ? `${p.birthYear} – ${p.deces}` : (p.age ? `${p.age} ans` : '—');
+          else if(r.key==='age') val = (p.apiId && p.birthYear && p.seasonShown) ? `${p.seasonShown - p.birthYear} ans${p.age ? ` <small class="muted">(${p.age} aujourd'hui)</small>` : ''}` : (p.age ? p.age : '—');
           else if(p.apiId && (r.key==='caps' || r.key==='intGoals')){
             // Vrai joueur : total des matchs de l'équipe nationale A trouvés dans la base, toutes saisons confondues
             const v = trophyValue(p, r.key);
             val = v === null ? trophyPlaceholder(p, r.key) : v;
           }
-          else if(p.apiId && isStatMissing(pv, r.key)) val = '—';
+          else if((p.apiId || p.estLegende) && isStatMissing(pv, r.key)) val = '—';
+          else if(pv[r.key] === undefined || pv[r.key] === null) val = '—';
           else val = (r.decimals!=null ? Number(pv[r.key]).toFixed(r.decimals) : pv[r.key]) + suf;
           const lbl = (p.apiId && r.key==='age' && p.birthYear && p.seasonShown) ? `Âge en ${seasonLabel(p.seasonShown)}` : r.label;
           return `<div class="solo-stat-row"><span class="k">${lbl}</span><span class="v">${val}</span></div>`;
@@ -6319,7 +6491,8 @@ function renderBrowse(){
       let events = [];
       p.career.forEach((stint, idx)=>{
         let feeLabel;
-        if(stint.fee===null){ feeLabel = 'Formation'; }
+        if(stint.labelLibre){ feeLabel = stint.labelLibre; }   // légendes : bilan du passage
+        else if(stint.fee===null || stint.fee===undefined){ feeLabel = 'Formation'; }
         else if(stint.fee===0){ feeLabel = 'Transfert libre'; }
         else { feeLabel = `${stint.fee.toString().replace('.',',')} M€`; }
         events.push({
@@ -6720,6 +6893,7 @@ try{ console.log('%cDuelio', 'font-weight:bold;color:#2DD4BF',
   const content = document.getElementById('content');
   content.innerHTML = `<div class="empty-state">Chargement…</div>`;
   await bootstrapPlayers();
+  await chargerLegendes();   // 29 Ko : on attend, pour que « Zidane » réponde dès la première frappe
   loadPlayerIndex(); // en arrière-plan : la recherche instantanée s'active dès que l'index est là
   if(FALLBACK_REASON){
     const banner = document.getElementById('globalFallbackBanner');
