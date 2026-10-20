@@ -5044,6 +5044,29 @@ function paysFr(nom){
 
 const PALMARES_VISIBLES = 8;   // au-delà, le tableau se replie pour ne pas noyer la fiche
 
+/* Ordre d'un palmarès : par prestige, et non par nombre de titres. Trier sur le
+ * compte plaçait une Coupe du monde derrière cinq Trophées des Champions, donc
+ * sous le bouton « voir plus » — exactement l'inverse de ce qu'on vient
+ * chercher. Plus le rang est bas, plus la ligne monte.
+ * Contrairement au filtre des amicaux, une erreur ici ne fausse aucun chiffre :
+ * elle met seulement une ligne à la mauvaise hauteur. */
+function rangPrestige(nom){
+  const n = (nom || '').toLowerCase();
+  if(/\bu-?\d{2}\b/.test(n)) return 90;                               // catégories de jeunes, en fin de liste
+  if(/world cup|coupe du monde|mundial|mondial/.test(n) && /club/.test(n)) return 35;   // Mondial des clubs
+  if(/world cup|coupe du monde/.test(n)) return 10;                   // Coupe du monde
+  if(/euro championship|european championship|^euro\b|copa am[ée]rica|africa cup|asian cup|gold cup|finalissima|confederations/.test(n)) return 20;
+  if(/nations league/.test(n)) return 22;
+  if(/olympic/.test(n)) return 24;
+  if(/champions league|libertadores/.test(n)) return 30;
+  if(/intercontinental/.test(n)) return 35;
+  if(/europa league|conference league|sudamericana/.test(n)) return 40;
+  // Le championnat avant la coupe, la supercoupe après les deux.
+  if(/super ?cup|supercopa|supercoppa|recopa|community shield|troph[ée]e des champions|supertaça|süper kupa/.test(n)) return 55;
+  if(/cup|coupe|copa|coppa|pokal|puchar|kupa|cupen|beker|taça|taca|trophy|shield/.test(n)) return 50;
+  return 45;
+}
+
 const RESULTAT_FR = [
   [/winner|vainqueur|champion/i, 'Vainqueur', 'or'],
   [/2nd|runner|finalist|finaliste/i, 'Finaliste', 'argent'],
@@ -5085,10 +5108,17 @@ function palmaresDe(fp){
     const s = saisonTrophee(t.season);
     lignes.push({ ...t, rang: s ? s.fin : null, libelleSaison: s ? s.libelle : null });
   });
-  // Du plus récent au plus ancien ; les titres non datés ferment la marche.
+  /* Par prestige, puis du plus récent au plus ancien à l'intérieur d'une même
+   * compétition : c'est ainsi qu'on lit un palmarès, et non par ordre
+   * chronologique pur, qui enterrait une Coupe du monde de 2018 sous les
+   * coupes nationales des saisons suivantes. */
+  const gagne = (t)=> /winner|vainqueur|champion/i.test(t.place || '') ? 0 : 1;
   lignes.sort((a,b)=>{
-    if(a.rang == null && b.rang == null) return 0;
-    if(a.rang == null) return 1;
+    const pa = rangPrestige(a.league), pb = rangPrestige(b.league);
+    if(pa !== pb) return pa - pb;
+    const ga = gagne(a), gb = gagne(b);
+    if(ga !== gb) return ga - gb;          // un titre avant une place d'honneur
+    if(a.rang == null) return b.rang == null ? 0 : 1;
     if(b.rang == null) return -1;
     return b.rang - a.rang;
   });
@@ -7025,8 +7055,10 @@ function palmaresDuelHtml(filled){
       : 'Aucun titre enregistré pour ces joueurs.'}</div>`;
   }
 
-  // Les compétitions les plus fournies d'abord ; à égalité, par ordre alphabétique.
+  // Par prestige ; à rang égal, la compétition la plus fournie d'abord.
   const rangees = [...comps.values()].sort((a,b)=>{
+    const pa = rangPrestige(a.nom), pb = rangPrestige(b.nom);
+    if(pa !== pb) return pa - pb;
     const ta = a.par.reduce((s,x)=>s+x.n, 0), tb = b.par.reduce((s,x)=>s+x.n, 0);
     return tb - ta || a.nom.localeCompare(b.nom, 'fr');
   });
