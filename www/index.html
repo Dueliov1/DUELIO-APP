@@ -3298,7 +3298,23 @@ function shortName(p){
   const n = (p && p.name) || '';
   return /^\p{L}\.\s/u.test(n) ? n.split(' ').slice(-1)[0] : n;
 }
-function seasonLabel(season){ return season ? `${season}-${String(season+1).slice(2)}` : ''; }
+/* Libellé d'une saison.
+ *
+ * La forme « 2025-26 » suppose un championnat à cheval sur deux années, ce qui
+ * est le cas en Europe mais pas ailleurs : le Brésil, le Japon et la MLS jouent
+ * en année civile, et les compétitions internationales portent le nom de l'année
+ * du tournoi. La Coupe d'Afrique 2027 se qualifie en 2025 et 2026 ; API-Football
+ * la range donc sous « 2027 », et on l'affichait « 2027-28 » — une saison qui
+ * n'existera jamais, en octobre 2026.
+ *
+ * Règle : une saison postérieure à celle en cours ne peut pas être un exercice
+ * à cheval déjà commencé. On l'écrit alors d'une seule année, ce qui est la
+ * vérité : c'est le nom du tournoi, pas une période. */
+function seasonLabel(season){
+  if(!season) return '';
+  if(season > currentSeasonYear()) return String(season);
+  return `${season}-${String(season + 1).slice(2)}`;
+}
 
 // Adresse de l'application, pour le texte qui accompagne une image partagée.
 const SITE_URL = 'https://duelio-app.bensouna-ahmed.workers.dev/';
