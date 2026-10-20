@@ -4961,11 +4961,23 @@ const TROPHIES = [
 //   puis Coupe du monde / Euro / Copa América / Ligue des nations… -> titre en sélection, le reste -> titre continental (club)
 const INTL_COUNTRY_RE = /^(world|europe|south[- ]america|north[- ]america|africa|asia|oceania|concacaf)$/i;
 const SELECTION_TROPHY_RE = /world cup|euro championship|european championship|^euro\b|copa am[eé]rica|nations league|africa cup|asian cup|gold cup|confederations|olympic|finalissima|\bu-?\d{2}\b/i;
+/* L'API ajoute, pour chaque couple compétition + résultat, une entrée sans
+ * saison : une ligne de récapitulation, pas un titre de plus. Mesuré sur deux
+ * palmarès entiers (sonde du 20 octobre, diagnostics/palmares-brut.txt) :
+ * seize groupes, seize entrées non datées, et aucun groupe qui n'existerait
+ * qu'à cet état — les écarter ne perd donc aucun titre. Les garder gonflait
+ * chaque compte d'une unité : Haaland affichait vingt-trois titres pour douze,
+ * Mbappé vingt-neuf pour vingt et un. */
+function trophiesAvecSaison(trophies){
+  return (trophies || []).filter(t => t && t.season != null && String(t.season).trim() !== '');
+}
+
 function applyRealTrophies(p, trophies){
   let nat = 0, cont = 0, sel = 0;
   const seen = new Set();
-  p.trophiesEmpty = !(trophies||[]).length; // l'API n'a aucun palmarès pour ce joueur : on affiche « — », pas 0
-  (trophies||[]).forEach(t=>{
+  const liste = trophiesAvecSaison(trophies);
+  p.trophiesEmpty = !liste.length; // l'API n'a aucun palmarès pour ce joueur : on affiche « — », pas 0
+  liste.forEach(t=>{
     if(!t || !/winner/i.test(t.place||'')) return;
     const k = `${t.league}|${t.country}|${t.season}`; if(seen.has(k)) return; seen.add(k);
     const league = t.league || '', country = t.country || '';
@@ -4974,19 +4986,26 @@ function applyRealTrophies(p, trophies){
     else cont++;
   });
   p.titresNationaux = nat; p.titresContinentaux = cont; p.titresSelection = sel; p.trophiesLoaded = true;
-  p.trophiesRaw = (trophies || []).slice();   // liste intégrale, pour le tableau du palmarès
+  p.trophiesRaw = liste;   // liste intégrale, pour le tableau du palmarès
 }
 
-/* Rang chronologique d'une saison de palmarès. Un titre se gagne à la fin de sa
- * saison : « 2009 » se conclut en 2010, et « 2016/2017 » en 2017. Renvoie null
- * quand l'API ne date pas le titre — ces lignes vont en fin de tableau. */
-function rangFinSaison(saison){
+/* Date d'un titre, lue dans le format même que l'API emploie : « 2023/2024 »
+ * pour une saison à cheval sur deux années, « 2023 » tout court pour une
+ * compétition qui se joue dans l'année — une supercoupe, un tournoi d'été, un
+ * championnat à calendrier civil comme l'Eliteserien norvégienne. S'appuyer sur
+ * cette distinction vaut mieux que de tenir une liste de noms de compétitions :
+ * elle vient de la source et ne se périme pas.
+ * Renvoie { fin, libelle }, ou null si rien d'exploitable. */
+function saisonTrophee(saison){
   if(saison == null) return null;
-  const txt = String(saison);
-  const paire = txt.match(/(\d{4})\s*[\/\-–]\s*(\d{2,4})/);
-  if(paire) return paire[2].length === 2 ? parseInt(paire[1].slice(0,2) + paire[2], 10) : parseInt(paire[2], 10);
-  const seul = txt.match(/(\d{4})/);
-  return seul ? parseInt(seul[1], 10) + 1 : null;
+  const txt = String(saison).trim();
+  const paire = txt.match(/^(\d{4})\s*[\/\-–]\s*(\d{2,4})$/);
+  if(paire){
+    const fin = paire[2].length === 2 ? parseInt(paire[1].slice(0,2) + paire[2], 10) : parseInt(paire[2], 10);
+    return { fin, libelle: `${paire[1]}-${String(fin).slice(2)}` };
+  }
+  const seul = txt.match(/^(\d{4})$/);
+  return seul ? { fin: parseInt(seul[1], 10), libelle: seul[1] } : null;
 }
 
 /* L'API nomme les pays en anglais ; la table de correspondance existe déjà pour
@@ -5040,7 +5059,8 @@ function palmaresDe(fp){
     const cle = `${t.league}|${t.country||''}|${t.season||''}|${t.place||''}`;
     if(vus.has(cle)) return;
     vus.add(cle);
-    lignes.push({ ...t, rang: rangFinSaison(t.season) });
+    const s = saisonTrophee(t.season);
+    lignes.push({ ...t, rang: s ? s.fin : null, libelleSaison: s ? s.libelle : null });
   });
   // Du plus récent au plus ancien ; les titres non datés ferment la marche.
   lignes.sort((a,b)=>{
@@ -6926,13 +6946,7 @@ function palmaresTableHtml(p){
 
   const corps = lignes.map((t, i)=>{
     const { mot, ton } = resultatTrophee(t.place);
-    /* Un tournoi d'été se joue sur une seule année : « Euro 2016 », pas
-     * « Euro 2016-17 ». Même famille de confusion que les qualifications à la
-     * CAN, étiquetées à l'année du tournoi plutôt qu'à celle des matchs. */
-    const annee = t.rang == null ? null : t.rang - 1;
-    const saison = annee == null
-      ? '<span class="tlh-sansdate">inconnue</span>'
-      : (SELECTION_TROPHY_RE.test(t.league || '') ? String(annee) : (seasonLabel(annee) || t.season));
+    const saison = t.libelleSaison || '<span class="tlh-sansdate">inconnue</span>';
     return `
       <div class="palmares-row${i >= PALMARES_VISIBLES ? ' enplus' : ''}" role="row">
         <div role="cell">
@@ -6978,9 +6992,7 @@ function palmaresDuelHtml(filled){
       const c = comps.get(t.league);
       if(!c.pays && t.country) c.pays = t.country;
       c.par[i].n++;
-      const annee = t.rang == null ? null : t.rang - 1;
-      c.par[i].saisons.push(annee == null ? '?'
-        : (SELECTION_TROPHY_RE.test(t.league || '') ? String(annee) : (seasonLabel(annee) || t.season)));
+      if(t.libelleSaison) c.par[i].saisons.push(t.libelleSaison);
     });
   });
 
