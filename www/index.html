@@ -227,7 +227,7 @@
     --accent: #06D6A0;
     --amber: #FFB020;
     --danger: #FF5A5A;
-    --grad: linear-gradient(120deg, #2B2F77 0%, #3B5BA8 50%, #4FA8D8 100%);
+    --grad: linear-gradient(120deg, #2B2F77 0%, #3B5BA8 50%, #2A5F93 100%);
     --grad-soft: linear-gradient(120deg, rgba(43,47,119,.18), rgba(79,168,216,.18));
     --win: #2FE88A;
     --win-dim: rgba(47,232,138,.14);
@@ -395,20 +395,23 @@
   .nav-back{
     width:34px; height:34px; flex-shrink:0; border-radius:50%; border:1px solid rgba(255,255,255,.28);
     background: rgba(255,255,255,.14); color:#fff; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; padding:0; overflow:hidden;
+    cursor:pointer; padding:0;
     transition: width .22s ease, opacity .22s ease, margin .22s ease, border-width .22s ease, background .15s;
   }
   .nav-back svg{ width:18px; height:18px; flex-shrink:0; }
   .nav-back:hover{ background: rgba(255,255,255,.24); }
   .nav-back:active{ transform: scale(.94); }
-  .nav-back.hidden{ width:0; opacity:0; margin-right:-10px; border-width:0; pointer-events:none; }
+  /* Replié : on le cache vraiment, sinon il reste la première tabulation de
+     chaque écran, sans rien de visible à l'arrivée. */
+  .nav-back.hidden{ width:0; opacity:0; margin-right:-10px; border-width:0;
+                    pointer-events:none; overflow:hidden; visibility:hidden; }
   .brand-icon{ width:28px; height:28px; flex-shrink:0; filter: drop-shadow(0 1px 3px rgba(0,0,0,.25)); }
   .brand-name{
     font-family:'Unbounded', sans-serif; font-weight:800; font-size:16px; color:#fff;
     letter-spacing:.01em; line-height:1;
   }
   .app-header h2{
-    font-family:'Plus Jakarta Sans', sans-serif; font-size:12px; font-weight:600; color:rgba(255,255,255,.82);
+    font-family:'Plus Jakarta Sans', sans-serif; font-size:12.5px; font-weight:600; color:#fff;
     margin-left:auto; text-align:right; line-height:1.2;
   }
 
@@ -450,6 +453,9 @@
   .browse-item{
     display:flex; align-items:center; gap:12px; padding:10px 8px; border-radius:12px; cursor:pointer;
     border-bottom:1px solid rgba(44,66,114,.6);
+    /* Vrai <button> : on annule l'apparence native, on garde le dessin. */
+    width:100%; text-align:left; font:inherit; color:inherit; background:none;
+    border-left:0; border-right:0; border-top:0; appearance:none;
   }
   .browse-item:hover, .browse-item:active{ background: var(--surface); }
   .browse-item .info{ flex:1; min-width:0; }
@@ -682,7 +688,7 @@
      Discret : c'est un repère, pas une décoration. */
   .marque-legende{ margin-left:7px; padding:1px 6px; border-radius:999px;
                    background: rgba(234,179,8,.13); border:1px solid rgba(234,179,8,.3);
-                   color:#E9C46A; font-size:9.5px; font-weight:700;
+                   color:#E9C46A; font-size:10px; font-weight:700;
                    letter-spacing:.02em; white-space:nowrap; vertical-align:1px; }
   /* Pourquoi le duel est réduit quand une légende est en lice. */
   /* Une note de bas de page, pas un avertissement : elle informe sans alarmer.
@@ -771,7 +777,7 @@
   .ct-row{
     display:flex; align-items:center; gap:6px; background:var(--surface-2); border-radius:8px; padding:4px 8px;
   }
-  .ct-label{ flex:0 0 30%; font-size:8px; color:var(--chalk-dim); line-height:1.15; }
+  .ct-label{ flex:0 0 32%; font-size:10.5px; color:var(--chalk-dim); line-height:1.15; }
   .ct-vals{ flex:1; display:flex; gap:5px; }
   .ct-val{
     flex:1; min-width:0; text-align:center; background:var(--surface); color:#fff; border:1px solid var(--line); border-radius:6px;
@@ -798,7 +804,7 @@
   .compare-cols.count-4 .portrait{ width:50px; height:50px; }
   .compare-cols.count-4 .col-name{ font-size:10px; line-height:1.15; min-height:24px; }
   .compare-cols.count-4 .pos-lbl{ font-size:8px; }
-  .compare-cols.count-4 .col-club{ font-size:7.5px; }
+  .compare-cols.count-4 .col-club{ font-size:9px; }
   .compare-cols.count-4 .col-hint{ font-size:7px; }
   .compare-cols.count-4 .col-head{ padding: 10px 2px 8px; }
   .compare-cols.count-4 .stat-row{ padding: 4px 6px; height:46px; border-radius:12px; }
@@ -861,7 +867,7 @@
   .portrait.placeholder{ font-size:24px; color: var(--chalk-dim); background: var(--surface-2); border-radius:14px; box-shadow:none; }
   .col-name{ font-weight:700; font-size:12.5px; line-height:1.2; color:var(--chalk); min-height:30px; }
   .pos-lbl{ font-size:11.5px; color:var(--gold); font-weight:700; letter-spacing:0; }
-  .col-club{ font-size:9px; color:var(--chalk-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; box-sizing:border-box; }
+  .col-club{ font-size:10.5px; color:var(--chalk-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; box-sizing:border-box; }
   .club-logo{ width:14px; height:14px; object-fit:contain; vertical-align:middle; display:inline-block; }
   .pmeta .club-logo, .p-club .club-logo{ width:15px; height:15px; }
   .placeholder-lbl{ font-size:11px; color:var(--chalk-dim); font-weight:600; text-align:center; }
@@ -1092,6 +1098,10 @@
   }
   .picker-close svg{ width:16px; height:16px; }
   .picker-title{ font-family:'Unbounded'; font-weight:800; font-size:15px; }
+  /* Fermé, le sélecteur sort de l'ordre de tabulation. `visibility` est
+     différée pour ne pas couper la transition de sortie. */
+  .picker:not(.open){ visibility:hidden; transition: transform .28s cubic-bezier(.3,.9,.3,1), visibility 0s linear .28s; }
+  .picker.open{ visibility:visible; transition: transform .28s cubic-bezier(.3,.9,.3,1), visibility 0s; }
   .picker-scroll{ flex:1; overflow-y:auto; }
   .picker-search{ padding: 12px 16px 4px; }
   .pf-chip{
@@ -1101,6 +1111,8 @@
   .pf-chip[aria-pressed="true"]{ background: var(--grad); border-color:transparent; color:#fff; font-weight:700; }
   .picker-list{ padding: 4px 16px 20px; }
   .picker-item{
+    width:100%; text-align:left; font:inherit; color:inherit; background:none;
+    border:0; appearance:none;
     display:flex; align-items:center; gap:12px; padding:10px 8px; border-bottom:1px solid rgba(44,66,114,.6);
     cursor:pointer; border-radius:12px;
   }
@@ -1124,7 +1136,8 @@
    * chacune des règles d'origine. */
   .tuto-kicker-steps{ margin-top:30px; }
 
-  .tab-btn, .period-btn, .reset-btn, .duel-chip{ min-height:44px; }
+  .tab-btn, .period-btn, .reset-btn, .duel-chip,
+  #addSlotCard, .share-chip{ min-height:44px; }
   .icon-btn{ width:44px; height:44px; }
   .search-field input{ min-height:44px; }
   .season-pick{ min-height:44px; }
@@ -1280,7 +1293,7 @@
     </div>
   </div>
 
-  <div class="app-header">
+  <div class="app-header" role="banner">
     <button class="nav-back hidden" id="navBackBtn" type="button" aria-label="Retour" title="Retour">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>
     </button>
@@ -1333,19 +1346,19 @@
       </svg>
       <span class="brand-name">Duelio</span>
     </div>
-    <h2 id="headerTitle">Comparatif</h2>
+    <h2 id="headerTitle" role="heading" aria-level="1">Comparatif</h2>
   </div>
 
   <div id="globalFallbackBanner" style="display:none;"></div>
   <div class="api-wait-notice" id="apiWaitNotice" role="status" aria-live="polite" hidden></div>
 
-  <div class="screens">
+  <div class="screens" role="main">
     <div id="content" class="screen"></div>
     <div id="browseScreen" class="screen" style="display:none;"></div>
     <div id="generateScreen" class="screen" style="display:none;"></div>
   </div>
 
-  <div class="tabbar">
+  <div class="tabbar" role="navigation" aria-label="Navigation principale">
     <button class="tabbar-btn active" id="tabCompare" data-screen="compare" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="16" rx="2"/><rect x="14" y="4" width="7" height="16" rx="2"/><path d="M6.5 9v6M17.5 9v6"/></svg>
       Comparer
@@ -1394,10 +1407,10 @@
       <div class="picker-search">
         <div class="search-field" id="pickerSearchField">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
-          <input type="text" id="pickerSearch" placeholder="Nom du joueur…" autocomplete="off" autocorrect="off" spellcheck="false">
+          <input type="text" id="pickerSearch" aria-label="Rechercher un joueur" placeholder="Nom du joueur…" autocomplete="off" autocorrect="off" spellcheck="false">
           <button class="search-clear" id="pickerSearchClear" type="button" aria-label="Effacer">×</button>
         </div>
-        <div class="browse-search-status" id="pickerSearchStatus"></div>
+        <div class="browse-search-status" id="pickerSearchStatus" role="status"></div>
       </div>
       <div class="picker-list" id="pickerList"></div>
     </div>
@@ -5091,8 +5104,8 @@ function renderAll(){
     ${filled.length>=2 ? `
     <div class="toolbar">
       <div class="tab-switch">
-        <button class="tab-btn ${activeTab==='stats'?'active':''}" data-tab="stats" type="button">Stats</button>
-        <button class="tab-btn ${activeTab==='trophies'?'active':''}" data-tab="trophies" type="button">Trophées</button>
+        <button class="tab-btn ${activeTab==='stats'?'active':''}" data-tab="stats" type="button" role="tab" aria-selected="${activeTab==='stats'}">Stats</button>
+        <button class="tab-btn ${activeTab==='trophies'?'active':''}" data-tab="trophies" type="button" role="tab" aria-selected="${activeTab==='trophies'}">Trophées</button>
       </div>
       ${activeTab==='stats' ? `<button class="icon-btn ${compactView?'active':''}" id="compactToggle" type="button" title="${compactView ? 'Vue détaillée' : 'Tout voir sur un écran'}" aria-label="${compactView ? 'Vue détaillée' : 'Tout voir sur un écran'}">${compactIcon}</button>` : ''}
     </div>` : ''}
@@ -5103,9 +5116,9 @@ function renderAll(){
               title="Le détail par saison de cette légende n'a pas pu être établi">Carrière</button>
     </div>` : `
     <div class="period-seg" id="periodSeg" role="tablist" aria-label="Période comparée">
-      <button class="period-btn ${compareMode==='shown'||compareMode==='season'||compareMode==='until'?'active':''}" data-mode="shown" type="button" role="tab">Saison</button>
-      ${modeAvail.age ? `<button class="period-btn ${compareMode==='age'?'active':''}" data-mode="age" type="button" role="tab">${compareMode==='age' ? `À ${compareAgeValue} ans<span class="chev">▾</span>` : 'Même âge'}</button>` : ''}
-      ${modeAvail.career ? `<button class="period-btn ${compareMode==='career'?'active':''}" data-mode="career" type="button" role="tab">Carrière</button>` : ''}
+      <button class="period-btn ${compareMode==='shown'||compareMode==='season'||compareMode==='until'?'active':''}" data-mode="shown" type="button" role="tab" aria-selected="${compareMode==='shown'||compareMode==='season'||compareMode==='until'}">Saison</button>
+      ${modeAvail.age ? `<button class="period-btn ${compareMode==='age'?'active':''}" data-mode="age" type="button" role="tab" aria-selected="${compareMode==='age'}">${compareMode==='age' ? `À ${compareAgeValue} ans<span class="chev">▾</span>` : 'Même âge'}</button>` : ''}
+      ${modeAvail.career ? `<button class="period-btn ${compareMode==='career'?'active':''}" data-mode="career" type="button" role="tab" aria-selected="${compareMode==='career'}">Carrière</button>` : ''}
     </div>`}
     <div class="period-sub">
       <span>${legendeSansSaisons(filled) ? 'Carrières entières, toutes compétitions'
@@ -6387,14 +6400,14 @@ document.getElementById('pickerSearchClear').addEventListener('click', ()=>{
 
 function pickerItemHtml(p, disabled){
   return `
-    <div class="picker-item ${disabled?'disabled':''}" data-id="${p.id}" data-api="${p.apiId||''}">
+    <button type="button" class="picker-item ${disabled?'disabled':''}" data-id="${p.id}" data-api="${p.apiId||''}" ${disabled?'disabled':''}>
       <div class="portrait">${portraitHtml(p)}</div>
       <div class="info">
         <div class="pname">${p.name}</div>
         <div class="pmeta">${playerMetaHtml(p)}</div>
       </div>
       <span class="row-spin" aria-hidden="true"></span>
-    </div>`;
+    </button>`;
 }
 function renderPickerList(){
   const list = document.getElementById('pickerList');
@@ -6460,6 +6473,13 @@ function renderPickerList(){
     return;
   }
   list.innerHTML = filtered.map(p=>pickerItemHtml(p, usedIds.includes(p.id))).join('') + skeletons;
+  // On tapait sans jamais savoir si la recherche avait abouti : la liste
+  // changeait en silence. Le compte est désormais annoncé.
+  if(pickerSearch && !pickerSearchInFlight){
+    setPickerStatus(filtered.length
+      ? `${filtered.length} joueur${filtered.length > 1 ? 's' : ''} trouvé${filtered.length > 1 ? 's' : ''}`
+      : '');
+  }
   if(pickerSearch) prefetchPlayers(filtered, 2);
   list.querySelectorAll('.picker-item:not(.disabled)').forEach(el=>{
     el.addEventListener('click', ()=>{
@@ -6490,14 +6510,14 @@ function renderPickerList(){
 function playerRowHtml(p, mode){
   const chev = `<svg class="chev" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>`;
   return `
-    <div class="browse-item" data-id="${p.id}" data-api="${p.apiId||''}">
+    <button type="button" class="browse-item" data-id="${p.id}" data-api="${p.apiId||''}">
       <div class="portrait">${portraitHtml(p)}</div>
       <div class="info">
         <div class="pname">${p.name}</div>
         <div class="pmeta">${playerMetaHtml(p)}</div>
       </div>
       ${mode==='recent' ? '' : chev}
-    </div>`;
+    </button>`;
 }
 function skeletonRowsHtml(n){
   return Array.from({length:n}, ()=>`
@@ -6843,10 +6863,10 @@ function renderBrowse(){
     <div class="browse-search">
       <div class="search-field ${browseSearch ? 'has-value':''}" id="browseSearchField">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
-        <input type="text" id="browseSearchInput" placeholder="${REAL_DATA_CONFIG.enabled ? 'Nom du joueur…' : 'Rechercher un joueur ou un club…'}" autocomplete="off" autocorrect="off" spellcheck="false" value="${escapeHtml(browseSearch)}">
+        <input type="text" id="browseSearchInput" aria-label="Rechercher un joueur" placeholder="${REAL_DATA_CONFIG.enabled ? 'Nom du joueur…' : 'Rechercher un joueur ou un club…'}" autocomplete="off" autocorrect="off" spellcheck="false" value="${escapeHtml(browseSearch)}">
         <button class="search-clear" id="browseSearchClear" type="button" aria-label="Effacer">×</button>
       </div>
-      <div class="browse-search-status" id="browseSearchStatus"></div>
+      <div class="browse-search-status" id="browseSearchStatus" role="status"></div>
     </div>
     <div class="browse-list" id="browseList"></div>
   `;
@@ -7029,8 +7049,23 @@ function navigateTo(screen, detailId){
   applyScreen(screen);
   if(!same){ const el = navScreenEl(screen); if(el) el.scrollTop = 0; }
 }
+/* Isolement de l'arrière-plan quand une couche s'ouvre.
+ *
+ * Sans cela, la tabulation partait se promener dix à douze fois dans l'écran
+ * qu'on ne voit plus : les boutons du comparatif, la barre d'onglets, tout
+ * restait atteignable derrière la fenêtre, et sans anneau de focus visible
+ * puisqu'il était dessiné sous le voile. `inert` règle les trois problèmes
+ * d'un coup — plus de tabulation, plus de clic, plus de lecture par un lecteur
+ * d'écran — et rend enfin vrai le `aria-modal="true"` de la feuille de saison. */
+function fondInerte(actif){
+  for(const sel of ['.screens', '.tabbar', '.app-header']){
+    const el = document.querySelector(sel);
+    if(el) el.inert = actif;
+  }
+}
 function navOverlayOpened(id){
   navStack.push({ type:'overlay', id });
+  fondInerte(true);
   navPushHistory();
 }
 // Panneau fermé par son propre bouton (croix, fond, choix d'une valeur) : on retire son entrée
@@ -7040,7 +7075,21 @@ function navOverlayClosed(id){
     navStack.pop();
     if(navHistoryOk){ navSuppress++; history.back(); }
   }
+  // On ne réveille l'arrière-plan que s'il ne reste aucune couche par-dessus.
+  if(!navStack.some(e => e.type === 'overlay')) fondInerte(false);
 }
+
+/* Échap ferme la couche du dessus. C'est le réflexe universel pour sortir
+ * d'une fenêtre, et il ne faisait rien : ni le sélecteur de joueur ni la
+ * feuille de saison ne répondaient. La pile de navigation sait déjà quelle
+ * couche est au-dessus — c'est elle qui gère le retour du navigateur. */
+document.addEventListener('keydown', (e)=>{
+  if(e.key !== 'Escape' && e.key !== 'Esc') return;
+  const top = navStack[navStack.length-1];
+  if(!top || top.type !== 'overlay') return;
+  const fermer = NAV_OVERLAY_CLOSERS[top.id];
+  if(fermer){ e.preventDefault(); fermer(); }
+});
 function navBack(){
   const top = navStack.pop();
   if(!top){
@@ -7077,9 +7126,14 @@ function applyScreen(name){
   document.getElementById('content').style.display = name==='compare' ? 'flex' : 'none';
   document.getElementById('browseScreen').style.display = name==='browse' ? 'flex' : 'none';
   document.getElementById('generateScreen').style.display = name==='generate' ? 'flex' : 'none';
-  document.getElementById('tabCompare').classList.toggle('active', name==='compare');
-  document.getElementById('tabBrowse').classList.toggle('active', name==='browse');
-  document.getElementById('tabGenerate').classList.toggle('active', name==='generate');
+  // `aria-current` dit à voix haute sur quel écran on se trouve : la classe
+  // `active` ne le signale que par une couleur.
+  for(const [id, ecran] of [['tabCompare','compare'], ['tabBrowse','browse'], ['tabGenerate','generate']]){
+    const b = document.getElementById(id);
+    b.classList.toggle('active', name === ecran);
+    if(name === ecran) b.setAttribute('aria-current', 'page');
+    else b.removeAttribute('aria-current');
+  }
   document.getElementById('headerTitle').textContent =
     name==='compare' ? 'Comparatif' :
     name==='generate' ? 'Image à partager' : (browseDetailId ? 'Fiche joueur' : 'Joueurs');
