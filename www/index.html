@@ -68,7 +68,16 @@
      ligne le navigateur n'ouvre la connexion qu'après avoir lu la feuille de
      style, ce qui retarde l'affichage du texte. -->
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- Les données viennent d'une troisième origine : on ouvre la connexion tout de
+     suite, au lieu d'attendre le premier fetch pour payer DNS + TLS. -->
+<link rel="preconnect" href="https://duelio-app.bensouna-ahmed.workers.dev" crossorigin>
+<!-- La feuille de polices ne bloque plus le premier rendu : mesuré, 1,5 s de
+     latence sur Google Fonts repoussait le premier affichage de 0,5 à 1,9 s et
+     retardait d'autant le script et le premier chargement de données. Elle se
+     charge en parallèle et s'applique à l'arrivée (display=swap). Archivo n'était
+     utilisée nulle part, Unbounded 500 non plus : huit fichiers de moins. -->
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
 <script>
   // Génère une icône d'app (en vrai PNG, requis par iOS pour l'écran d'accueil) et un manifest PWA
   // via une data: URI (plus fiable qu'un blob: pour que "Ajouter à l'écran d'accueil" lance
@@ -121,7 +130,7 @@
     </g>
     </g>
   </g>
-  <text x="60" y="98" text-anchor="middle" font-family="Archivo, Helvetica, Arial, sans-serif" font-size="16" font-weight="800" letter-spacing="2.4" fill="#FFFFFF">DUELIO</text>
+  <text x="60" y="98" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="16" font-weight="800" letter-spacing="2.4" fill="#FFFFFF">DUELIO</text>
   </g>
 </svg>`;
     const svgHref = 'data:image/svg+xml,' + encodeURIComponent(iconSVG);
@@ -178,21 +187,14 @@
     });
   })();
 
-  // Enregistre le service worker : permet à l'appli installée de s'ouvrir même hors connexion
-  // (met en cache la coquille de l'appli au premier chargement en ligne).
-  if('serviceWorker' in navigator){
-    // Quand une nouvelle version de l'appli est installée, la page se recharge une fois pour
-    // l'afficher tout de suite (sinon l'ancienne version restait visible jusqu'à l'ouverture suivante).
-    const hadController = !!navigator.serviceWorker.controller;
-    let reloaded = false;
-    navigator.serviceWorker.addEventListener('controllerchange', ()=>{
-      if(hadController && !reloaded){ reloaded = true; location.reload(); }
-    });
+  /* Le service worker est retiré. Son fichier (sw.js) n'existait plus dans le
+   * dépôt : chaque visite web tentait de l'enregistrer et recevait un 404. Et
+   * l'application native n'en a pas besoin — Capacitor embarque la coquille.
+   * On désinscrit celui qu'un ancien visiteur garderait, pour qu'une vieille
+   * coquille mise en cache ne lui serve pas une version périmée. */
+  if('serviceWorker' in navigator && navigator.serviceWorker.getRegistrations){
     window.addEventListener('load', ()=>{
-      navigator.serviceWorker.register('./sw.js').catch(()=>{
-        // pas grave si l'enregistrement échoue (ex: environnement sans HTTPS) : l'appli
-        // fonctionne quand même normalement, juste sans le mode hors-ligne.
-      });
+      navigator.serviceWorker.getRegistrations().then(regs => regs.forEach(r => r.unregister())).catch(()=>{});
     });
   }
 
@@ -300,6 +302,9 @@
   .welcome-screen.leaving .welcome-top{ transform: translateY(-100%); }
   .welcome-screen.leaving .welcome-bottom{ transform: translateY(100%); }
   .welcome-screen.gone{ display:none; }
+  /* Tant que l'accueil couvre l'écran, le comparatif en dessous n'a aucune
+   * raison de s'animer : on le met en pause. */
+  body.accueil-visible .screens *, body.accueil-visible .tabbar *{ animation-play-state: paused !important; }
   .welcome-content{
     position:absolute; left:0; right:0; height:200%;
     background: linear-gradient(160deg, #1E2F5C 0%, #0B1730 55%, #050B18 100%);
@@ -315,7 +320,10 @@
   .welcome-content > .beam{
     position:absolute; inset:0; z-index:0; pointer-events:none;
     animation: floodlightPulse 4s ease-in-out infinite;
+    will-change: opacity;
   }
+  /* Sur un écran lent ou avec les animations réduites, les projecteurs restent fixes. */
+  @media (prefers-reduced-motion: reduce), (update: slow){ .welcome-content > .beam{ animation:none; } }
   .beam-tl{
     background: conic-gradient(from 0deg at 0% 0%, transparent 58deg, rgba(255,255,255,.14) 133deg, transparent 208deg);
     -webkit-mask-image: radial-gradient(circle at 0% 0%, #000 0%, transparent 55%);
@@ -411,13 +419,15 @@
   .nav-back.hidden{ width:0; opacity:0; margin-right:-10px; border-width:0;
                     pointer-events:none; overflow:hidden; visibility:hidden; }
   .brand-icon{ width:28px; height:28px; flex-shrink:0; filter: drop-shadow(0 1px 3px rgba(0,0,0,.25)); }
+  /* La marque est un repère, le titre d'écran est l'information : il doit
+   * dominer. Avant, « Duelio » faisait 16 px et le titre 12,5 — l'inverse. */
   .brand-name{
-    font-family:'Unbounded', sans-serif; font-weight:800; font-size:16px; color:#fff;
-    letter-spacing:.01em; line-height:1;
+    font-family:'Unbounded', sans-serif; font-weight:800; font-size:13px; color:rgba(255,255,255,.82);
+    letter-spacing:.02em; line-height:1;
   }
-  .app-header h2{
-    font-family:'Plus Jakarta Sans', sans-serif; font-size:12.5px; font-weight:600; color:#fff;
-    margin-left:auto; text-align:right; line-height:1.2;
+  .app-header h1{
+    font-family:'Unbounded', 'Plus Jakarta Sans', sans-serif; font-size:17px; font-weight:700; color:#fff;
+    margin-left:auto; text-align:right; line-height:1.2; letter-spacing:-.01em;
   }
 
   /* ---- Player columns (header + full stat list, side by side) ---- */
@@ -494,7 +504,7 @@
     background: var(--surface); border:1px solid var(--line); color:var(--chalk); font-weight:700; font-size:12px;
     cursor:pointer; font-family:inherit;
   }
-  .duel-chip .vs{ font-family:'Unbounded'; font-size:8.5px; color:var(--gold); }
+  .duel-chip .vs{ font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-size:8.5px; color:var(--gold); }
   .duel-chip:hover, .duel-chip:active{ border-color: var(--gold); }
   .duel-chip:disabled{ opacity:.5; cursor:default; }
   /* Lignes fantômes pendant une recherche API */
@@ -536,7 +546,7 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
   .sheet-head{ display:flex; align-items:center; justify-content:space-between; padding: 16px 16px 6px; }
-  .sheet-title{ font-family:'Unbounded'; font-weight:800; font-size:14px; }
+  .sheet-title{ font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:14px; }
   .sheet-sub{ padding: 0 16px 10px; font-size:11.5px; color:var(--chalk-dim); line-height:1.4; }
   .sheet-sub:empty{ display:none; }
   .sheet-list{ overflow-y:auto; padding: 0 12px 16px; position:relative; }
@@ -546,7 +556,7 @@
   }
   .season-row:hover{ background: var(--surface); }
   .season-row.current{ border-color: rgba(34,211,238,.5); background: rgba(34,211,238,.08); }
-  .season-row .yr{ font-family:'Unbounded'; font-weight:700; font-size:13px; min-width:64px; }
+  .season-row .yr{ font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:700; font-size:13px; min-width:64px; }
   .season-row .meta{ flex:1; min-width:0; }
   .season-row .meta .club{ display:block; font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .season-row .meta .nums{ display:block; font-size:10.5px; color:var(--chalk-dim); margin-top:2px; }
@@ -570,7 +580,7 @@
   .browse-back:hover{ color: var(--gold); }
   .browse-hero{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; margin-bottom:20px; }
   .browse-hero .portrait{ width:80px; height:80px; font-size:22px; }
-  .browse-hero .p-name{ font-family:'Unbounded'; font-weight:700; font-size:17px; color:var(--chalk); margin-top:4px; }
+  .browse-hero .p-name{ font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:700; font-size:17px; color:var(--chalk); margin-top:4px; }
   .browse-hero .p-pos{ font-size:12px; color:var(--gold); font-weight:700; letter-spacing:0; }
   .browse-hero .p-club{ font-size:12px; color:var(--chalk-dim); }
   .p-physique{ display:flex; gap:8px; margin-top:8px; }
@@ -761,7 +771,7 @@
     background: rgba(30,47,92,.55); border:1px solid var(--line); border-radius:14px; margin-bottom:6px;
   }
   .solo-stat-row .k{ font-size:11.5px; color:var(--chalk-dim); font-weight:600; }
-  .solo-stat-row .v{ font-family:'Unbounded'; font-weight:800; font-size:14px; color:#fff; }
+  .solo-stat-row .v{ font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:14px; color:#fff; }
   .note{
     margin: 12px 16px 0; padding: 9px 12px; background: var(--grad-soft);
     border: 1px solid rgba(255,255,255,.12); border-radius: 12px; font-size: 10.5px; color: var(--chalk-dim); line-height:1.4;
@@ -901,7 +911,7 @@
   .duel-vs{
     position:absolute; left:50%; top:44%; transform:translate(-50%,-50%); z-index:3;
     width:34px; height:34px; border-radius:50%; background:#071c33; border:1px solid rgba(160,200,235,.5);
-    display:flex; align-items:center; justify-content:center; font-family:'Unbounded'; font-weight:700; font-size:10px; color:#fff;
+    display:flex; align-items:center; justify-content:center; font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:700; font-size:10px; color:#fff;
     box-shadow: 0 4px 12px rgba(0,0,0,.35);
   }
   .compare-wrap.compact-view{ padding: 10px 10px 16px; width:100%; box-sizing:border-box; }
@@ -925,7 +935,7 @@
   .ct-vals{ flex:1; display:flex; gap:5px; }
   .ct-val{
     flex:1; min-width:0; text-align:center; background:var(--surface); color:#fff; border:1px solid var(--line); border-radius:6px;
-    padding:3px 2px; font-family:'Unbounded'; font-weight:700; font-size:10px;
+    padding:3px 2px; font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:700; font-size:10px;
   }
   .ct-val.ct-lead{ background:var(--win); color:#04231a; }
   .ct-val.ct-empty{ background:none; color:var(--chalk-dim); font-weight:400; }
@@ -999,9 +1009,10 @@
     position:relative;
     display:flex; align-items:center; justify-content:center;
     overflow:hidden; flex-shrink:0;
-    font-family:'Unbounded'; font-weight:700; font-size:15px; color:#fff;
+    font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:700; font-size:15px; color:#fff;
   }
   .portrait svg{ width:100%; height:100%; display:block; }
+  .portrait .monogramme{ border-radius:inherit; }
   .portrait img{
     width:100%; height:100%; display:block; object-fit:contain; object-position:center;
   }
@@ -1048,7 +1059,7 @@
     background: linear-gradient(to top, var(--bg) 70%, rgba(11,23,48,0)); margin: 0 -16px -30px;
   }
   .share-counter{
-    display:inline-flex; align-items:center; gap:6px; font-family:'Unbounded'; font-size:11px; font-weight:700;
+    display:inline-flex; align-items:center; gap:6px; font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700;
     color:var(--gold); background: rgba(34,211,238,.12); border:1px solid rgba(34,211,238,.4); padding:4px 10px; border-radius:20px;
   }
   .share-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; }
@@ -1091,7 +1102,7 @@
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
     font-size:8.5px; color:var(--chalk-dim); line-height:1.2; margin-bottom:2px; font-weight:600;
   }
-  .stat-row .v{ display:block; font-family:'Unbounded'; font-weight:800; font-size:14px; color:#fff; }
+  .stat-row .v{ display:block; font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:14px; color:#fff; }
   .stat-row.lead{ background: var(--win); border-color: var(--win); box-shadow:0 4px 14px rgba(47,232,138,.28); }
   .stat-row.lead .k{ color:#04231a; opacity:.8; }
   .stat-row.lead .v{ color:#04231a; }
@@ -1107,13 +1118,17 @@
     flex:0 0 150px; min-width:0; box-sizing:border-box; height:46px; padding:0 8px;
     display:flex; align-items:center; justify-content:center; text-align:center;
     background: rgba(30,47,92,.55); border:1px solid var(--line); border-radius:14px;
-    font-family:'Unbounded'; font-weight:800; font-size:15px; color:#fff;
+    font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:15px; color:#fff;
     transition: background .15s, border-color .15s, color .15s;
   }
   /* Le meilleur reste signalé, mais sans repeindre la moitié de l'écran : une teinte et
      un liseré suffisent. Le fond plein est gardé pour les écarts vraiment nets. */
-  .dr-val.lead{ background: var(--win-dim); border-color: rgba(47,232,138,.5); color: var(--win); }
-  .dr-val.lead.net{ background: var(--win); border-color: var(--win); color:#04231a; box-shadow:0 3px 12px rgba(47,232,138,.22); }
+  /* Un seul style de vainqueur. Deux verts — plein pour un écart net, cerclé
+   * pour un écart serré — se lisaient comme un bug, et la vue compacte n'en
+   * connaissait qu'un. L'écart, s'il est net, se dit en chiffres : un petit
+   * « +N % » à côté de la valeur. */
+  .dr-val.lead{ background: var(--win); border-color: var(--win); color:#04231a; }
+  .dr-val .ecart{ display:block; font-size:9.5px; font-weight:700; opacity:.72; margin-top:1px; font-family:'Plus Jakarta Sans',sans-serif; }
   .dr-val.unknown{ color: var(--chalk-dim); font-weight:600; font-size:12px; font-family:'Plus Jakarta Sans',sans-serif; }
 
   /* Tutoriel du comparatif vide */
@@ -1141,9 +1156,10 @@
   .tart-duo b{ font-family:'Unbounded',sans-serif; font-size:7.5px; color:#fff; }
   .tart-rows{ display:grid; grid-template-columns: 1fr 1fr; gap:4px 4px; width:52px; }
   .tart-rows i{ display:block; height:12px; border-radius:4px; background: var(--surface-2); border:1px solid var(--line); }
-  .tart-rows i.win{ background: var(--win); border-color: var(--win); animation: tartWin 2.4s ease-in-out infinite; }
+  .tart-rows i.win{ background: var(--win); border-color: var(--win); position:relative; }
+  .tart-rows i.win::after, .tart-share::after{ content:''; position:absolute; inset:-3px; border-radius:inherit; border:1.5px solid rgba(47,232,138,.6); opacity:0; animation: tartWin 2.4s ease-in-out infinite; pointer-events:none; }
   .tart-rows i.win:nth-child(3){ animation-delay:1.2s; }
-  @keyframes tartWin{ 0%,100%{ box-shadow: 0 0 0 0 rgba(47,232,138,0); } 50%{ box-shadow: 0 0 8px 1px rgba(47,232,138,.55); } }
+  @keyframes tartWin{ 0%,100%{ opacity:0; transform:scale(.9); } 50%{ opacity:1; transform:scale(1.15); } }
   .tart-chips{ display:flex; flex-direction:column; gap:4px; align-items:center; }
   .tart-chips span{ font-size:7.5px; font-weight:700; padding:2px 7px; border-radius:10px; border:1px solid var(--line); color:var(--chalk-dim); white-space:nowrap; }
   .tart-chips span.on{ background: var(--grad); border-color:transparent; color:#fff; }
@@ -1199,7 +1215,7 @@
   .tart-formats .sq{ width:22px; height:22px; }
   .tart-formats .st{ width:17px; height:30px; }
   .tart-formats .on{ border-color: var(--gold); background: rgba(34,211,238,.12); }
-  .tart-share{ width:30px; height:30px; border-radius:50%; background: var(--grad); color:#fff; display:flex; align-items:center; justify-content:center; animation: tartWin 2.4s ease-in-out infinite; }
+  .tart-share{ position:relative; width:30px; height:30px; border-radius:50%; background: var(--grad); color:#fff; display:flex; align-items:center; justify-content:center; }
   .tart-share svg{ width:16px; height:16px; }
   /* Apparition en cascade, seulement la première fois */
   .tuto.anim .tuto-kicker, .tuto.anim .tuto-title, .tuto.anim .tuto-sub{ animation: tutoIn .45s ease both; }
@@ -1212,8 +1228,17 @@
   .tuto.anim .tuto-step{ animation: tutoIn .45s ease both; animation-delay: calc(.42s + var(--d) * .09s); }
   @keyframes tutoIn{ from{ opacity:0; transform: translateY(10px); } to{ opacity:1; transform:none; } }
   /* Le « + » de la carte à remplir respire doucement */
-  .portrait.placeholder.pulse{ animation: plusPulse 2s ease-in-out infinite; }
-  @keyframes plusPulse{ 0%,100%{ box-shadow: 0 0 0 0 rgba(34,211,238,0); color: var(--chalk-dim); } 50%{ box-shadow: 0 0 0 6px rgba(34,211,238,.18); color: var(--gold); } }
+  /* Les pulsations n'animent que transform et opacity, sur un pseudo-élément :
+   * composées par le GPU, elles ne coûtent rien au fil principal. Mesuré avant :
+   * box-shadow et color animés forçaient 60 recalculs de style par seconde sur
+   * l'accueil et le comparatif vide — 250 ms de processeur par seconde, au repos. */
+  .portrait.placeholder.pulse{ position:relative; color: var(--gold); }
+  .portrait.placeholder.pulse::after{
+    content:''; position:absolute; inset:-2px; border-radius:16px; pointer-events:none;
+    border:2px solid rgba(34,211,238,.35); opacity:0; transform:scale(.96);
+    animation: plusPulse 2s ease-in-out infinite; will-change: transform, opacity;
+  }
+  @keyframes plusPulse{ 0%,100%{ opacity:0; transform:scale(.96); } 50%{ opacity:1; transform:scale(1.08); } }
   .empty-state{ padding: 40px 20px; text-align:center; color:var(--chalk-dim); font-size:13px; line-height:1.5; align-self:center; max-width:300px; }
   .empty-state .big{ font-size:34px; margin-bottom:10px; }
   .empty-state b{ color:var(--chalk); }
@@ -1241,7 +1266,7 @@
     border-radius:50%; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center;
   }
   .picker-close svg{ width:16px; height:16px; }
-  .picker-title{ font-family:'Unbounded'; font-weight:800; font-size:15px; }
+  .picker-title{ font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:15px; }
   /* Fermé, le sélecteur sort de l'ordre de tabulation. `visibility` est
      différée pour ne pas couper la transition de sortie. */
   .picker:not(.open){ visibility:hidden; transition: transform .28s cubic-bezier(.3,.9,.3,1), visibility 0s linear .28s; }
@@ -1265,7 +1290,7 @@
   .picker-item .info{ flex:1; min-width:0; }
   .picker-item .pname{ font-size:13.5px; font-weight:700; }
   .picker-item .pmeta{ font-size:10.5px; color:var(--chalk-dim); }
-  .picker-item .pov{ font-family:'Unbounded'; font-weight:800; font-size:15px; color:var(--gold); flex-shrink:0; }
+  .picker-item .pov{ font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:15px; color:var(--gold); flex-shrink:0; }
   .picker-item.disabled{ opacity:.3; pointer-events:none; }
   .picker-empty{ text-align:center; color:var(--chalk-dim); font-size:12.5px; padding:30px 10px; }
 
@@ -1490,7 +1515,7 @@
       </svg>
       <span class="brand-name">Duelio</span>
     </div>
-    <h2 id="headerTitle" role="heading" aria-level="1">Comparatif</h2>
+    <h1 id="headerTitle">Comparer</h1>
   </div>
 
   <div id="globalFallbackBanner" style="display:none;"></div>
@@ -1513,7 +1538,7 @@
     </button>
     <button class="tabbar-btn" id="tabGenerate" data-screen="generate" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 16l5-5 4 4 3-3 6 6"/><circle cx="16" cy="8" r="1.5"/></svg>
-      Générer
+      Partager
     </button>
   </div>
 
@@ -1891,15 +1916,39 @@ function normalizeSearch(s){
 }
 function rand(rng,min,max){ return Math.round(rng()*(max-min)+min); }
 function randf(rng,min,max,dec){ const v = rng()*(max-min)+min; const m = Math.pow(10,dec); return Math.round(v*m)/m; }
-function initials(name){ return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function initials(name){
+  const mots = String(name || '').replace(/[.'’]/g, ' ').split(/\s+/).filter(Boolean);
+  if(!mots.length) return '?';
+  if(mots.length === 1) return mots[0].slice(0, 2).toUpperCase();
+  return (mots[0][0] + mots[mots.length - 1][0]).toUpperCase();
+}
+/* Un vrai joueur sans photo n'a pas de visage inventé. L'ancien avatar
+ * procédural tirait au hasard carnation et coiffure pour une personne réelle,
+ * et le tirage changeait d'un écran à l'autre selon l'identifiant utilisé. Il
+ * était fait pour les joueurs fictifs de la démo, où il reste. Ici : les
+ * initiales sur un disque dont la teinte découle de l'identifiant API — la
+ * même partout, jusque sur l'image partagée. */
+function monogrammeSVG(p){
+  const graine = Number(p.apiId || p.id || 0);
+  const teinte = Math.round((graine * 137.508) % 360);
+  const txt = initials(p.name);
+  return `<svg class="monogramme" viewBox="0 0 80 80" role="img" aria-label="${escapeHtml(p.name || '')}">
+    <circle cx="40" cy="40" r="40" fill="hsl(${teinte} 42% 34%)"/>
+    <text x="40" y="40" text-anchor="middle" dominant-baseline="central" font-family="'Unbounded','Plus Jakarta Sans',sans-serif" font-size="${txt.length > 2 ? 24 : 28}" font-weight="700" fill="rgba(255,255,255,.92)" letter-spacing="1">${escapeHtml(txt)}</text>
+  </svg>`;
+}
+function portraitSansPhoto(p){
+  return (p && (p.apiId || p.estLegende)) ? monogrammeSVG(p) : avatarSVG(p ? p.id : 0);
+}
 function portraitHtml(p){
   if(p.photoUrl){
     return `<img src="${escapeHtml(urlSure(p.photoUrl))}" alt="${escapeHtml(p.name)}" loading="lazy" onerror="handlePhotoError(this, ${Number(p.id)||0})">`;
   }
-  return avatarSVG(p.id);
+  return portraitSansPhoto(p);
 }
 function handlePhotoError(imgEl, playerId){
-  imgEl.outerHTML = avatarSVG(playerId);
+  const p = (typeof PLAYERS !== 'undefined' && PLAYERS.find(x=>x.id===playerId)) || { id: playerId, name: imgEl.alt || '' , apiId: imgEl.alt ? 1 : 0 };
+  imgEl.outerHTML = portraitSansPhoto(p);
 }
 function clubLogoFail(img){
   // Vrai logo du club uniquement : une nouvelle tentative (échec réseau passager), sinon on n'affiche rien
@@ -4348,7 +4397,10 @@ async function loadPlayerIndex(){
         const court = await r.json();
         if(applyPlayerIndex(court)){
           // Celui-là tient dans le stockage du navigateur, contrairement au grand.
-          try{ localStorage.setItem(INDEX_LS_KEY, JSON.stringify({t: Date.now(), data: court})); }catch(e){}
+          // Les champs dérivés (_nw, _w, _s) sont recalculés à la lecture : les
+          // sérialiser gonflait l'écriture de 68 % — 912 Ko pour 544 utiles —
+          // sur un quota de 5 Mo partagé avec le cache des saisons.
+          try{ localStorage.setItem(INDEX_LS_KEY, JSON.stringify({t: Date.now(), data: court}, (k, v)=> (typeof k === 'string' && k[0] === '_') ? undefined : v)); }catch(e){}
           if(currentScreen==='browse' && !browseDetailId && !browseSearch) renderBrowse();
         }
       }
@@ -4367,7 +4419,12 @@ async function loadPlayerIndex(){
 }
 
 let _indexCompletEnCours = null;
-function indexCompletCharge(){ return PLAYER_INDEX.players.length > 20000; }
+/* Vrai seulement quand le GRAND index a été chargé d'un bloc. L'ancien test
+ * « plus de 20 000 entrées » devenait vrai après trois tranches (m, a, s :
+ * 21 500 joueurs) : plus aucune autre tranche ne se chargeait et toute
+ * recherche sur une autre initiale répondait « Aucun joueur trouvé ». */
+let _indexCompletOk = false;
+function indexCompletCharge(){ return _indexCompletOk; }
 
 /* ---------- Index de recherche découpé par initiale ----------
  * Jusqu'ici, dès qu'une recherche ne trouvait rien dans l'index court, le téléphone
@@ -4441,6 +4498,7 @@ async function chargerIndexComplet(){
     // du navigateur, l'écriture échouait silencieusement à chaque chargement. Le cache
     // HTTP de Cloudflare fait ce travail, et l'index court sert de secours hors ligne.
     const ok = applyPlayerIndex(data);
+    if(ok) _indexCompletOk = true;
     if(ok && currentScreen==='browse' && !browseDetailId && !browseSearch) renderBrowse();
     return ok;
   })().catch(()=>{ _indexCompletEnCours = null; return false; });
@@ -4558,6 +4616,37 @@ function searchLocalIndex(q, limit=20){
   return hits.slice(0, limit).map(h=>mapIndexEntryToLightPlayer(h[1]));
 }
 // Même pertinence pour classer la liste affichée (profils de l'index + résultats API mélangés)
+/* Filtre et tri communs aux deux listes (sélecteur, onglet Joueurs).
+ * Le score de pertinence est calculé UNE fois par joueur — le tri en demandait
+ * 1 524 pour 520 lignes — et la normalisation du nom est mise en cache sur la
+ * fiche. Au-delà de LISTE_VISIBLE lignes, le reste attend un « Voir plus » :
+ * 520 lignes d'un coup, c'était 700 Ko de HTML et 1,3 s de blocage. */
+const LISTE_VISIBLE = 40;
+function normNom(p){
+  if(p._norm === undefined || p._normPour !== p.name + '|' + (p.club || '')){
+    p._norm = normalizeSearch(p.name || '') + '\u0001' + normalizeSearch(p.club || '');
+    p._normPour = p.name + '|' + (p.club || '');
+  }
+  return p._norm;
+}
+function filtrerEtTrier(q){
+  const nq = q ? normalizeSearch(q) : '';
+  const out = [];
+  for(const p of PLAYERS){
+    if(jumeauVideDeLegende(p)) continue;   // « W. Rooney » sans chiffres, quand « Wayne Rooney » existe
+    if(nq && p._q !== q && normNom(p).indexOf(nq) === -1) continue;
+    out.push(p);
+  }
+  if(nq){
+    const score = new Map();
+    for(const p of out) score.set(p, rankPlayer(p, q));
+    out.sort((a,b)=> score.get(b) - score.get(a));
+  }
+  return out;
+}
+function boutonVoirPlus(reste, cible){
+  return reste > 0 ? `<button type="button" class="palmares-plus" data-voir-plus="${cible}">Voir ${reste} joueur${reste>1?'s':''} de plus</button>` : '';
+}
 function rankPlayer(p, q){
   const nq = normalizeSearch(q).trim(); if(!nq) return 0;
   const qw = nq.split(/\s+/).filter(Boolean);
@@ -4952,7 +5041,7 @@ let compareAgeValue = null;
 let compareSeasonValue = null;
 
 const STATS_COMMON = [
-  {key:'appearances', label:'Apparitions'},
+  {key:'appearances', label:'Matchs joués'},
   {key:'buts', label:'Buts'},
   {key:'passesDec', label:'Passes décisives'},
   {key:'touches', label:'Passes / match'},
@@ -4968,7 +5057,7 @@ const STATS_COMMON = [
 
 const STATS_BY_POS = {
   GK: [
-    {key:'appearances', label:'Apparitions'},
+    {key:'appearances', label:'Matchs joués'},
     {key:'saves', label:'Arrêts'},
     {key:'goalsConceded', label:'Buts encaissés', lowerIsBetter:true},
     {key:'penaltiesSaved', label:'Penaltys arrêtés'},
@@ -4979,7 +5068,7 @@ const STATS_BY_POS = {
     {key:'buts', label:'Buts'}
   ],
   DEF: [
-    {key:'appearances', label:'Apparitions'},
+    {key:'appearances', label:'Matchs joués'},
     {key:'tacles', label:'Tacles / match'},
     {key:'interceptions', label:'Interceptions / match'},
     {key:'duelsAeriens', label:'Duels gagnés / match'},
@@ -4991,7 +5080,7 @@ const STATS_BY_POS = {
     {key:'passesDec', label:'Passes décisives'}
   ],
   MID: [
-    {key:'appearances', label:'Apparitions'},
+    {key:'appearances', label:'Matchs joués'},
     {key:'passesDec', label:'Passes décisives'},
     {key:'keyPasses', label:'Passes clés'},
     {key:'passesReussies', label:'Passes réussies', suffix:'%'},
@@ -5002,7 +5091,7 @@ const STATS_BY_POS = {
     {key:'buts', label:'Buts'}
   ],
   FWD: [
-    {key:'appearances', label:'Apparitions'},
+    {key:'appearances', label:'Matchs joués'},
     {key:'buts', label:'Buts'},
     {key:'shotsOnTarget', label:'Tirs cadrés'},
     {key:'precisionTirs', label:'Précision des tirs', suffix:'%'},
@@ -5314,7 +5403,7 @@ function renderAll(){
         <div class="col-head empty" data-slot="${idx}" data-empty="1">
           ${removeBtn}
           <div class="portrait placeholder ${filled.length<2 && slots.findIndex(id=>!id)===idx ? 'pulse' : ''}">+</div>
-          <div class="placeholder-lbl">Choisir<br>joueur ${idx+1}</div>
+          <div class="placeholder-lbl">Joueur ${idx+1}</div>
         </div>`;
     }
     const swapBtn = `<button class="slot-swap" data-swap="${idx}" type="button" aria-label="Changer de joueur">⇄</button>`;
@@ -5455,12 +5544,20 @@ function renderAll(){
         const haut = Math.max(...known.map(Math.abs));
         if(haut > 0) net = (Math.max(...known) - Math.min(...known)) / haut >= 0.25;
       }
+      // Écart relatif entre le meilleur et le second, en pourcentage du second.
+      let ecartPct = 0;
+      if(!tie && known.length >= 2){
+        const tries = known.slice().sort((x,y)=> r.lowerIsBetter ? x-y : y-x);
+        const ref = Math.abs(tries[1]);
+        if(ref > 0) ecartPct = Math.round(Math.abs(tries[0]-tries[1]) / ref * 100);
+      }
       const cellule = (v, i) => {
         const lead = v !== null && best !== null && Number(v) === best && !tie;
         const txt = v === null
           ? (unknown ? fmtStat(filled[i], r.key, r.suffix) : trophyPlaceholder(filled[i], r.key))
           : `${fmtNombre(v)}${fmtSuffixe(r.suffix)}`;
-        return `<div class="dr-val${lead ? ' lead' : ''}${lead && net ? ' net' : ''}${v === null ? ' unknown' : ''}">${txt}</div>`;
+        const ecart = (lead && net && ecartPct >= 25 && ecartPct < 1000) ? `<span class="ecart">${r.lowerIsBetter ? '−' : '+'}${ecartPct} %</span>` : '';
+        return `<div class="dr-val${lead ? ' lead' : ''}${v === null ? ' unknown' : ''}">${txt}${ecart}</div>`;
       };
       return `<div class="dr-row">
           <div class="dr-label">${r.label}</div>
@@ -5563,9 +5660,9 @@ function renderAll(){
     </div>`}
     <div class="period-sub">
       <span>${legendeSansSaisons(filled) ? 'Carrières entières, toutes compétitions'
-        : compareMode==='age' ? (realMode ? `Tout ce qu'ils avaient accumulé à ${compareAgeValue} ans` : `Estimation à ${compareAgeValue} ans`)
-        : compareMode==='career' ? 'Toutes leurs saisons additionnées'
-        : (realMode ? 'Choisissez la saison sous chaque joueur' : 'Statistiques de la saison')}</span>
+        : compareMode==='age' ? (realMode ? `Cumul jusqu'à ${compareAgeValue} ans` : `Estimation à ${compareAgeValue} ans`)
+        : compareMode==='career' ? 'Carrière entière, toutes compétitions'
+        : (realMode ? 'Une saison chacun, à choisir sous le nom' : 'Statistiques de la saison')}</span>
       ${hasSplit && !duelAvecLegende(filled) ? `<button class="scope-link" id="scopeChip" type="button">${escapeHtml(scopeLabel())}<span class="chev">▾</span></button>` : ''}
     </div>
     <div class="career-progress">${careerProgressHtml()}</div>` : ''}
@@ -5575,9 +5672,11 @@ function renderAll(){
             ? (slots.length===2 ? duelRowsHtml()
                                 : `<div class="compare-cols count-${slots.length}">${statsColsHtml}</div>`)
             : '')}
-      ${activeTab==='trophies' && filled.length>=2 && !compactView ? `
+      ${activeTab==='trophies' && filled.length>=2 && !compactView && filled.some(p=>!p.estLegende) ? `
       <div class="browse-section-label" style="margin-top:18px;">Palmarès comparé</div>
       ${palmaresDuelHtml(filled)}` : ''}
+      ${activeTab==='trophies' && filled.length>=2 && filled.some(p=>p.estLegende) ? `
+      <div class="palmares-vide">Le palmarès des légendes n'est pas encore renseigné : seules leurs sélections et leurs buts en équipe nationale sont connus.</div>` : ''}
       ${activeTab==='trophies' && filled.length>=2 && palmaresEnEchec(filled) ? `<div class="palmares-vide">Le palmarès n'a pas pu être chargé pour le moment. <button type="button" class="lien-inline" id="palmaresRetry">Réessayer</button></div>` : ''}
       ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs de l'équipe nationale A trouvés dans la base API-Football (amicaux compris), parfois incomplet pour les anciennes saisons. Le tableau ne compte que les titres gagnés : ni les places de finaliste, ni les tournois amicaux de pré-saison. « — » = rien dans la base.</div>` : ''}
       ${activeTab==='stats' && filled.length>=2 && compareBasis!=='nation' && !compactView && !duelAvecLegende(filled) ? `
@@ -5596,7 +5695,7 @@ function renderAll(){
       </div>` : ''}
       ${filled.length<2 ? compareTutorialHtml(filled, isDemo) : ''}
       ${slots.length < MAX_SLOTS && filled.length>=2 ? '<button class="add-slot-btn" id="addSlotCard" type="button">+ Ajouter un joueur</button>' : ''}
-      ${filled.length>=2 && !compactView ? '<button class="reset-btn" id="resetBtn" type="button">Recommencer la comparaison</button>' : ''}
+      ${filled.length>=2 && !compactView ? '<button class="reset-btn" id="resetBtn" type="button">Nouveau duel</button>' : ''}
     </div>
   `;
   content.scrollTop = defilementGarde;
@@ -5721,7 +5820,7 @@ function compareTutorialHtml(filled, isDemo){
       badge: `${n}/2` },
     { title: 'Comparez stat par stat', text: 'Sur chaque ligne, le meilleur s\'allume en vert.',
       art: `<div class="tart-rows"><i></i><i class="win"></i><i class="win"></i><i></i></div>` },
-    { title: 'Changez d\'époque', text: 'Même saison, au même âge ou toute la carrière : une pastille suffit.',
+    { title: 'Changez d\'époque', text: 'Même saison, au même âge ou toute la carrière : un bouton suffit.',
       art: `<div class="tart-chips"><span>À 23 ans</span><span class="on">Carrière</span></div>` },
     { title: 'Partagez le verdict', text: 'Onglet Générer : une image prête pour vos stories.',
       art: `<div class="tart-story"><i></i><i class="w"></i><i></i><em>↗</em></div>` }
@@ -5730,7 +5829,7 @@ function compareTutorialHtml(filled, isDemo){
     <section class="tuto ${anim}" aria-label="Comment ça marche">
       <h3 class="tuto-title">Qui est le meilleur ?</h3>
       <p class="tuto-sub">Mettez deux joueurs face à face : les chiffres tranchent le débat.</p>
-      <button class="tuto-cta" id="tutoCta" type="button" data-slot="${nextIdx}">${n===0 ? 'Choisir le premier joueur' : `Choisir le joueur ${nextIdx+1}`}</button>
+      <button class="tuto-cta" id="tutoCta" type="button" data-slot="${nextIdx}">${n===0 ? 'Choisir le joueur 1' : `Choisir le joueur ${nextIdx+1}`}</button>
       ${!isDemo && n===0 ? `
       <div class="tuto-or">ou essayez un duel tout prêt</div>
       <div class="duel-chips tuto-duels">
@@ -5779,7 +5878,7 @@ function generateTutorialHtml(filled){
   const anim = genTutoAnimated ? '' : 'anim';
   genTutoAnimated = true;
   // Aperçu illustratif de l'image : pas de nom ni de chiffre, seulement la mise en page
-  const rows = [['Apparitions', 46], ['Buts', 62], ['Passes décisives', 38]];
+  const rows = [['Matchs joués', 46], ['Buts', 62], ['Passes décisives', 38]];
   const mock = `
     <div class="gen-mock" aria-hidden="true">
       <div class="gm-brand">DUELIO</div>
@@ -5809,14 +5908,14 @@ function generateTutorialHtml(filled){
       <h3 class="tuto-title">Votre duel, prêt à poster</h3>
       <p class="tuto-sub">Transformez une comparaison en image et laissez vos abonnés trancher.</p>
       ${mock}
-      <button class="tuto-cta" id="genTutoCta" type="button" data-slot="${nextIdx}">${n===0 ? 'Choisir les joueurs' : `Choisir le joueur ${nextIdx+1}`}</button>
+      <button class="tuto-cta" id="genTutoCta" type="button" data-slot="${nextIdx}">${n===0 ? 'Choisir deux joueurs' : `Choisir le joueur ${nextIdx+1}`}</button>
       ${!isDemo && n===0 ? `
       <div class="tuto-or">ou créez tout de suite l'image d'un duel</div>
       <div class="duel-chips tuto-duels">
         ${SUGGESTED_DUELS.slice(0,4).map((d,i)=>`<button class="duel-chip" type="button" data-gduel="${i}" ${duelLoading ? 'disabled' : ''}>${d.a.label} <span class="vs">VS</span> ${d.b.label}</button>`).join('')}
       </div>
       <div class="tuto-status ${genTutoStatus.err ? 'error' : ''}" id="genTutoStatus">${escapeHtml(genTutoStatus.msg)}</div>` : ''}
-      <div class="tuto-kicker tuto-kicker-steps">Image à partager, pas à pas</div>
+      <div class="tuto-kicker tuto-kicker-steps">Partager, pas à pas</div>
       ${tutoStepsHtml(steps)}
     </section>`;
 }
@@ -5913,7 +6012,7 @@ function noteCouvertureHtml(p){
   const raison = age != null
     ? `${escapeHtml(p.name)} avait ${age} ans en ${premiere}.`
     : '';
-  return `<div class="season-note" title="Nos chiffres partent de la saison ${seasonLabel(premiere)}. ${raison} La source de données ne couvre pas tous les championnats avant 2010 environ, donc un début de carrière peut manquer et les totaux être inférieurs à la réalité.">Données depuis ${seasonLabel(premiere)}</div>`;
+  return `<div class="season-note" title="Nos chiffres partent de la saison ${seasonLabel(premiere)}. ${raison} La source de données ne couvre pas tous les championnats avant 2010 environ, donc un début de carrière peut manquer et les totaux être inférieurs à la réalité.">Données à partir de ${seasonLabel(premiere)}</div>`;
 }
 
 function seasonPickHtml(p, opts){
@@ -6128,7 +6227,7 @@ function renderGenerateBody(){
       <div class="share-section-label">Format</div>
       <div class="share-format-row">
         <button class="share-format-btn ${shareFormat==='square'?'active':''}" data-fmt="square" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>Carré · feed
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/></svg>Carré · publication
         </button>
         <button class="share-format-btn ${shareFormat==='story'?'active':''}" data-fmt="story" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/></svg>Story
@@ -6169,7 +6268,7 @@ function loadImageForCanvas(p){
     img.crossOrigin = 'anonymous';
     img.onload = ()=> resolve({img, isAvatar:false});
     img.onerror = ()=>{
-      const svgData = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(avatarSVG(p.id))));
+      const svgData = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(portraitSansPhoto(p).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '))));
       const fallback = new Image();
       fallback.onload = ()=> resolve({img:fallback, isAvatar:true});
       fallback.onerror = ()=> resolve({img:null, isAvatar:true});
@@ -6181,7 +6280,7 @@ function loadImageForCanvas(p){
       img.crossOrigin = null;
       img.onerror = null;
       img.onload = ()=> resolve({img, isAvatar:true});
-      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(avatarSVG(p.id))));
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(portraitSansPhoto(p).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" '))));
     }
   });
 }
@@ -6821,6 +6920,13 @@ async function dessinerImageDePartage(btn){
 }
 
 
+let pickerListePlafond = 0, browseListePlafond = 0;   // 0 = plafond par défaut ; monte à chaque « Voir plus »
+document.addEventListener('click', e=>{
+  const b = e.target.closest && e.target.closest('[data-voir-plus]');
+  if(!b) return;
+  if(b.dataset.voirPlus === 'picker'){ pickerListePlafond = (pickerListePlafond || LISTE_VISIBLE) + 80; renderPickerList(); }
+  else { browseListePlafond = (browseListePlafond || LISTE_VISIBLE) + 80; if(typeof renderBrowse === 'function') renderBrowse(); }
+});
 let pickerSearchTimer = null;
 let pickerSearchInFlight = '';
 function setPickerStatus(msg, isErr){
@@ -6829,6 +6935,7 @@ function setPickerStatus(msg, isErr){
 }
 document.getElementById('pickerSearch').addEventListener('input', e=>{
   pickerSearch = e.target.value.trim().toLowerCase();
+  pickerListePlafond = 0;
   document.getElementById('pickerSearchField').classList.toggle('has-value', !!e.target.value);
   clearTimeout(pickerSearchTimer);
   setPickerStatus('');
@@ -6905,12 +7012,7 @@ function renderPickerList(){
   const usedIds = slots.filter((id, idx)=> idx!==pickerTarget && id!==null);
   const usedApi = usedIds.map(id=>{ const p = PLAYERS.find(x=>x.id===id); return p && p.apiId; }).filter(Boolean);
   const searchOnly = REAL_DATA_CONFIG.enabled && !REAL_DATA_CONFIG.preloadRoster;
-  const filtered = PLAYERS.filter(p=>{
-    if(jumeauVideDeLegende(p)) return false;   // « W. Rooney » sans chiffres, quand « Wayne Rooney » existe
-    if(pickerSearch && p._q!==pickerSearch && !(normalizeSearch(p.name).includes(normalizeSearch(pickerSearch)) || normalizeSearch(p.club).includes(normalizeSearch(pickerSearch)))) return false;
-    return true;
-  });
-  if(pickerSearch) filtered.sort((a,b)=> rankPlayer(b, pickerSearch) - rankPlayer(a, pickerSearch));
+  const filtered = filtrerEtTrier(pickerSearch);
   const skeletons = pickerSearchInFlight ? skeletonRowsHtml(filtered.length ? 1 : 3) : '';
 
   if(searchOnly && !pickerSearch){
@@ -6963,7 +7065,9 @@ function renderPickerList(){
       : 'Aucun joueur ne correspond à cette recherche.')+'</div>';
     return;
   }
-  list.innerHTML = filtered.map(p=>pickerItemHtml(p, usedIds.includes(p.id))).join('') + skeletons;
+  const plafond = pickerListePlafond || LISTE_VISIBLE;
+  list.innerHTML = filtered.slice(0, plafond).map(p=>pickerItemHtml(p, usedIds.includes(p.id))).join('')
+    + boutonVoirPlus(filtered.length - plafond, 'picker') + skeletons;
   // On tapait sans jamais savoir si la recherche avait abouti : la liste
   // changeait en silence. Le compte est désormais annoncé.
   if(pickerSearch && !pickerSearchInFlight){
@@ -7023,7 +7127,7 @@ const BROWSE_STAT_GROUPS = [
   {
     label: 'Matchs',
     rows: [
-      {key:'appearances', label:'Apparitions'},
+      {key:'appearances', label:'Matchs joués'},
       {key:'lineups', label:'Titularisations'},
       {key:'minutesPlayed', label:'Minutes jouées'},
       {key:'rating', label:'Note moyenne', suffix:'/10', decimals:1},
@@ -7072,7 +7176,7 @@ const BROWSE_STAT_GROUPS = [
     rows: [
       {key:'dribblesAttempts', label:'Dribbles tentés'},
       {key:'dribbles', label:'Dribbles réussis / match'},
-      {key:'dribblesPast', label:'Fois dribblé par un adversaire'}
+      {key:'dribblesPast', label:'Dribbles subis'}
     ]
   },
   {
@@ -7104,6 +7208,7 @@ const BROWSE_STAT_GROUPS = [
 ];
 const BROWSE_TROPHIES = TROPHIES.filter(r=>r.key.startsWith('titres')); // les sélections ont déjà leur rubrique dans la fiche
 function detailTrophyRowsHtml(p){
+  if(p.estLegende) return `<div class="palmares-vide">Palmarès non renseigné pour cette légende.</div>`;
   const compteurs = BROWSE_TROPHIES.map(r=>{
     const v = trophyValue(p, r.key);
     return `<div class="solo-stat-row"><span class="k">${r.label}</span><span class="v">${v===null ? trophyPlaceholder(p, r.key) : v}</span></div>`;
@@ -7507,7 +7612,7 @@ function renderBrowse(){
         const rows = g.rows.map(r=>{
           const suf = r.suffix || '';
           let val;
-          if(r.key==='age' && p.estLegende) val = p.deces ? `${p.birthYear} – ${p.deces}` : (p.age ? `${p.age} ans` : '—');
+          if(r.key==='age' && p.estLegende) val = p.deces ? `${p.birthYear} – ${p.deces}` : (p.birthYear ? `né en ${p.birthYear}` : '—');
           else if(r.key==='age'){
             /* L'âge affiché est celui de la saison montrée. Le rappel entre
              * parenthèses se recalcule depuis l'année de naissance : le champ
@@ -7527,15 +7632,27 @@ function renderBrowse(){
           else if((p.apiId || p.estLegende) && isStatMissing(pv, r.key)) val = '—';
           else if(pv[r.key] === undefined || pv[r.key] === null) val = '—';
           else val = fmtNombre(r.decimals!=null ? Number(Number(pv[r.key]).toFixed(r.decimals)) : pv[r.key]) + fmtSuffixe(suf);
-          const lbl = (p.apiId && r.key==='age' && p.birthYear && p.seasonShown) ? `Âge en ${seasonLabel(p.seasonShown)}` : r.label;
-          return `<div class="solo-stat-row"><span class="k">${lbl}</span><span class="v">${val}</span></div>`;
-        }).join('');
+          const lbl = (p.apiId && r.key==='age' && p.birthYear && p.seasonShown) ? `Âge en ${seasonLabel(p.seasonShown)}`
+                    : (p.estLegende && r.key==='age') ? (p.deces ? 'Naissance · décès' : 'Naissance') : r.label;
+          return { html: `<div class="solo-stat-row"><span class="k">${lbl}</span><span class="v">${val}</span></div>`, vide: val === '—' };
+        });
+        /* Une légende n'a que matchs, buts et sélections : afficher les quarante
+         * autres lignes en tirets faisait lire « on n'a rien » alors que c'est
+         * l'époque qui ne relevait rien. On ne montre que ce qu'on sait. */
+        if(p.estLegende){
+          const utiles = rows.filter(r => !r.vide);
+          if(!utiles.length) return '';
+          return `<div class="browse-section-label">${g.label}</div>${utiles.map(r=>r.html).join('')}`;
+        }
+        const rowsHtml = rows.map(r=>r.html).join('');
         const nt = (p.apiId && g.label==='Sélection nationale') ? nationTotals(p) : null;
         const note = (p.apiId && g.label==='Sélection nationale')
           ? `<div class="radar-note" style="text-align:left; margin:4px 2px 0;">Matchs de l'équipe nationale A trouvés dans la base API-Football${nt && nt.span ? ` (${nt.span[0]} → ${nt.span[1]})` : ''}, amicaux compris. Peut être incomplet pour les anciennes saisons.</div>` : '';
-        return `<div class="browse-section-label">${g.label}</div>${rows}${note}`;
+        return `<div class="browse-section-label">${g.label}</div>${rowsHtml}${note}`;
       }).join('');
     const trophyRows = `<div id="detailTrophies">${detailTrophyRowsHtml(p)}</div>`;
+    const avisLegende = p.estLegende
+      ? `<div class="duel-avis" style="margin:0 0 6px;">Pour cette époque, seuls les matchs, les buts et les sélections sont connus.</div>` : '';
 
     const isReal = p.career.length===0 && p.apiId;
     let timeline;
@@ -7585,13 +7702,14 @@ function renderBrowse(){
           ${(p.apiId || p.estLegende) && p.seasonsAvailable ? `<div class="detail-season">${seasonPickHtml(p, { detail:true })}</div>` : ''}
           <div class="career-progress">${careerProgressHtml()}</div>
         </div>
-        <div class="browse-section-label">Parcours en club &amp; transferts</div>
+        <div class="browse-section-label">Parcours et transferts</div>
         <div class="tlh-rail"><div class="timeline-h">${timeline}</div></div>
+        ${avisLegende}
         ${statGroupsHtml}
-        <div class="radar-panel">
+        ${p.estLegende ? '' : `<div class="radar-panel">
           <div class="browse-section-label" style="text-align:center;">Profil d'attributs</div>
           ${radarChartSVG([p], ['#22D3EE'], 'detail')}
-        </div>
+        </div>`}
         <div class="browse-section-label">Palmarès</div>
         ${trophyRows}
       </div>
@@ -7628,14 +7746,9 @@ function renderBrowse(){
 
   function renderBrowseList(){
     const searchOnly = REAL_DATA_CONFIG.enabled && !REAL_DATA_CONFIG.preloadRoster;
-    const filtered = PLAYERS.filter(p=>{
-      if(jumeauVideDeLegende(p)) return false;   // même règle que dans le sélecteur du comparatif
-      if(browseSearch && p._q!==browseSearch && !(normalizeSearch(p.name).includes(normalizeSearch(browseSearch)) || normalizeSearch(p.club).includes(normalizeSearch(browseSearch)))) return false;
-      return true;
-    });
+    const filtered = filtrerEtTrier(browseSearch);
     const listEl = document.getElementById('browseList');
     if(!listEl) return;
-    if(browseSearch) filtered.sort((a,b)=> rankPlayer(b, browseSearch) - rankPlayer(a, browseSearch));
     const skeletons = globalSearchInFlight ? skeletonRowsHtml(filtered.length ? 1 : 3) : '';
 
     if(searchOnly && !browseSearch){
@@ -7681,7 +7794,8 @@ function renderBrowse(){
       <div class="browse-empty" id="browseEmptyState">${searchOnly
         ? (browseSearch.length < REAL_DATA_CONFIG.searchMinChars ? 'Continuez à taper le nom…' : 'Aucun joueur trouvé.<small>Vérifiez l\'orthographe ou essayez seulement le nom de famille.</small>')
         : 'Aucun joueur ne correspond à cette recherche.'}</div>` :
-      filtered.map(p=>playerRowHtml(p)).join('')) + skeletons;
+      filtered.slice(0, browseListePlafond || LISTE_VISIBLE).map(p=>playerRowHtml(p)).join('')
+      + boutonVoirPlus(filtered.length - (browseListePlafond || LISTE_VISIBLE), 'browse')) + skeletons;
     if(browseSearch) prefetchPlayers(filtered, 2);
     listEl.querySelectorAll('.browse-item').forEach(item=>{
       item.addEventListener('click', ()=>{
@@ -7720,6 +7834,7 @@ function renderBrowse(){
   const browseInput = document.getElementById('browseSearchInput');
   browseInput.addEventListener('input', (e)=>{
     browseSearch = e.target.value.trim().toLowerCase();
+    browseListePlafond = 0;
     document.getElementById('browseSearchField').classList.toggle('has-value', !!e.target.value);
     clearTimeout(globalSearchTimer);
     setBrowseStatus('');
@@ -7888,8 +8003,8 @@ function applyScreen(name){
     else b.removeAttribute('aria-current');
   }
   document.getElementById('headerTitle').textContent =
-    name==='compare' ? 'Comparatif' :
-    name==='generate' ? 'Image à partager' : (browseDetailId ? 'Fiche joueur' : 'Joueurs');
+    name==='compare' ? 'Comparer' :
+    name==='generate' ? 'Partager' : (browseDetailId ? 'Fiche joueur' : 'Joueurs');
   if(name==='browse') renderBrowse();
   if(name==='generate') renderGenerate();
   updateBackBtn();
@@ -7929,6 +8044,7 @@ document.querySelectorAll('.welcome-cta').forEach(btn=>{
     if(screen.classList.contains('leaving')) return;
     try{ localStorage.setItem('duelio_welcomed','1'); }catch(e){}
     screen.classList.add('leaving');
+    document.body.classList.remove('accueil-visible');
     setTimeout(()=>{ screen.classList.add('gone'); }, 420);   // suit la durée de l'animation
   });
 });
@@ -7937,6 +8053,7 @@ document.querySelectorAll('.welcome-cta').forEach(btn=>{
   let seen = false;
   try{ seen = localStorage.getItem('duelio_welcomed') === '1'; }catch(e){}
   if(seen) document.getElementById('welcomeScreen').classList.add('gone');
+  else document.body.classList.add('accueil-visible');
 })();
 
 /* Préchargement des duels. Les fiches viennent de fichiers figés : on peut aller
@@ -7977,23 +8094,20 @@ try{ console.log('%cDuelio', 'font-weight:bold;color:#2DD4BF',
   const content = document.getElementById('content');
   content.innerHTML = `<div class="empty-state">Chargement…</div>`;
   await bootstrapPlayers();
-  // 29 Ko : on les attend pour que « Zidane » réponde dès la première frappe —
-  // mais quatre secondes au plus. Si le réseau se tait, l'écran s'affiche quand
-  // même et les légendes rejoignent la liste à leur arrivée.
-  let premierRenduFait = false;
-  await Promise.race([
-    chargerLegendes().then(()=>{ if(LEGENDES.chargees && premierRenduFait) renderAll(); }),
-    sleep(4000)
-  ]);
-  loadPlayerIndex(); // en arrière-plan : la recherche instantanée s'active dès que l'index est là
   if(FALLBACK_REASON){
     const banner = document.getElementById('globalFallbackBanner');
     console.warn('mode démonstration :', FALLBACK_REASON);
     banner.innerHTML = `<b>Mode démonstration</b> — les vraies données sont momentanément inaccessibles, les joueurs affichés sont fictifs. Réessayez dans quelques minutes.`;
     banner.style.display = 'block';
   }
+  /* Le comparatif vide ne dépend de rien : on l'affiche tout de suite. Les
+   * légendes (29 Ko) et l'index de recherche partent EN MÊME TEMPS, pas l'un
+   * après l'autre — mesuré, l'enchaînement coûtait un aller-retour entier
+   * avant que la recherche réponde. Les légendes redessinent à leur arrivée
+   * pour que « Zidane » les trouve ; remplacerJumeauxEnPlace s'en charge. */
   renderAll();
-  premierRenduFait = true;
+  chargerLegendes().then(()=>{ if(LEGENDES.chargees) renderAll(); });
+  loadPlayerIndex();
 })();
 </script>
 
