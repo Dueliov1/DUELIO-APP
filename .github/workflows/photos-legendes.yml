@@ -1,0 +1,228 @@
+name: Photos des légendes
+
+# Récupère sur Wikimedia Commons une photo de chaque légende de
+# www/data/legendes.json, et n'accepte QUE les licences réellement libres.
+#
+# Pourquoi un workflow : commons.wikimedia.org et upload.wikimedia.org sont
+# injoignables depuis l'environnement de développement. GitHub a un accès
+# internet libre.
+#
+# RÈGLES DE LICENCE — c'est un sujet juridique, pas esthétique :
+#   acceptées  : domaine public, CC0, CC BY, CC BY-SA
+#   refusées   : tout ce qui n'est pas libre, « fair use », et surtout
+#                - NC (non commercial) : l'application peut être monétisée
+#                - ND (pas de modification) : on recadre, donc on modifie
+# Une photo refusée n'est pas téléchargée ; la légende reste sans portrait et
+# l'application affichera ses initiales.
+#
+# L'auteur et la licence de chaque photo retenue sont écrits dans
+# www/data/legendes-credits.json, pour l'écran de mentions de l'application.
+
+on:
+  workflow_dispatch:
+    inputs:
+      refaire:
+        description: "Retélécharger les photos déjà présentes (oui/non)"
+        default: "non"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: photos-legendes
+  cancel-in-progress: false
+
+jobs:
+  photos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+          sparse-checkout: |
+            www/data/legendes.json
+            www/data/legendes-credits.json
+            www/legendes
+          sparse-checkout-cone-mode: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Se placer sur le dernier état de main
+        run: |
+          git fetch origin main
+          git checkout -B main origin/main
+
+      - name: Installer Sharp
+        run: npm install --no-save sharp@0.33.5
+
+      - name: Récupérer les photos
+        env:
+          REFAIRE: ${{ inputs.refaire || 'non' }}
+        run: |
+          mkdir -p www/legendes/photos
+          cat > photos.mjs <<'EOF'
+          import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+          import sharp from "sharp";
+
+          const AGENT = "DuelioLegendsBot/1.0 (https://duelio.app; contact via GitHub)";
+          const REFAIRE = (process.env.REFAIRE || "non").toLowerCase() === "oui";
+          const DOSSIER = "www/legendes/photos";
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+          async function api(hote, params) {
+            const url = `https://${hote}/w/api.php?` + new URLSearchParams(
+              { format: "json", formatversion: "2", ...params }).toString();
+            const r = await fetch(url, { headers: { "User-Agent": AGENT } });
+            if (!r.ok) throw new Error(`${hote} HTTP ${r.status}`);
+            await sleep(180);
+            return r.json();
+          }
+
+          // --- Licences ---------------------------------------------------------
+          // On raisonne sur le texte brut renvoyé par Commons, en refusant par
+          // défaut : une licence qu'on ne sait pas lire est une licence refusée.
+          function licenceLibre(meta) {
+            const brut = [
+              meta.LicenseShortName?.value, meta.License?.value,
+              meta.UsageTerms?.value, meta.Copyrighted?.value,
+            ].filter(Boolean).join(" | ").toLowerCase();
+            if (!brut) return { ok: false, pourquoi: "aucune licence déclarée" };
+            // Interdits absolus, même si « CC » apparaît à côté.
+            if (/\bnc\b|non-?commercial/.test(brut))
+              return { ok: false, pourquoi: "non commercial" };
+            if (/\bnd\b|no-?derivative|noderiv/.test(brut))
+              return { ok: false, pourquoi: "modification interdite (on recadre)" };
+            if (/fair use|non-?free|all rights reserved/.test(brut))
+              return { ok: false, pourquoi: "non libre" };
+            // Autorisés.
+            if (/public domain|^pd|\bpd-|\bcc0\b/.test(brut)) return { ok: true, type: "domaine public" };
+            if (/cc[ -]by[ -]sa/.test(brut)) return { ok: true, type: "CC BY-SA" };
+            if (/cc[ -]by/.test(brut))       return { ok: true, type: "CC BY" };
+            return { ok: false, pourquoi: `licence non reconnue : ${
+              (meta.LicenseShortName?.value || "?").slice(0, 40)}` };
+          }
+
+          const dessous = (s) => String(s || "").replace(/<[^>]*>/g, "").trim();
+
+          // --- Trouver la photo d'un joueur ------------------------------------
+          async function chercherPhoto(nom) {
+            // 1. L'article de Wikipédia et son image principale.
+            const rech = await api("en.wikipedia.org", {
+              action: "query", generator: "search", gsrsearch: `${nom} footballer`,
+              gsrlimit: "3", prop: "pageimages", piprop: "name",
+            });
+            const pages = (rech.query?.pages || []).filter((p) => p.pageimage);
+            if (!pages.length) return null;
+            const fichier = "File:" + pages[0].pageimage;
+
+            // 2. Sa licence et une miniature, sur Commons.
+            const inf = await api("commons.wikimedia.org", {
+              action: "query", titles: fichier, prop: "imageinfo",
+              iiprop: "extmetadata|url|size", iiurlwidth: "600",
+            });
+            const page = (inf.query?.pages || [])[0];
+            const ii = page?.imageinfo?.[0];
+            if (!ii) return null;
+            return {
+              fichier,
+              meta: ii.extmetadata || {},
+              miniature: ii.thumburl || ii.url,
+              page: ii.descriptionurl,
+            };
+          }
+
+          // --- Déroulé -----------------------------------------------------------
+          const doc = JSON.parse(readFileSync("www/data/legendes.json", "utf8"));
+          mkdirSync(DOSSIER, { recursive: true });
+          const credits = existsSync("www/data/legendes-credits.json")
+            ? JSON.parse(readFileSync("www/data/legendes-credits.json", "utf8"))
+            : { v: 1, photos: {} };
+          credits.photos = credits.photos || {};
+
+          let pris = 0, refuses = 0, absents = 0, sautes = 0;
+          const journal = [];
+
+          for (const l of doc.legendes) {
+            const sortie = `${DOSSIER}/${l.id}.jpg`;
+            if (existsSync(sortie) && !REFAIRE) { sautes++; continue; }
+            try {
+              const p = await chercherPhoto(l.n);
+              if (!p) {
+                absents++; journal.push(`${l.n} : aucune image trouvée`);
+                console.log(`  —  ${l.n} : aucune image`);
+                continue;
+              }
+              const lic = licenceLibre(p.meta);
+              if (!lic.ok) {
+                refuses++;
+                journal.push(`${l.n} : REFUSÉE (${lic.pourquoi})`);
+                console.log(`  ✗  ${l.n} : refusée — ${lic.pourquoi}`);
+                continue;
+              }
+
+              const img = await fetch(p.miniature, { headers: { "User-Agent": AGENT } });
+              if (!img.ok) throw new Error(`image HTTP ${img.status}`);
+              const brut = Buffer.from(await img.arrayBuffer());
+
+              // Carré centré sur le haut : les portraits de Commons cadrent
+              // souvent le buste ou le corps entier, et un carré pris au milieu
+              // donnerait un torse sans visage.
+              const meta = await sharp(brut).metadata();
+              const cote = Math.min(meta.width, meta.height);
+              const gauche = Math.round((meta.width - cote) / 2);
+              const haut = Math.round(Math.min((meta.height - cote) / 2, meta.height * 0.08));
+              await sharp(brut)
+                .extract({ left: gauche, top: Math.max(0, haut), width: cote, height: cote })
+                .resize(320, 320, { fit: "cover" })
+                .jpeg({ quality: 82, mozjpeg: true })
+                .toFile(sortie);
+
+              credits.photos[l.id] = {
+                nom: l.n,
+                fichier: p.fichier,
+                auteur: dessous(p.meta.Artist?.value) || "auteur non précisé",
+                licence: dessous(p.meta.LicenseShortName?.value) || lic.type,
+                type: lic.type,
+                page: p.page,
+              };
+              pris++;
+              console.log(`  ✓  ${l.n} : ${lic.type}`);
+            } catch (e) {
+              absents++;
+              journal.push(`${l.n} : échec — ${e.message}`);
+              console.log(`  !  ${l.n} : ${e.message}`);
+            }
+          }
+
+          credits.majLe = new Date().toISOString().slice(0, 10);
+          writeFileSync("www/data/legendes-credits.json",
+                        JSON.stringify(credits, null, 2));
+
+          console.log("\n===== BILAN =====");
+          console.log(`photos retenues    : ${pris}`);
+          console.log(`refusées (licence) : ${refuses}`);
+          console.log(`introuvables       : ${absents}`);
+          console.log(`déjà présentes     : ${sautes}`);
+          if (journal.length) {
+            console.log("\ndétail :");
+            for (const l of journal) console.log("  " + l);
+          }
+          EOF
+          node photos.mjs
+
+      - name: Publier
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add --sparse -- www/legendes www/data/legendes-credits.json
+          if git diff --cached --quiet; then echo "rien de nouveau"; exit 0; fi
+          git commit -m "Photos libres des legendes depuis Wikimedia Commons"
+          for i in 1 2 3 4 5; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
