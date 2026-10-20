@@ -357,9 +357,13 @@
     letter-spacing:.04em; margin-bottom:2px;
     animation: welcomeIn .4s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.1s;
   }
+  /* La question qui est le produit, pas une étiquette décorative. Elle se lit,
+     donc elle garde sa casse normale : des capitales espacées se déchiffrent,
+     elles ne se lisent pas. */
   .welcome-subtitle{
-    font-size:12px; font-weight:700; color: var(--gold); text-transform:uppercase; letter-spacing:.18em;
-    margin-bottom:44px;
+    font-family:'Unbounded', sans-serif;
+    font-size:17px; font-weight:600; color: var(--gold); letter-spacing:-.01em;
+    margin-bottom:40px;
     animation: welcomeIn .4s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.14s;
   }
   .welcome-tagline{
@@ -376,7 +380,8 @@
   .welcome-cta:hover{ filter:brightness(1.08); transform:translateY(-1px); }
   .welcome-foot{
     position:absolute; bottom:26px; left:0; right:0; text-align:center;
-    font-size:9.5px; color:var(--win); opacity:.9; letter-spacing:.08em; text-transform:uppercase; font-weight:700;
+    font-size:11px; color:var(--chalk-dim); opacity:.85; letter-spacing:0; font-weight:600;
+    padding:0 24px;
     animation: welcomeIn .4s ease both; animation-delay:.38s;
   }
   .app-header{
@@ -555,7 +560,7 @@
   .browse-hero{ display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px; margin-bottom:20px; }
   .browse-hero .portrait{ width:80px; height:80px; font-size:22px; }
   .browse-hero .p-name{ font-family:'Unbounded'; font-weight:700; font-size:17px; color:var(--chalk); margin-top:4px; }
-  .browse-hero .p-pos{ font-size:11px; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+  .browse-hero .p-pos{ font-size:12px; color:var(--gold); font-weight:700; letter-spacing:0; }
   .browse-hero .p-club{ font-size:12px; color:var(--chalk-dim); }
   .p-physique{ display:flex; gap:8px; margin-top:8px; }
   .p-physique-item{
@@ -596,8 +601,8 @@
   }
   .tlh-trophy-date{ font-size:8px; color:var(--chalk-dim); margin-top:2px; }
   .tlh-badge{
-    display:inline-block; margin-top:5px; font-size:8px; font-weight:700; color:var(--win);
-    background: var(--win-dim); padding:2px 6px; border-radius:20px; text-transform:uppercase; letter-spacing:.03em;
+    display:inline-block; margin-top:5px; font-size:9.5px; font-weight:700; color:var(--win);
+    background: var(--win-dim); padding:2px 7px; border-radius:20px; letter-spacing:0;
   }
 
   .browse-section-label{ font-size:11px; color:var(--chalk-dim); font-weight:700; letter-spacing:.03em; margin: 18px 0 8px; }
@@ -673,10 +678,18 @@
   /* Mention de couverture : discrète, informative, jamais alarmante. */
   .season-note{ margin-top:3px; font-size:9.5px; color: var(--chalk-dim); text-align:center;
                 line-height:1.25; letter-spacing:.01em; cursor:help; }
+  /* Années de carrière d'une légende, accolées à sa ligne de description.
+     Discret : c'est un repère, pas une décoration. */
+  .marque-legende{ margin-left:7px; padding:1px 6px; border-radius:999px;
+                   background: rgba(234,179,8,.13); border:1px solid rgba(234,179,8,.3);
+                   color:#E9C46A; font-size:9.5px; font-weight:700;
+                   letter-spacing:.02em; white-space:nowrap; vertical-align:1px; }
   /* Pourquoi le duel est réduit quand une légende est en lice. */
-  .duel-avis{ margin:0 16px 10px; padding:8px 11px; border-radius:11px;
-              background: rgba(234,179,8,.08); border:1px solid rgba(234,179,8,.26);
-              color: var(--chalk-dim); font-size:11px; line-height:1.4; text-align:center; }
+  /* Une note de bas de page, pas un avertissement : elle informe sans alarmer.
+     Un liseré à gauche suffit à la rattacher au tableau qui suit. */
+  .duel-avis{ margin:0 16px 12px; padding:0 0 0 10px;
+              border-left:2px solid rgba(234,179,8,.45);
+              color: var(--chalk-dim); font-size:11px; line-height:1.45; text-align:left; }
   .compare-cols.count-3 .season-note, .compare-cols.count-4 .season-note{ font-size:8.5px; }
   .compare-cols.count-3 .season-pick, .compare-cols.count-4 .season-pick{ font-size:10.5px; padding:0 6px; min-height:34px; }
   .compare-cols.count-4 .season-pick.static{ font-size:8.5px; }
@@ -722,7 +735,7 @@
     cursor:pointer; border-bottom:1px solid var(--line);
   }
   .csel-option:last-child{ border-bottom:none; }
-  .csel-group{ padding:8px 14px 4px; font-size:9.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--gold); background: rgba(34,211,238,.06); border-bottom:1px solid var(--line); }
+  .csel-group{ padding:9px 14px 5px; font-size:11px; font-weight:700; letter-spacing:0; color:var(--gold); background: rgba(34,211,238,.06); border-bottom:1px solid var(--line); }
   .csel-hint{ display:block; font-size:10px; font-weight:500; color:var(--chalk-dim); margin-top:2px; }
   .csel-option.selected .csel-hint{ color: rgba(255,255,255,.8); }
   .csel-option:hover{ background: var(--surface); color:var(--chalk); }
@@ -847,7 +860,7 @@
   }
   .portrait.placeholder{ font-size:24px; color: var(--chalk-dim); background: var(--surface-2); border-radius:14px; box-shadow:none; }
   .col-name{ font-weight:700; font-size:12.5px; line-height:1.2; color:var(--chalk); min-height:30px; }
-  .pos-lbl{ font-size:11px; color:var(--gold); font-weight:800; text-transform:uppercase; letter-spacing:.03em; }
+  .pos-lbl{ font-size:11.5px; color:var(--gold); font-weight:700; letter-spacing:0; }
   .col-club{ font-size:9px; color:var(--chalk-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; width:100%; box-sizing:border-box; }
   .club-logo{ width:14px; height:14px; object-fit:contain; vertical-align:middle; display:inline-block; }
   .pmeta .club-logo, .p-club .club-logo{ width:15px; height:15px; }
@@ -955,7 +968,8 @@
 
   /* Tutoriel du comparatif vide */
   .tuto{ width:100%; max-width:340px; align-self:center; margin: 18px auto 6px; padding: 0 2px; }
-  .tuto-kicker{ text-align:center; font-size:9.5px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
+  /* Un intertitre se lit : ni capitales, ni interlettrage forcé. */
+  .tuto-kicker{ text-align:center; font-size:12.5px; font-weight:700; letter-spacing:0; color:var(--gold); }
   .tuto-title{ text-align:center; font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:21px; line-height:1.15; margin-top:6px; color:var(--chalk); }
   .tuto-sub{ text-align:center; font-size:12.5px; color:var(--chalk-dim); line-height:1.45; margin: 6px 8px 0; }
   .tuto-steps{ list-style:none; margin-top:16px; position:relative; padding: 6px 12px; border-radius:18px; background: rgba(22,35,74,.82); border:1px solid var(--line); }
@@ -1012,7 +1026,7 @@
   .gm-card i.s{ width:28px; height:3px; background: rgba(34,211,238,.6); }
   .gm-vs{ font-family:'Unbounded',sans-serif; font-size:7px; font-weight:800; color:#fff; width:18px; height:18px; border-radius:50%; border:1px solid rgba(255,255,255,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .gm-row{ margin-top:8px; }
-  .gm-lbl{ text-align:center; font-size:6.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color: rgba(169,207,197,.9); margin-bottom:3px; }
+  .gm-lbl{ text-align:center; font-size:7.5px; font-weight:700; letter-spacing:0; color: rgba(169,207,197,.9); margin-bottom:3px; }
   .gm-bar{ position:relative; height:5px; border-radius:3px; overflow:hidden; display:flex; background: rgba(255,255,255,.08); }
   .gm-bar .l{ width: var(--w); background: linear-gradient(90deg,#3d9be8,#45bfee); }
   .gm-bar .r{ flex:1; background: linear-gradient(90deg,#2fd88a,#29c481); }
@@ -1196,10 +1210,10 @@
           </svg>
         </div>
         <div class="welcome-name">DUELIO</div>
-        <div class="welcome-subtitle">Foot Stats</div>
+        <div class="welcome-subtitle">Qui est le meilleur&nbsp;?</div>
         <p class="welcome-tagline">Comparez vos joueurs favoris, statistique par statistique, en quelques secondes.</p>
         <button class="welcome-cta" type="button">Comparer</button>
-        <div class="welcome-foot">Football • Statistiques • Comparaison</div>
+        <div class="welcome-foot">55 000 joueurs et 40 légendes, de Pelé à Mbappé</div>
       </div>
     </div>
     <div class="welcome-half welcome-bottom">
@@ -1258,10 +1272,10 @@
           </svg>
         </div>
         <div class="welcome-name">DUELIO</div>
-        <div class="welcome-subtitle">Foot Stats</div>
+        <div class="welcome-subtitle">Qui est le meilleur&nbsp;?</div>
         <p class="welcome-tagline">Comparez vos joueurs favoris, statistique par statistique, en quelques secondes.</p>
         <button class="welcome-cta" type="button">Comparer</button>
-        <div class="welcome-foot">Football • Statistiques • Comparaison</div>
+        <div class="welcome-foot">55 000 joueurs et 40 légendes, de Pelé à Mbappé</div>
       </div>
     </div>
   </div>
@@ -1719,7 +1733,13 @@ function playerMetaHtml(p){
   if(p.posLabel) bits.push(p.posLabel);
   if(p.club) bits.push(clubHtml(p));
   bits.push(`${flagSVG(p.nation.iso)} ${p.nation.name}`);
-  return bits.join(' · ');
+  // Un joueur retiré depuis longtemps n'a ni la même profondeur de données ni
+  // le même statut qu'un joueur en activité : l'annoncer évite la surprise
+  // devant une fiche qui n'affiche que des matchs et des buts.
+  const ligne = bits.join(' · ');
+  return p.estLegende
+    ? `${ligne}<span class="marque-legende">${p.span ? p.span[0] + '–' + p.span[1] : 'légende'}</span>`
+    : ligne;
 }
 function clubHtml(p){
   if(!p.club) return '';
@@ -3850,6 +3870,14 @@ function construireLegende(l, rang){
   for(const a of annees){
     if(!vedette || parSaison[a].buts > parSaison[vedette].buts) vedette = a;
   }
+  /* Le club annoncé sous le nom est celui où il a le plus joué, pas le dernier
+   * ni celui de sa meilleure saison. Zidane s'affichait « Bordeaux » parce que
+   * c'est là qu'il a le plus marqué, et Pelé « New York Cosmos » parce que c'est
+   * là qu'il a fini. Un joueur est du club où sa carrière s'est faite. */
+  let clubPrincipal = dernier ? dernier.club : null, plusDeMatchs = -1;
+  for(const c of (l.clubs || [])){
+    if((c.m || 0) > plusDeMatchs){ plusDeMatchs = c.m || 0; clubPrincipal = c.club; }
+  }
   return {
     id: LEGENDE_ID_BASE + rang,
     apiId: null,
@@ -3859,7 +3887,7 @@ function construireLegende(l, rang){
     name: l.n,
     pos: code,
     posLabel: POS_LABEL[code] || '',
-    club: dernier ? dernier.club : null,
+    club: clubPrincipal,
     clubLogo: null,
     age: l.deces ? null : (new Date().getFullYear() - l.naissance),
     birthYear: l.naissance,
@@ -4626,6 +4654,12 @@ let pickerPos = 'ALL';
 let activeTab = 'stats'; // 'stats' | 'trophies'
 let teamScope = 'club'; // 'club' (par défaut, comme les tableaux de saison de référence) | 'all' (club + sélection) | 'nation' | 'friendly' (amicaux seulement)
 let compareBasis = 'current'; // dérivé de compareMode (voir renderAll) : 'current' | 'season' | 'age' | 'seasonCumul' | 'ageCumul' | 'career' | 'nation'
+let periodeChoisie = false;   // vrai dès que l'utilisateur a touché au sélecteur de période
+/* Noms proposés quand le sélecteur s'ouvre sans recherche. Moitié d'aujourd'hui,
+   moitié légendes : c'est aussi la façon la plus courte de faire comprendre que
+   les deux cohabitent dans la même recherche. */
+const NOMS_AMORCE = ['Mbappé', 'Pelé', 'Haaland', 'Maradona', 'Bellingham',
+                     'Zidane', 'Salah', 'Ronaldinho'];
 let compareMode = 'shown';    // 'shown' (saison affichée de chacun) | 'season' (une même saison) | 'age' (cumul jusqu'à un âge) | 'until' (cumul jusqu'à une saison) | 'career'
 let compactView = false;
 let compareAgeValue = null;
@@ -4721,6 +4755,10 @@ function applyRealTrophies(p, trophies){
 }
 const trophyLoading = {};
 function trophyValue(fp, key){
+  // Une légende connaît ses sélections et ses buts internationaux — ils ont été
+  // saisis avec sa carrière — mais pas son palmarès en titres. Renvoyer 0 pour
+  // les titres de Zidane serait un mensonge : c'est « — » qu'il faut afficher.
+  if(fp.estLegende) return (key === 'caps' || key === 'intGoals') ? (fp[key] || 0) : null;
   if(!fp.apiId) return fp[key] || 0;               // joueurs de la démo
   const real = PLAYERS.find(x=>x.id===fp.id) || fp;
   if(key==='caps' || key==='intGoals'){ const t = nationTotals(real); return (t && t.caps > 0) ? t[key] : null; }
@@ -4729,6 +4767,7 @@ function trophyValue(fp, key){
 }
 // Texte d'une valeur de palmarès / sélection inconnue : « … » pendant un chargement, « — » si la base n'a rien
 function trophyPlaceholder(fp, key){
+  if(fp.estLegende) return '—';   // rien à charger : on sait déjà qu'on ne l'a pas
   const real = PLAYERS.find(x=>x.id===fp.id) || fp;
   if(key==='caps' || key==='intGoals') return (careerLoading[real.apiId] || !real.careerLoaded) && !real._careerFailed && !real.needsStats ? '…' : '—';
   return trophyLoading[real.apiId] || !real.trophiesLoaded ? '…' : '—';
@@ -4890,6 +4929,18 @@ function renderAll(){
     compareMode = 'career';
     compareBasis = 'career';
   }
+  /* Une légende arrive dans le duel : on se met en carrière par défaut. En mode
+   * « Saison », chacun affiche la sienne — la meilleure pour une légende, la
+   * courante pour un joueur d'aujourd'hui — et on opposait donc le Zidane de
+   * 1995-96 au Mbappé de 2025-26. Les deux colonnes portent bien leur étiquette,
+   * mais le rapprochement n'a aucun sens pour qui ouvre l'écran. La carrière,
+   * elle, se compare toujours. L'utilisateur reste libre de changer, et dès
+   * qu'il y touche on ne décide plus à sa place. */
+  else if(duelAvecLegende(filled) && !periodeChoisie && compareMode === 'shown'
+          && modeAvail.career){
+    compareMode = 'career';
+    compareBasis = 'career';
+  }
   if(compareMode==='career') compareSeasonValue = seasonCumulOptions[0];
   if(compareBasis==='age' && (!compareAgeValue || !ageOptions.includes(compareAgeValue))) compareAgeValue = ageOptions.length ? ageOptions[ageOptions.length-1] : null;
   if(compareBasis==='ageCumul' && (!compareAgeValue || !ageCumulOptions.includes(compareAgeValue))) compareAgeValue = ageCumulOptions.length ? ageCumulOptions[ageCumulOptions.length-1] : null;
@@ -4978,11 +5029,10 @@ function renderAll(){
       const tronques = filled.filter(p => p.estLegende && p.saisonsCompletes === false
                                        && compareBasis !== 'career');
       const bouts = [];
-      if(manquantes) bouts.push(`Comparaison limitée aux statistiques relevées à l'époque des légendes.`);
+      if(manquantes) bouts.push(`À cette époque, on ne relevait que les matchs et les buts.`);
       for(const p of tronques){
-        bouts.push(`Le détail par saison de ${escapeHtml(p.name)} ne couvre pas toute sa carrière`
-                   + (p.saisonsNote ? ` — ${escapeHtml(p.saisonsNote)}` : '')
-                   + ` : les cumuls sont sous-estimés.`);
+        const quoi = p.saisonsNote ? p.saisonsNote.replace(/\s*non ventilé.*$/i, '') : 'une partie de sa carrière';
+        bouts.push(`Aucune source ne ventile ${escapeHtml(quoi)} par saison : ce cumul les ignore.`);
       }
       if(bouts.length) avis = `<div class="duel-avis">${bouts.join(' ')}</div>`;
     }
@@ -5112,6 +5162,7 @@ function renderAll(){
   content.querySelectorAll('.period-btn[data-mode]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const mode = btn.dataset.mode;
+      periodeChoisie = true;   // à partir d'ici, on ne décide plus à sa place
       if(mode==='shown' || mode==='career'){ compareMode = mode; renderAll(); return; }
       if(mode==='age'){
         const list = realMode ? ageCumulOptions : ageOptions;
@@ -6365,7 +6416,21 @@ function renderPickerList(){
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
         <div>Tapez le nom d'un joueur<small>Actuel ou légende : Mbappé, Zidane, Ronaldinho…</small></div>
       </div>
-      ${recents.length ? `<div class="list-section-title">Consultés récemment</div>${recents.map(p=>pickerItemHtml(p, usedApi.includes(p.apiId))).join('')}` : ''}`;
+      ${recents.length ? `<div class="list-section-title">Consultés récemment</div>${recents.map(p=>pickerItemHtml(p, usedApi.includes(p.apiId))).join('')}` : ''}
+      <div class="list-section-title">Quelques noms pour commencer</div>
+      <div class="duel-chips">${NOMS_AMORCE.map(n=>
+        `<button class="duel-chip" type="button" data-amorce="${escapeHtml(n)}">${escapeHtml(n)}</button>`).join('')}</div>`;
+    // Un écran vide est une invitation, pas une attente : ces noms évitent
+    // la page blanche à qui ouvre le sélecteur sans idée précise.
+    list.querySelectorAll('[data-amorce]').forEach(el=>{
+      el.addEventListener('click', ()=>{
+        const champ = document.getElementById('pickerSearch');
+        champ.value = el.dataset.amorce;
+        pickerSearch = el.dataset.amorce;
+        document.getElementById('pickerSearchField').classList.add('has-value');
+        champ.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+    });
     list.querySelectorAll('.picker-item:not(.disabled)').forEach(el=>{
       el.addEventListener('click', ()=>{
         const p = recents.find(r=>r.apiId===parseInt(el.dataset.api,10));
@@ -6656,9 +6721,14 @@ function renderBrowse(){
     // Vrai joueur : chiffres de la saison en club (comme le libellé « Saison 2005-06 · FC Barcelona »)
     // Une légende porte ses chiffres dans statsLegende, pas à la racine : sans ce
     // cas, la fiche affichait « undefined » sur chaque ligne.
-    // Pour une légende, on montre ce que la période choisie désigne vraiment :
-    // la saison retenue si elle en a une, son total de carrière sinon.
-    const pv = p.estLegende ? { ...p, ...((getStatSource(p) || {}).src || p.statsLegende) }
+    // La fiche d'un joueur est indépendante du comparatif : elle montre la
+    // saison affichée sous son nom, pas la période choisie dans le duel. Sans
+    // cela, la fiche de Pelé annonçait « Saison 1958-59 » au-dessus de ses
+    // 723 matchs de carrière.
+    const blocLegende = p.estLegende
+      ? ((p.statsBySeason && p.statsBySeason[p.seasonShown]) || p.statsLegende)
+      : null;
+    const pv = blocLegende ? { ...p, ...blocLegende }
              : (p.apiId && p.split && p.split.club) ? { ...p, ...p.split.club } : p;
     const statGroupsHtml = BROWSE_STAT_GROUPS
       .filter(g => g.label !== 'Gardien' || p.pos === 'GK')
@@ -6742,7 +6812,7 @@ function renderBrowse(){
             ${p.height ? `<span class="p-physique-item">📏 ${p.height} cm</span>` : ''}
             ${p.preferredFoot ? `<span class="p-physique-item">🦵 ${p.preferredFoot}</span>` : ''}
           </div>` : ''}
-          ${p.apiId && p.seasonsAvailable ? `<div class="detail-season">${seasonPickHtml(p, { detail:true })}</div>` : ''}
+          ${(p.apiId || p.estLegende) && p.seasonsAvailable ? `<div class="detail-season">${seasonPickHtml(p, { detail:true })}</div>` : ''}
           <div class="career-progress" id="careerProgress">${careerProgressHtml()}</div>
         </div>
         <div class="browse-section-label">Parcours en club &amp; transferts</div>
