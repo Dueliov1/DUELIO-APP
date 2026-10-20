@@ -1103,7 +1103,10 @@
    * connaissait qu'un. L'écart, s'il est net, se dit en chiffres : un petit
    * « +N % » à côté de la valeur. */
   .dr-val.lead{ background: var(--win); border-color: var(--win); color:#04231a; }
-  .dr-val .ecart{ display:block; font-size:9.5px; font-weight:700; opacity:.72; margin-top:1px; font-family:'Plus Jakarta Sans',sans-serif; }
+  /* La cellule est une boîte flex : l'écart doit occuper toute la largeur
+   * pour passer SOUS la valeur, et non se coller à côté. */
+  .dr-val{ flex-wrap:wrap; line-height:1.1; align-content:center; }
+  .dr-val .ecart{ flex-basis:100%; font-size:9px; font-weight:700; opacity:.7; margin-top:1px; line-height:1; font-family:'Plus Jakarta Sans',sans-serif; }
   .dr-val.unknown{ color: var(--chalk-dim); font-weight:600; font-size:12px; font-family:'Plus Jakarta Sans',sans-serif; }
 
   /* Tutoriel du comparatif vide */
@@ -5515,7 +5518,8 @@ function renderAll(){
       // forcément les cumuls. Le dire vaut mieux que de laisser croire au chiffre.
       // …et seulement quand on cumule : sur une saison précise, rien n'est ignoré.
       const cumule = compareBasis === 'ageCumul' || compareBasis === 'seasonCumul';
-      const tronques = filled.filter(p => p.estLegende && p.saisonsCompletes === false && cumule);
+      // …et seulement si le cumul ne couvre pas tout : couvrant tout, il rend le total validé, Cannes compris.
+      const tronques = filled.filter(p => p.estLegende && p.saisonsCompletes === false && cumule && !getStatSource(p).career);
       const bouts = [];
       if(manquantes) bouts.push(`Pour cette époque, seuls les matchs et les buts sont connus.`);
       for(const p of tronques){
