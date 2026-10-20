@@ -1,0 +1,350 @@
+{
+  "curseur": 0,
+  "passages": [
+    {
+      "quand": "2026-10-20T07:27:19.884Z",
+      "depart": 0,
+      "joueurs_vus": 5000,
+      "joueurs_completes": 27,
+      "saisons_ajoutees": 76,
+      "blocs_ajoutes": 224,
+      "joueurs_sans_manque": 4958,
+      "echecs": 1,
+      "exemples": [
+        {
+          "nom": "B. Ramselaar",
+          "id": 238,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "G. Buffon",
+          "id": 254,
+          "ajoutees": 1,
+          "annees": [
+            1998
+          ]
+        },
+        {
+          "nom": "Ö. Bayram",
+          "id": 431,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "Juan Jesus",
+          "id": 774,
+          "ajoutees": 10,
+          "annees": [
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015
+          ]
+        },
+        {
+          "nom": "M. Rojo",
+          "id": 890,
+          "ajoutees": 14,
+          "annees": [
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013
+          ]
+        },
+        {
+          "nom": "M. Sanson",
+          "id": 1914,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "E. Rakip",
+          "id": 1964,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "Y. Kobayashi",
+          "id": 2602,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "O. Etebo",
+          "id": 2774,
+          "ajoutees": 4,
+          "annees": [
+            2013,
+            2014,
+            2015,
+            2016
+          ]
+        },
+        {
+          "nom": "J. Gbamin",
+          "id": 3240,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "Á. Martino",
+          "id": 5641,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "L. Milivojević",
+          "id": 18852,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "R. Fraser",
+          "id": 18873,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "D. Ings",
+          "id": 18955,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "Camarasa",
+          "id": 18998,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "T. Cairney",
+          "id": 19025,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "F. Sotoca",
+          "id": 20761,
+          "ajoutees": 7,
+          "annees": [
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017
+          ]
+        },
+        {
+          "nom": "B. Mendy",
+          "id": 21087,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "G. Ferrari",
+          "id": 30523,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "S. Sensi",
+          "id": 30535,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "T. Wellenreuther",
+          "id": 36776,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "Gorosabel",
+          "id": 47299,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "Illarramendi",
+          "id": 47310,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "E. Belözoğlu",
+          "id": 49849,
+          "ajoutees": 4,
+          "annees": [
+            1996,
+            1997,
+            1998,
+            1999
+          ]
+        },
+        {
+          "nom": "E. Višća",
+          "id": 49860,
+          "ajoutees": 1,
+          "annees": [
+            2026
+          ]
+        }
+      ],
+      "exemples_sans_suite": [
+        {
+          "nom": "Wallace",
+          "id": 1840,
+          "annees": [
+            2012
+          ]
+        },
+        {
+          "nom": "L. Díaz",
+          "id": 2489,
+          "annees": [
+            2013,
+            2014
+          ]
+        },
+        {
+          "nom": "Jean Irmer",
+          "id": 10065,
+          "annees": [
+            2011
+          ]
+        },
+        {
+          "nom": "Vinícius Lopes",
+          "id": 10367,
+          "annees": [
+            2018
+          ]
+        },
+        {
+          "nom": "Rúben Lameiras",
+          "id": 20405,
+          "annees": [
+            2013,
+            2014
+          ]
+        },
+        {
+          "nom": "D. Kulusevski",
+          "id": 30435,
+          "annees": [
+            2026
+          ]
+        },
+        {
+          "nom": "João Palhinha",
+          "id": 41104,
+          "annees": [
+            2012
+          ]
+        },
+        {
+          "nom": "Rúben Semedo",
+          "id": 41173,
+          "annees": [
+            2012
+          ]
+        },
+        {
+          "nom": "Jonathan Buatu",
+          "id": 41174,
+          "annees": [
+            2013
+          ]
+        },
+        {
+          "nom": "Charles",
+          "id": 41259,
+          "annees": [
+            2012
+          ]
+        },
+        {
+          "nom": "Helton Leite",
+          "id": 41293,
+          "annees": [
+            2008
+          ]
+        },
+        {
+          "nom": "Nuno Santos",
+          "id": 41587,
+          "annees": [
+            2014
+          ]
+        },
+        {
+          "nom": "Matheus Pereira",
+          "id": 195091,
+          "annees": [
+            2019
+          ]
+        },
+        {
+          "nom": "André Luiz",
+          "id": 325717,
+          "annees": [
+            2020
+          ]
+        }
+      ],
+      "appels": 5092,
+      "arrive_au_rang": 5000,
+      "termine": true
+    }
+  ],
+  "cumul": {
+    "joueurs_completes": 27,
+    "saisons_ajoutees": 76,
+    "blocs_ajoutes": 224,
+    "joueurs_sans_manque": 4958,
+    "echecs": 1
+  }
+}
