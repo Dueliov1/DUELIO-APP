@@ -1,0 +1,64 @@
+name: Sonde palmarès
+
+# Pourquoi des « ? » dans les saisons du palmarès comparé : on regarde la
+# réponse brute de /trophies, entrée par entrée, pour deux joueurs.
+
+on:
+  workflow_dispatch:
+    inputs:
+      joueurs:
+        description: "Identifiants API séparés par des virgules"
+        required: false
+        default: "1100,278"
+
+jobs:
+  sonde:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lire les palmarès bruts
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          JOUEURS: ${{ github.event.inputs.joueurs }}
+        run: |
+          cat > sonde.mjs <<'EOF'
+          const key = process.env.API_FOOTBALL_KEY;
+          if (!key) { console.log("ERREUR : secret API_FOOTBALL_KEY absent."); process.exit(1); }
+          const ids = (process.env.JOUEURS || "1100,278").split(",").map(s=>s.trim()).filter(Boolean);
+
+          for (const id of ids) {
+            const r = await fetch(`https://v3.football.api-sports.io/trophies?player=${id}`,
+                                  { headers: { "x-apisports-key": key } });
+            const j = await r.json().catch(()=>null);
+            const errs = j && j.errors;
+            const hasErr = errs && (Array.isArray(errs) ? errs.length : Object.keys(errs).length);
+            if (hasErr) { console.log(`joueur ${id} : REFUSE ${JSON.stringify(errs)}`); continue; }
+
+            const lignes = j.response || [];
+            console.log(`\n=== joueur ${id} : ${lignes.length} entrées ===`);
+
+            let sansSaison = 0;
+            const parCle = new Map();
+            for (const t of lignes) {
+              const saison = t.season;
+              if (saison === null || saison === undefined || String(saison).trim() === "") sansSaison++;
+              const cle = `${t.league}|${t.place}`;
+              if (!parCle.has(cle)) parCle.set(cle, []);
+              parCle.get(cle).push(JSON.stringify(saison));
+            }
+            console.log(`  entrées sans saison exploitable : ${sansSaison}`);
+
+            console.log("  --- toutes les entrées, telles que l'API les renvoie ---");
+            for (const t of lignes) {
+              console.log(`    league=${JSON.stringify(t.league)} country=${JSON.stringify(t.country)} ` +
+                          `season=${JSON.stringify(t.season)} place=${JSON.stringify(t.place)}`);
+            }
+
+            console.log("  --- regroupé par compétition + résultat ---");
+            for (const [cle, saisons] of parCle) {
+              const uniques = new Set(saisons);
+              const marque = saisons.length !== uniques.size ? "  ← DOUBLONS" : "";
+              console.log(`    ${cle} : ${saisons.length} entrée(s) [${saisons.join(", ")}]${marque}`);
+            }
+          }
+          EOF
+          node sonde.mjs
