@@ -12,14 +12,14 @@
      au manifeste plus bas, ces balises doivent donc être écrites en dur dans la page.
      Sans elles, un lien Duelio partagé n'affiche rien du tout : pas d'image, pas de
      titre, pas de description. -->
-<link rel="canonical" href="https://dueliov2.pages.dev/">
+<link rel="canonical" href="https://duelio-app.bensouna-ahmed.workers.dev/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Duelio">
 <meta property="og:locale" content="fr_FR">
-<meta property="og:url" content="https://dueliov2.pages.dev/">
+<meta property="og:url" content="https://duelio-app.bensouna-ahmed.workers.dev/">
 <meta property="og:title" content="Duelio — Qui est le meilleur ?">
 <meta property="og:description" content="Deux joueurs face à face : les chiffres tranchent le débat. 55 000 joueurs, carrières complètes, et une image prête pour vos stories.">
-<meta property="og:image" content="https://dueliov2.pages.dev/og-image.png">
+<meta property="og:image" content="https://duelio-app.bensouna-ahmed.workers.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -27,7 +27,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Duelio — Qui est le meilleur ?">
 <meta name="twitter:description" content="Deux joueurs face à face : les chiffres tranchent le débat. 55 000 joueurs, carrières complètes.">
-<meta name="twitter:image" content="https://dueliov2.pages.dev/og-image.png">
+<meta name="twitter:image" content="https://duelio-app.bensouna-ahmed.workers.dev/og-image.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -3425,10 +3425,12 @@ function seasonLabel(season){
 
 // Adresse de l'application, pour le texte qui accompagne une image partagée.
 /* L'adresse publique : celle que portent les liens partagés et la prévisualisation.
- * Les données, elles, restent sur workers.dev, qui n'est qu'un entrepôt.
- * Le jour où duelio.app sera branché sur Pages, c'est ici que ça se change —
- * et dans les balises og:url / canonical de l'en-tête, qui sont statiques. */
-const SITE_URL = 'https://dueliov2.pages.dev/';
+ * C'est le déploiement Workers qui reçoit chaque mise à jour ; le projet Pages
+ * (dueliov2.pages.dev) est une vieille copie qui ne se met plus à jour, et il
+ * a égaré tout le monde pendant une journée. Le jour où duelio.app sera
+ * branché, c'est ici que ça se change — et dans les balises og:url /
+ * canonical de l'en-tête, qui sont statiques. */
+const SITE_URL = 'https://duelio-app.bensouna-ahmed.workers.dev/';
 // Sans adresse, celui qui reçoit l'image n'a aucun moyen de retrouver Duelio : l'image
 // circule, l'application non. On nomme aussi les deux joueurs, parce qu'un duel nommé
 // donne envie de cliquer bien plus qu'un « mon duel ».
