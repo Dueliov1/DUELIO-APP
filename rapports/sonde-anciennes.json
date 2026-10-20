@@ -1,0 +1,1129 @@
+{
+  "quand": "2026-10-20T07:46:23.165Z",
+  "cas": [
+    {
+      "id": 51070,
+      "nom": "Z. Ibrahimović",
+      "vrai": 1999,
+      "ou": "Malmö puis Ajax",
+      "annoncees": [
+        2002,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "premiere_annoncee": 2002,
+      "direct": [
+        {
+          "annee": 1999,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        },
+        {
+          "annee": 2000,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        },
+        {
+          "annee": 2001,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        }
+      ],
+      "clubs": [
+        {
+          "equipe": "Sweden",
+          "saisons": [
+            2002,
+            2004,
+            2006,
+            2008,
+            2012,
+            2016,
+            2023
+          ]
+        },
+        {
+          "equipe": "AC Milan",
+          "saisons": [
+            2010,
+            2011,
+            2019,
+            2020,
+            2021,
+            2022
+          ]
+        },
+        {
+          "equipe": "Los Angeles Galaxy",
+          "saisons": [
+            2018
+          ]
+        },
+        {
+          "equipe": "Manchester United",
+          "saisons": [
+            2016,
+            2017
+          ]
+        },
+        {
+          "equipe": "Paris Saint Germain",
+          "saisons": [
+            2012,
+            2013,
+            2014,
+            2015
+          ]
+        },
+        {
+          "equipe": "Barcelona",
+          "saisons": [
+            2009
+          ]
+        },
+        {
+          "equipe": "Inter",
+          "saisons": [
+            2006,
+            2007,
+            2008
+          ]
+        },
+        {
+          "equipe": "Juventus",
+          "saisons": [
+            2005
+          ]
+        }
+      ],
+      "club_plus_ancien": 2002,
+      "transferts": [
+        {
+          "date": "2020-01-02",
+          "de": "Los Angeles Galaxy",
+          "vers": "AC Milan"
+        },
+        {
+          "date": "2018-03-23",
+          "de": "Manchester United",
+          "vers": "Los Angeles Galaxy"
+        },
+        {
+          "date": "2016-07-01",
+          "de": "Paris Saint Germain",
+          "vers": "Manchester United"
+        },
+        {
+          "date": "2012-07-18",
+          "de": "AC Milan",
+          "vers": "Paris Saint Germain"
+        },
+        {
+          "date": "2011-07-01",
+          "de": "Barcelona",
+          "vers": "AC Milan"
+        },
+        {
+          "date": "2010-08-28",
+          "de": "Barcelona",
+          "vers": "AC Milan"
+        },
+        {
+          "date": "2009-07-28",
+          "de": "Inter",
+          "vers": "Barcelona"
+        },
+        {
+          "date": "2006-08-01",
+          "de": "Juventus",
+          "vers": "Inter"
+        },
+        {
+          "date": "2004-08-01",
+          "de": "Ajax",
+          "vers": "Juventus"
+        },
+        {
+          "date": "2001-08-01",
+          "de": "Malmo FF",
+          "vers": "Ajax"
+        }
+      ],
+      "transfert_plus_ancien": "2001-08-01"
+    },
+    {
+      "id": 254,
+      "nom": "G. Buffon",
+      "vrai": 1995,
+      "ou": "Parme",
+      "annoncees": [
+        1998,
+        2000,
+        2002,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023
+      ],
+      "premiere_annoncee": 1998,
+      "direct": [
+        {
+          "annee": 1995,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        },
+        {
+          "annee": 1996,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        },
+        {
+          "annee": 1997,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        }
+      ],
+      "clubs": [
+        {
+          "equipe": "Parma",
+          "saisons": [
+            2021,
+            2022,
+            2023
+          ]
+        },
+        {
+          "equipe": "Juventus",
+          "saisons": [
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2019,
+            2020
+          ]
+        },
+        {
+          "equipe": "Paris Saint Germain",
+          "saisons": [
+            2018
+          ]
+        },
+        {
+          "equipe": "Italy",
+          "saisons": [
+            1998,
+            2000,
+            2002,
+            2004,
+            2006,
+            2008,
+            2010,
+            2012,
+            2014,
+            2016
+          ]
+        }
+      ],
+      "club_plus_ancien": 1998,
+      "transferts": [
+        {
+          "date": "2021-07-01",
+          "de": "Juventus",
+          "vers": "Parma"
+        },
+        {
+          "date": "2019-07-04",
+          "de": "Paris Saint Germain",
+          "vers": "Juventus"
+        },
+        {
+          "date": "2018-07-06",
+          "de": "Juventus",
+          "vers": "Paris Saint Germain"
+        },
+        {
+          "date": "2001-07-01",
+          "de": "Parma",
+          "vers": "Juventus"
+        }
+      ],
+      "transfert_plus_ancien": "2001-07-01"
+    },
+    {
+      "id": 516,
+      "nom": "A. Robben",
+      "vrai": 2000,
+      "ou": "Groningue puis PSV",
+      "annoncees": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021
+      ],
+      "premiere_annoncee": 2003,
+      "direct": [
+        {
+          "annee": 2000,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        },
+        {
+          "annee": 2001,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        },
+        {
+          "annee": 2002,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        }
+      ],
+      "clubs": [
+        {
+          "equipe": "Groningen",
+          "saisons": [
+            2020,
+            2021
+          ]
+        },
+        {
+          "equipe": "Bayern München",
+          "saisons": [
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019
+          ]
+        },
+        {
+          "equipe": "Netherlands",
+          "saisons": [
+            2003,
+            2004,
+            2005,
+            2006,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018
+          ]
+        },
+        {
+          "equipe": "Real Madrid",
+          "saisons": [
+            2007,
+            2008
+          ]
+        },
+        {
+          "equipe": "Chelsea",
+          "saisons": [
+            2004,
+            2005,
+            2006
+          ]
+        }
+      ],
+      "club_plus_ancien": 2003,
+      "transferts": [
+        {
+          "date": "2020-07-01",
+          "de": "Bayern Munich",
+          "vers": "Groningen"
+        },
+        {
+          "date": "2009-08-28",
+          "de": "Real Madrid",
+          "vers": "Bayern Munich"
+        },
+        {
+          "date": "2007-08-01",
+          "de": "Chelsea",
+          "vers": "Real Madrid"
+        },
+        {
+          "date": "2004-08-01",
+          "de": "PSV Eindhoven",
+          "vers": "Chelsea"
+        },
+        {
+          "date": "2002-07-01",
+          "de": "Groningen",
+          "vers": "PSV Eindhoven"
+        }
+      ],
+      "transfert_plus_ancien": "2002-07-01"
+    },
+    {
+      "id": 754,
+      "nom": "L. Modrić",
+      "vrai": 2003,
+      "ou": "Zrinjski puis Dinamo Zagreb",
+      "annoncees": [
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "premiere_annoncee": 2005,
+      "direct": [
+        {
+          "annee": 2003,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        },
+        {
+          "annee": 2004,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        }
+      ],
+      "clubs": [
+        {
+          "equipe": "Croatia",
+          "saisons": [
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2026
+          ]
+        },
+        {
+          "equipe": "AC Milan",
+          "saisons": [
+            2025,
+            2026
+          ]
+        },
+        {
+          "equipe": "Real Madrid",
+          "saisons": [
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024
+          ]
+        },
+        {
+          "equipe": "Tottenham",
+          "saisons": [
+            2008,
+            2009,
+            2010,
+            2011
+          ]
+        },
+        {
+          "equipe": "Dinamo Zagreb",
+          "saisons": [
+            2005,
+            2006,
+            2007
+          ]
+        }
+      ],
+      "club_plus_ancien": 2005,
+      "transferts": [
+        {
+          "date": "2012-08-27",
+          "de": "Tottenham",
+          "vers": "Real Madrid"
+        },
+        {
+          "date": "2008-08-01",
+          "de": "Dinamo Zagreb",
+          "vers": "Tottenham"
+        },
+        {
+          "date": "2004-08-01",
+          "de": "Dinamo Zagreb",
+          "vers": "Inter Zapresic"
+        },
+        {
+          "date": "2003-08-01",
+          "de": "Dinamo Zagreb",
+          "vers": "Zrinjski"
+        },
+        {
+          "date": "2025-07-14",
+          "de": "Real Madrid",
+          "vers": "AC Milan"
+        },
+        {
+          "date": "2025-07-12",
+          "de": "Real Madrid",
+          "vers": "AC Milan"
+        },
+        {
+          "date": "2026-06-29",
+          "de": "AC Milan",
+          "vers": "Modric Luka"
+        }
+      ],
+      "transfert_plus_ancien": "2003-08-01"
+    },
+    {
+      "id": 515,
+      "nom": "F. Ribéry",
+      "vrai": 2002,
+      "ou": "Boulogne puis Metz",
+      "annoncees": [
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022
+      ],
+      "premiere_annoncee": 2004,
+      "direct": [
+        {
+          "annee": 2002,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        },
+        {
+          "annee": 2003,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        }
+      ],
+      "clubs": [
+        {
+          "equipe": "Salernitana",
+          "saisons": [
+            2021,
+            2022
+          ]
+        },
+        {
+          "equipe": "Fiorentina",
+          "saisons": [
+            2019,
+            2020
+          ]
+        },
+        {
+          "equipe": "Bayern München",
+          "saisons": [
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018
+          ]
+        },
+        {
+          "equipe": "France",
+          "saisons": [
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014
+          ]
+        },
+        {
+          "equipe": "Marseille",
+          "saisons": [
+            2005,
+            2006
+          ]
+        },
+        {
+          "equipe": "Galatasaray",
+          "saisons": [
+            2004
+          ]
+        }
+      ],
+      "club_plus_ancien": 2004,
+      "transferts": [
+        {
+          "date": "2021-09-11",
+          "de": "Fiorentina",
+          "vers": "Salernitana"
+        },
+        {
+          "date": "2019-08-21",
+          "de": "Bayern Munich",
+          "vers": "Fiorentina"
+        },
+        {
+          "date": "2007-07-01",
+          "de": "Marseille",
+          "vers": "Bayern Munich"
+        },
+        {
+          "date": "2005-07-01",
+          "de": "Galatasaray",
+          "vers": "Marseille"
+        },
+        {
+          "date": "2005-01-01",
+          "de": "Metz",
+          "vers": "Galatasaray"
+        }
+      ],
+      "transfert_plus_ancien": "2005-01-01"
+    },
+    {
+      "id": 33243,
+      "nom": "A. Iniesta",
+      "vrai": 2002,
+      "ou": "Barcelone",
+      "annoncees": [
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024
+      ],
+      "premiere_annoncee": 2003,
+      "direct": [
+        {
+          "annee": 2002,
+          "repond": false,
+          "blocs": 0,
+          "equipes": [],
+          "matchs": 0,
+          "buts": 0
+        }
+      ],
+      "clubs": [
+        {
+          "equipe": "Emirates Club",
+          "saisons": [
+            2023,
+            2024
+          ]
+        },
+        {
+          "equipe": "Vissel Kobe",
+          "saisons": [
+            2018,
+            2019,
+            2020,
+            2021,
+            2022
+          ]
+        },
+        {
+          "equipe": "Spain",
+          "saisons": [
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018
+          ]
+        },
+        {
+          "equipe": "Barcelona",
+          "saisons": [
+            2003,
+            2004,
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017
+          ]
+        }
+      ],
+      "club_plus_ancien": 2003,
+      "transferts": [
+        {
+          "date": "2023-08-08",
+          "de": "Vissel Kobe",
+          "vers": "Emirates Club"
+        },
+        {
+          "date": "2018-07-01",
+          "de": "Barcelona",
+          "vers": "Vissel Kobe"
+        },
+        {
+          "date": "2024-10-06",
+          "de": "Emirates Club",
+          "vers": "Iniesta Andres"
+        }
+      ],
+      "transfert_plus_ancien": "2018-07-01"
+    },
+    {
+      "id": 874,
+      "nom": "Cristiano Ronaldo",
+      "vrai": 2002,
+      "ou": "Sporting",
+      "annoncees": [
+        2002,
+        2003,
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "premiere_annoncee": 2002,
+      "direct": [],
+      "clubs": [
+        {
+          "equipe": "Portugal",
+          "saisons": [
+            2003,
+            2004,
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2020,
+            2021,
+            2022,
+            2023,
+            2024,
+            2026
+          ]
+        },
+        {
+          "equipe": "Al-Nassr",
+          "saisons": [
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ]
+        },
+        {
+          "equipe": "Manchester United",
+          "saisons": [
+            2003,
+            2004,
+            2005,
+            2006,
+            2007,
+            2008,
+            2021
+          ]
+        },
+        {
+          "equipe": "Juventus",
+          "saisons": [
+            2018,
+            2019,
+            2020
+          ]
+        },
+        {
+          "equipe": "Real Madrid",
+          "saisons": [
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017
+          ]
+        },
+        {
+          "equipe": "Sporting CP",
+          "saisons": [
+            2002
+          ]
+        }
+      ],
+      "club_plus_ancien": 2002,
+      "transferts": [
+        {
+          "date": "2021-08-31",
+          "de": "Juventus",
+          "vers": "Manchester United"
+        },
+        {
+          "date": "2018-07-10",
+          "de": "Real Madrid",
+          "vers": "Juventus"
+        },
+        {
+          "date": "2009-07-01",
+          "de": "Manchester United",
+          "vers": "Real Madrid"
+        },
+        {
+          "date": "2003-07-01",
+          "de": "Sporting CP",
+          "vers": "Manchester United"
+        }
+      ],
+      "transfert_plus_ancien": "2003-07-01"
+    },
+    {
+      "id": 154,
+      "nom": "L. Messi",
+      "vrai": 2004,
+      "ou": "Barcelone",
+      "annoncees": [
+        2004,
+        2005,
+        2006,
+        2007,
+        2008,
+        2009,
+        2010,
+        2011,
+        2012,
+        2013,
+        2014,
+        2015,
+        2016,
+        2017,
+        2018,
+        2019,
+        2020,
+        2021,
+        2022,
+        2023,
+        2024,
+        2025,
+        2026
+      ],
+      "premiere_annoncee": 2004,
+      "direct": [],
+      "clubs": [
+        {
+          "equipe": "Argentina",
+          "saisons": [
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026
+          ]
+        },
+        {
+          "equipe": "Inter Miami",
+          "saisons": [
+            2023,
+            2024,
+            2025,
+            2026
+          ]
+        },
+        {
+          "equipe": "Paris Saint Germain",
+          "saisons": [
+            2021,
+            2022
+          ]
+        },
+        {
+          "equipe": "Barcelona",
+          "saisons": [
+            2004,
+            2005,
+            2006,
+            2007,
+            2008,
+            2009,
+            2010,
+            2011,
+            2012,
+            2013,
+            2014,
+            2015,
+            2016,
+            2017,
+            2018,
+            2019,
+            2020
+          ]
+        },
+        {
+          "equipe": "Argentina U23",
+          "saisons": [
+            2008
+          ]
+        }
+      ],
+      "club_plus_ancien": 2004,
+      "transferts": [
+        {
+          "date": "2023-07-15",
+          "de": "Paris Saint Germain",
+          "vers": "Inter Miami"
+        },
+        {
+          "date": "2021-08-10",
+          "de": "Barcelona",
+          "vers": "Paris Saint Germain"
+        }
+      ],
+      "transfert_plus_ancien": "2021-08-10"
+    }
+  ],
+  "verdict": {
+    "appels": 38,
+    "joueurs_testes": 8,
+    "saisons_trouvees_en_direct": 0,
+    "clubs_connus_plus_tot": 0,
+    "conclusion": "Aucune voie ne donne les saisons antérieures : non récupérable sur cette source."
+  }
+}
