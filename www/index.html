@@ -662,6 +662,9 @@
      * cran et toute la rangée de badges repartirait en escalier. */
     min-height: 1.25em;
   }
+  /* Un titre que l'API ne date pas est renvoyé en fin de parcours ; le dire
+   * évite de laisser croire qu'il s'est joué après les autres. */
+  .tlh-sansdate{ font-style:italic; opacity:.72; }
   .tlh-fee{ font-size:10px; color:var(--gold); font-weight:700; margin-top:4px; width:100%; box-sizing:border-box; overflow-wrap:break-word; }
   .tlh-fee.free{ color: var(--chalk-dim); font-weight:600; }
   .tlh-trophy{ margin-top:5px; display:flex; flex-direction:column; align-items:center; width:100%; box-sizing:border-box; }
@@ -4052,7 +4055,13 @@ function construireLegende(l, rang){
       labelLibre: `${c.m} match${c.m > 1 ? 's' : ''} · ${c.b} but${c.b > 1 ? 's' : ''}`
                   + (c.partiel ? ' (championnat seul)' : ''),
       arrivalDate: String(c.de),
-      arrivalSort: c.de,
+      /* Même encodage que les parcours venus de l'API — année × 372 + mois × 31
+       * + jour — bien qu'on ne connaisse ici que l'année : les deux chemins
+       * aboutissent au même trieur, et une échelle qui diffère est exactement ce
+       * qui faisait remonter les trophées en tête de parcours. Juillet, faute de
+       * mieux, est le mois où se font les transferts. L'ordre entre clubs d'une
+       * légende est inchangé, la transformation étant croissante. */
+      arrivalSort: c.de*372 + 6*31,
       from: c.de, to: c.a,
       trophies: []
     })),
@@ -6885,6 +6894,37 @@ async function loadRealTimelineFor(p){
     if(tr && browseDetailId === p.id) tr.innerHTML = detailTrophyRowsHtml(p);
     if(browseDetailId !== p.id) return; // l'utilisateur a changé d'écran entre-temps
 
+    /* Transferts et trophées doivent se ranger sur la MÊME échelle. Ils ne l'ont
+     * pas toujours été : un transfert valait new Date(...).getTime(), soit mille
+     * deux cent cinquante milliards, pendant qu'un trophée valait saison × 400,
+     * soit huit cent mille. Tout trophée passait donc avant tout transfert, et
+     * ceux sans saison, valant zéro, remontaient en tête de parcours.
+     * On réutilise ici l'encodage déjà employé par la chronologie des légendes :
+     * année × 372 + mois × 31 + jour. */
+    const rangDate = (iso)=>{
+      const d = new Date(iso);
+      if(isNaN(d)) return null;
+      return d.getFullYear()*372 + d.getMonth()*31 + d.getDate();
+    };
+    /* Un titre se gagne à la fin de sa saison, pas au début : la saison 2009
+     * se conclut en mai 2010, donc après un transfert de l'été 2009 et avant un
+     * transfert de l'été 2010. On date le trophée à la fin mai de l'année de
+     * clôture. Le reste de l'application lit déjà « 2009 » comme 2009-10. */
+    const rangSaison = (saison)=>{
+      if(saison == null) return null;
+      const txt = String(saison);
+      const paire = txt.match(/(\d{4})\s*[\/\-–]\s*(\d{2,4})/);
+      let fin;
+      if(paire){
+        fin = paire[2].length === 2 ? parseInt(paire[1].slice(0,2) + paire[2], 10) : parseInt(paire[2], 10);
+      } else {
+        const seul = txt.match(/(\d{4})/);
+        if(!seul) return null;
+        fin = parseInt(seul[1], 10) + 1;
+      }
+      return fin*372 + 4*31 + 31;   // fin mai de l'année de clôture
+    };
+
     let events = [];
     transfers.forEach(t=>{
       const inTeam = t.teams && t.teams.in ? t.teams.in.name : '?';
@@ -6892,12 +6932,24 @@ async function loadRealTimelineFor(p){
       if(!t.type || /free/i.test(t.type)) feeLabel = 'Transfert libre';
       else if(/loan|prêt/i.test(t.type)) feeLabel = 'Prêt';
       else feeLabel = t.type;
-      events.push({ club: inTeam, date: t.date || '', feeLabel, sortVal: t.date ? new Date(t.date).getTime() : 0 });
+      events.push({ club: inTeam, date: t.date || '', feeLabel, sortVal: rangDate(t.date) });
     });
     (trophies||[]).forEach(tr=>{
-      events.push({ trophy: true, name: tr.league, place: tr.place, season: tr.season, sortVal: (parseInt(tr.season,10)||0)*400 });
+      events.push({ trophy: true, name: tr.league, place: tr.place, season: tr.season, sortVal: rangSaison(tr.season) });
     });
-    events.sort((a,b)=>a.sortVal-b.sortVal);
+    /* Un événement sans date ne peut pas prétendre ouvrir le parcours : on le
+     * renvoie en fin de file, où son absence de date se lit comme telle. */
+    events.sort((a,b)=>{
+      if(a.sortVal == null && b.sortVal == null) return 0;
+      if(a.sortVal == null) return 1;
+      if(b.sortVal == null) return -1;
+      return a.sortVal - b.sortVal;
+    });
+
+    // Le club actuel est le dernier TRANSFERT, pas le dernier événement : un
+    // trophée en fin de liste lui volait son badge.
+    let dernierTransfert = -1;
+    events.forEach((ev,i)=>{ if(!ev.trophy && ev.sortVal != null) dernierTransfert = i; });
 
     if(events.length===0){
       container.innerHTML = `<div class="empty-state" style="padding:16px;">Parcours non disponible pour ce joueur.</div>`;
@@ -6910,11 +6962,11 @@ async function loadRealTimelineFor(p){
           <div class="tlh-item">
             <div class="tlh-dot trophy"></div>
             <div class="tlh-club">${ev.name}</div>
-            <div class="tlh-years">${ev.season ? (seasonLabel(parseInt(ev.season,10)) || ev.season) : ''}</div>
+            <div class="tlh-years">${ev.sortVal == null ? '<span class="tlh-sansdate">année inconnue</span>' : (seasonLabel(parseInt(ev.season,10)) || ev.season)}</div>
             <div class="tlh-trophy"><span class="tlh-trophy-name">${ev.place}</span></div>
           </div>`;
       }
-      const isLast = i===events.length-1;
+      const isLast = i === dernierTransfert;
       return `
         <div class="tlh-item ${isLast?'current':''}">
           <div class="tlh-dot"></div>
