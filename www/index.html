@@ -3616,6 +3616,8 @@ async function ensureSeasonsViaPack(p, list, priority){
 
 // Une saison précise d'un joueur déjà chargé (1 appel, ou 0 si déjà en cache)
 async function ensureSeasonLoaded(p, season, priority){
+  // Une légende porte déjà toutes ses saisons : rien à aller chercher.
+  if(p.estLegende) return (p.statsBySeason && p.statsBySeason[season]) || null;
   if(p.statsBySeason && p.statsBySeason[season] && p.rawBySeason && p.rawBySeason[season]) return p.statsBySeason[season];
   if(!p.apiId || !(p.seasonsAvailable||[]).includes(season)) return null;
   const entry = await fetchSeasonEntry(p.apiId, season, priority);
@@ -4829,7 +4831,10 @@ function renderAll(){
       </div>`;
   }
 
-  const realMode = filled.some(p=>p.apiId);
+  // Une légende compte comme un vrai joueur : ses saisons sont relevées, pas
+  // estimées. Sans cela, un duel entre deux légendes retombait sur la courbe
+  // d'âge théorique prévue pour les joueurs fictifs de démonstration.
+  const realMode = filled.some(p=>p.apiId || p.estLegende);
   let ageOptions = [], ageCumulOptions = [];
   if(realMode){
     // « Saison à un âge » : les âges où CHACUN a une vraie saison dans la base (rien d'estimé)
@@ -5013,7 +5018,7 @@ function renderAll(){
   // Les cartes des joueurs d'abord (c'est le duel qu'on vient voir), puis les réglages, puis les stats
   const headsHtml = chosen.map((p, idx)=> `<div class="player-col">${colHeadHtml(p, idx)}</div>`).join('');
   const statsColsHtml = chosen.map((p)=> `<div class="player-col">${statsHtml(p)}</div>`).join('');
-  const seasonPicksHtml = chosen.some(p=>p && p.apiId)
+  const seasonPicksHtml = chosen.some(p=>p && (p.apiId || p.estLegende))
     ? chosen.map(p=> `<div class="player-col">${p ? seasonPickHtml(PLAYERS.find(x=>x.id===p.id) || p) : ''}</div>`).join('') : '';
   const isDemo = !REAL_DATA_CONFIG.enabled || !!FALLBACK_REASON;
   const showControls = activeTab==='stats' && filled.length>=2;
@@ -5387,12 +5392,23 @@ function noteCouvertureHtml(p){
 
 function seasonPickHtml(p, opts){
   opts = opts || {};
-  // Une légende n'a pas de saisons à choisir : on affiche l'étendue de sa
-  // carrière, à la place du sélecteur, dans le même cadre.
+  // Une légende dont la carrière est découpée a droit au même sélecteur que les
+  // autres : on doit pouvoir regarder une saison précise de Rooney ou de Pelé.
+  // Seule celle qui n'a que des totaux garde l'étendue affichée en dur.
   if(p && p.estLegende){
-    const s = p.span;
-    return `<div class="season-pick static" title="Carrière entière, toutes compétitions">${
-      s ? `${s[0]} → ${s[1]}` : 'Carrière'}</div>`;
+    const annees = p.seasonsAvailable || [];
+    if(!annees.length || (!opts.detail && compareMode !== 'shown')){
+      const s = p.span;
+      return `<div class="season-pick static" title="Carrière entière, toutes compétitions">${
+        s ? `${s[0]} → ${s[1]}` : 'Carrière'}</div>`;
+    }
+    const court = slots.length > 2 && !opts.detail;
+    const vu = `${court ? '' : 'Saison '}${seasonLabel(p.seasonShown)}${
+      opts.detail && p.club ? ' · ' + escapeHtml(p.club) : ''}`;
+    return `<button type="button" class="season-pick" data-season-pick="${p.id}"
+        aria-label="Choisir la saison de ${escapeHtml(p.name)}">
+        <span class="sp-txt">${vu}</span><span class="sp-arrow" aria-hidden="true">▾</span>
+      </button>`;
   }
   if(!p || !p.apiId) return '';
   if(!opts.detail && compareMode !== 'shown'){
@@ -5462,7 +5478,12 @@ function renderSeasonSheet(){
   document.getElementById('seasonSheetTitle').innerHTML = `Saison de <b>${escapeHtml(shortName(p))}</b>`;
   const loadedCount = Object.keys(p.statsBySeason||{}).length;
   const pr = careerProgress[p.apiId];
-  document.getElementById('seasonSheetSub').textContent = pr
+  document.getElementById('seasonSheetSub').textContent = p.estLegende
+    ? `${seasons.length} saisons, saisies à la main et toutes compétitions`
+      + (p.saisonsCompletes === false
+         ? `. Attention : le découpage ne couvre pas toute sa carrière${p.saisonsNote ? ' — ' + p.saisonsNote : ''}.`
+         : `.`)
+    : pr
     ? `Chargement de la carrière : ${pr.done}/${pr.total} saisons…`
     : (p.careerLoaded ? `${seasons.length} saisons dans la base API-Football${p.careerSpan ? ' ('+p.careerSpan[0]+'-'+p.careerSpan[1]+')' : ''}. La meilleure : buts + passes décisives, ou matchs joués pour un défenseur ou un gardien.`
                       : `${loadedCount} saison${loadedCount>1?'s':''} chargée${loadedCount>1?'s':''} sur ${seasons.length} dans la base. Chaque saison choisie est chargée à la demande.`);
@@ -5490,7 +5511,9 @@ function renderSeasonSheet(){
   });
 }
 function openSeasonSheet(p, onChange){
-  if(!p || !p.apiId || p.needsStats) return;
+  if(!p) return;
+  if(p.estLegende){ if(!(p.seasonsAvailable || []).length) return; }
+  else if(!p.apiId || p.needsStats) return;
   seasonSheetPlayer = p; seasonSheetOnChange = onChange || null;
   if(document.getElementById('seasonSheet').hidden) navOverlayOpened('seasonSheet');
   document.getElementById('seasonSheet').hidden = false;
@@ -6623,7 +6646,9 @@ function renderBrowse(){
     // Vrai joueur : chiffres de la saison en club (comme le libellé « Saison 2005-06 · FC Barcelona »)
     // Une légende porte ses chiffres dans statsLegende, pas à la racine : sans ce
     // cas, la fiche affichait « undefined » sur chaque ligne.
-    const pv = p.estLegende ? { ...p, ...p.statsLegende }
+    // Pour une légende, on montre ce que la période choisie désigne vraiment :
+    // la saison retenue si elle en a une, son total de carrière sinon.
+    const pv = p.estLegende ? { ...p, ...((getStatSource(p) || {}).src || p.statsLegende) }
              : (p.apiId && p.split && p.split.club) ? { ...p, ...p.split.club } : p;
     const statGroupsHtml = BROWSE_STAT_GROUPS
       .filter(g => g.label !== 'Gardien' || p.pos === 'GK')
