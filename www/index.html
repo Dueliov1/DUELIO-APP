@@ -3341,7 +3341,17 @@ function readSeasonCache(apiId, season){
   }catch(e){}
   return null;
 }
+/* Mesure de la richesse d'une saison : le nombre de matchs qu'elle contient. Une
+ * réponse de l'API qui a perdu des lignes (le club de Kvaratskhelia à Rubin, les
+ * coupes de 2025-26) ne doit jamais écraser une saison plus complète déjà connue. */
+function richesseSaison(lignes){
+  return (lignes || []).reduce((t, x) => t + ((x && x.games && x.games.appearences) || 0), 0) + (lignes || []).length / 1000;
+}
 function writeSeasonCache(apiId, season, entry){
+  try{
+    const ancien = JSON.parse(localStorage.getItem(SEASON_CACHE_PREFIX+apiId+':'+season) || 'null');
+    if(ancien && ancien.entry && richesseSaison(ancien.entry.statistics) > richesseSaison(entry && entry.statistics)) return;
+  }catch(e){}
   try{ localStorage.setItem(SEASON_CACHE_PREFIX+apiId+':'+season, JSON.stringify({t:Date.now(), entry})); }
   catch(e){ pruneSeasonCache(); }
 }
@@ -3375,6 +3385,8 @@ async function fetchSeasonEntry(apiId, season, priority){
 // Ajoute une saison déjà récupérée au joueur (stats + lignes brutes pour la carrière)
 function attachSeason(p, season, entry){
   if(!entry || !entry.statistics || !entry.statistics.length) return null;
+  const connue = p.rawBySeason && p.rawBySeason[season];
+  if(connue && p.statsBySeason && p.statsBySeason[season] && richesseSaison(connue) > richesseSaison(entry.statistics)) return p.statsBySeason[season];
   const st = extractSeasonStats({ player: entry.player || { nationality: p.nation && p.nation.name }, statistics: entry.statistics });
   st.season = season;
   p.statsBySeason = p.statsBySeason || {};
@@ -3800,7 +3812,8 @@ async function fetchPack(p, opts){
     throw new Error(typeof json.erreur === 'string' ? json.erreur : apiErrorMessage(json.erreur));
   }
   if(Array.isArray(json.seasons) && json.seasons.length){
-    p.seasonsAvailable = json.seasons.slice().sort((a,b)=>b-a);
+    // Union avec ce qu'on connaissait déjà : l'API ne doit pas faire disparaître des saisons.
+    p.seasonsAvailable = [...new Set([...(p.seasonsAvailable || []), ...json.seasons])].sort((a,b)=>b-a);
   }
   let premiere = null;
   Object.keys(json.data || {}).forEach(k=>{
