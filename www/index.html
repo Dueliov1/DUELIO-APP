@@ -8170,8 +8170,11 @@ function applyScreen(name){
 document.getElementById('tabCompare').addEventListener('click', ()=>{
   navigateTo('compare');
 });
-// Le double-clic sur l'onglet vidait le duel sans confirmation ; sur un
-// téléphone, un double-tap impatient suffisait. « Nouveau duel » est là pour ça.
+/* Double-clic (ou double-tap) sur « Comparer » : on repart d'un duel vide pour choisir
+ * deux nouveaux joueurs. Retiré à tort lors de l'audit, rétabli à la demande. */
+document.getElementById('tabCompare').addEventListener('dblclick', ()=>{
+  resetComparison();
+});
 document.getElementById('tabBrowse').addEventListener('click', ()=>{
   if(currentScreen==='browse' && browseDetailId!==null) navigateTo('browse', null);
   else navigateTo('browse');
