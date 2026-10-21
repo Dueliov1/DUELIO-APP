@@ -1309,6 +1309,37 @@
     content:''; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:100%; min-width:44px; height:44px;
   }
+
+  /* ---------- Animations discrètes ----------
+     Uniquement transform et opacité (rien qui force la mise en page), courtes,
+     et seulement quand l'utilisateur change quelque chose : joueur, onglet, période.
+     Un chargement qui se termine en arrière-plan ne les rejoue pas.
+     prefers-reduced-motion les neutralise (règle générale plus haut). */
+  @keyframes revealUp{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+  @keyframes headIn{ from{ opacity:0; transform:translateY(6px) scale(.965); } to{ opacity:1; transform:none; } }
+  @keyframes leadPop{ 0%{ transform:scale(1); } 45%{ transform:scale(1.045); } 100%{ transform:scale(1); } }
+  @keyframes screenIn{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:none; } }
+  @keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes sheetUp{ from{ transform:translateY(24px); opacity:.4; } to{ transform:none; opacity:1; } }
+  #content.reveal .dr-row, #content.reveal .ct-row{
+    animation: revealUp .38s cubic-bezier(.22,.9,.3,1) both; animation-delay: calc(var(--i, 0) * 36ms + 60ms - var(--t, 0ms));
+  }
+  #content.reveal .stat-row{ animation: revealUp .34s cubic-bezier(.22,.9,.3,1) both; animation-delay: calc(80ms - var(--t, 0ms)); }
+  #content.reveal .dr-val.lead, #content.reveal .ct-val.ct-lead{
+    animation: leadPop .5s ease-out both; animation-delay: calc(var(--i, 0) * 36ms + 420ms - var(--t, 0ms));
+  }
+  #content.reveal .col-head:not(.empty){ animation: headIn .4s cubic-bezier(.22,.9,.3,1) both; animation-delay: calc(0ms - var(--t, 0ms)); }
+  #content.reveal .player-col:nth-child(2) .col-head:not(.empty){ animation-delay: calc(70ms - var(--t, 0ms)); }
+  #content.reveal .duel-vs{ animation: fadeIn .5s ease both; animation-delay: calc(150ms - var(--t, 0ms)); }
+  .screen-in{ animation: screenIn .24s cubic-bezier(.22,.9,.3,1) both; }
+  .sheet:not([hidden]){ animation: fadeIn .2s ease both; }
+  .sheet:not([hidden]) .sheet-panel{ animation: sheetUp .28s cubic-bezier(.3,.9,.3,1) both; }
+  #sharePreviewCanvas{ animation: revealUp .4s cubic-bezier(.22,.9,.3,1) both; }
+  .tabbar-btn svg{ transition: transform .18s cubic-bezier(.3,.9,.3,1); }
+  .tabbar-btn:active svg{ transform: scale(.88); }
+  .tabbar-btn.active svg{ transform: translateY(-1px); }
+  .reset-btn:active, .add-slot-btn:active, .period-btn:active, .tab-btn:active, .icon-btn:active, .scope-link:active{ transform: scale(.97); }
+  .col-head:not(.empty):active{ transform: scale(.985); }
 </style>
 </head>
 <body>
@@ -5380,6 +5411,7 @@ function listeTrophees(filled){
   const enCours = (filled || []).some(p => { const r = PLAYERS.find(x=>x.id===p.id) || p; return r.apiId && !r.trophiesLoaded && !r._trophyRetryAt; });
   return (unPalmares || enCours) ? TROPHIES : TROPHIES.filter(r => !r.key.startsWith('titres'));
 }
+let _cleRevealPrecedente = '', _revealDebut = -9999;
 function renderAll(){
   const content = document.getElementById('content');
   // Un identifiant sans fiche dans PLAYERS donnait {_idx} — un objet « vrai »
@@ -5534,7 +5566,7 @@ function renderAll(){
       return getStatValue(fp,key);
     };
     const unknown = activeTab==='stats' && compareBasis!=='nation';
-    const corps = list.map(r=>{
+    const corps = list.map((r, iLigne)=>{
       const vals = filled.map(fp=> (unknown && statUnknown(fp,r.key)) ? null : getVal(fp,r.key));
       const known = vals.filter(v=>v!==null && v!==undefined && !isNaN(Number(v))).map(Number);
       const best = known.length ? (r.lowerIsBetter ? Math.min(...known) : Math.max(...known)) : null;
@@ -5561,7 +5593,7 @@ function renderAll(){
         const ecart = (lead && net && ecartPct >= 25 && ecartPct < 1000) ? `<span class="ecart">${r.lowerIsBetter ? '−' : '+'}${ecartPct} %</span>` : '';
         return `<div class="dr-val${lead ? ' lead' : ''}${v === null ? ' unknown' : ''}">${txt}${ecart}</div>`;
       };
-      return `<div class="dr-row">
+      return `<div class="dr-row" style="--i:${Math.min(iLigne, 11)}">
           <div class="dr-label">${r.label}</div>
           <div class="dr-vals">${cellule(vals[0], 0)}${cellule(vals[1], 1)}</div>
         </div>`;
@@ -5605,7 +5637,7 @@ function renderAll(){
         <div class="ct-name">${escapeHtml(shortName(p))}</div>
       </div>`).join('');
 
-    const bodyRows = list.map(r=>{
+    const bodyRows = list.map((r, iLigne)=>{
       const unknown = activeTab==='stats' && compareBasis!=='nation';
       const vals = filled.map(fp=> (unknown && statUnknown(fp,r.key)) ? null : getVal(fp,r.key));
       const known = vals.filter(v=>v!==null && v!==undefined && !isNaN(Number(v))).map(Number);
@@ -5613,7 +5645,7 @@ function renderAll(){
       const tie = known.length < 2 || known.every(v=>v===best);
       const suf = r.suffix || '';
       return `
-        <div class="ct-row">
+        <div class="ct-row" style="--i:${Math.min(iLigne, 11)}">
           <div class="ct-label">${r.label}</div>
           <div class="ct-vals">
             ${vals.map((v,i)=>`<div class="ct-val ${v!==null && best!==null && Number(v)===best && !tie ? 'ct-lead':''} ${v===null?'ct-empty':''}">${v===null ? (unknown ? fmtStat(filled[i], r.key, suf) : trophyPlaceholder(filled[i], r.key)) : fmtNombre(v)+fmtSuffixe(suf)}</div>`).join('')}
@@ -5706,6 +5738,18 @@ function renderAll(){
     </div>
   `;
   content.scrollTop = defilementGarde;
+  /* Animation d'arrivée : seulement quand l'utilisateur a changé quelque chose
+   * (joueurs, onglet, période, vue). Un redessin dû à un chargement ne la rejoue pas. */
+  const cleReveal = [slots.join(','), activeTab, compareBasis, compareMode, teamScope, compareAgeValue, compareSeasonValue, compactView].join('|');
+  const maintenant = performance.now();
+  if(cleReveal !== _cleRevealPrecedente){ _cleRevealPrecedente = cleReveal; _revealDebut = maintenant; }
+  /* Un redessin pendant l'animation la reprend là où elle en était (délai négatif)
+   * au lieu de la rejouer ou de la couper net. */
+  const ecoule = maintenant - _revealDebut;
+  if(filled.length > 0 && ecoule < 1100){
+    content.style.setProperty('--t', Math.round(ecoule) + 'ms');
+    content.classList.add('reveal');
+  } else content.classList.remove('reveal');
   wireRadars(content);
   wireCompareTutorial(content);
   if(activeTab==='trophies' && filled.length>=2){ ensureTrophiesLoaded(filled); ensureCareerForNation(filled, 'high'); }
@@ -8138,6 +8182,7 @@ document.getElementById('navBackBtn').addEventListener('click', ()=>{
 
 function showScreen(name){ navigateTo(name); }
 function applyScreen(name){
+  const changeDEcran = name !== currentScreen;
   currentScreen = name;
   document.getElementById('content').style.display = name==='compare' ? 'flex' : 'none';
   document.getElementById('browseScreen').style.display = name==='browse' ? 'flex' : 'none';
@@ -8156,6 +8201,14 @@ function applyScreen(name){
   if(name==='browse') renderBrowse();
   if(name==='generate') renderGenerate();
   updateBackBtn();
+  if(changeDEcran){
+    const el = navScreenEl(name);
+    if(el){
+      el.classList.remove('screen-in'); void el.offsetWidth;
+      el.classList.add('screen-in');
+      el.addEventListener('animationend', function fin(ev){ if(ev.target !== el) return; el.classList.remove('screen-in'); el.removeEventListener('animationend', fin); });
+    }
+  }
 }
 
 document.getElementById('tabCompare').addEventListener('click', ()=>{
