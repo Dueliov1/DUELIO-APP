@@ -1,0 +1,74 @@
+name: Ajouter un joueur
+
+# Écrit la carrière complète d'un joueur (toutes compétitions, toutes saisons) dans
+# www/data/full/<id>.json et l'ajoute à l'index de recherche, pour les joueurs que
+# la moisson des 5 000 n'avait pas pris.
+
+on:
+  workflow_dispatch:
+    inputs:
+      id:
+        description: "Identifiant API-Football du joueur"
+        required: true
+        default: "281689"
+
+permissions:
+  contents: write
+
+jobs:
+  ajouter:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0, ref: main }
+      - name: Moissonner et écrire
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          ID: ${{ github.event.inputs.id }}
+        run: |
+          cat > ajout.mjs <<'EOS'
+          import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
+          const H = { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } };
+          const get = async u => { for (let k = 0; k < 4; k++) { const r = await fetch("https://v3.football.api-sports.io" + u, H); const j = await r.json(); const e = j.errors; if (e && (Array.isArray(e) ? e.length : Object.keys(e).length)) { await new Promise(r => setTimeout(r, 8000)); continue; } return j; } throw new Error("refusé : " + u); };
+          const id = Number(process.env.ID);
+          const sais = await get(`/players/seasons?player=${id}`);
+          const saisons = (sais.response || []).filter(s => s >= 1990).sort((a, b) => b - a);
+          console.log("saisons :", saisons.join(","));
+          const parSaison = {}; let profil = null;
+          for (const sn of saisons) {
+            const j = await get(`/players?id=${id}&season=${sn}`);
+            const rep = j.response && j.response[0];
+            if (!profil && rep) profil = rep.player;
+            if (rep && rep.statistics && rep.statistics.length) parSaison[sn] = rep.statistics;
+            await new Promise(r => setTimeout(r, 400));
+          }
+          if (!profil) throw new Error("aucune donnée");
+          const annees = Object.keys(parSaison).map(Number).sort((a, b) => b - a);
+          const fiche = { i: id, n: profil.name, a: profil.age, c: profil.nationality, saisons: annees, s: parSaison };
+          mkdirSync("www/data/full", { recursive: true });
+          writeFileSync(`www/data/full/${id}.json`, JSON.stringify(fiche));
+          console.log("fiche écrite :", profil.name, annees.length, "saisons");
+          // Index de recherche
+          const dernier = parSaison[annees[0]] || [];
+          const club = dernier.find(x => x.league && x.league.id != null && !/friendl/i.test(x.league.name || "")) || dernier[0] || {};
+          const pos = { Goalkeeper: "GK", Defender: "DEF", Midfielder: "MID", Attacker: "FWD" }[(dernier[0] && dernier[0].games && dernier[0].games.position)] || "MID";
+          let matchs = 0; for (const L of Object.values(parSaison)) for (const x of L) matchs += (x.games && x.games.appearences) || 0;
+          const nom = profil.lastname || profil.name.split(" ").pop();
+          const lettre = nom.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z]/g, "")[0] || "a";
+          const chemin = `www/data/search-az/${lettre}.json`;
+          const idx = JSON.parse(readFileSync(chemin, "utf8"));
+          if (!idx.players.some(p => p.i === id)) {
+            idx.players.push({ i: id, n: profil.name, f: "", l: "", a: profil.age, c: profil.nationality, p: pos, t: (club.team && club.team.name) || "", ti: Math.round(matchs / 2), m: matchs });
+            idx.count = idx.players.length;
+            writeFileSync(chemin, JSON.stringify(idx));
+            console.log("index mis à jour :", chemin);
+          }
+          EOS
+          node ajout.mjs
+          rm ajout.mjs
+      - name: Publier
+        run: |
+          git config user.name "ajout"; git config user.email "ajout@users.noreply.github.com"
+          git add www/data
+          git commit -m "Ajout du joueur ${{ github.event.inputs.id }}" || echo rien
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 3; done
