@@ -3754,7 +3754,8 @@ async function fetchPack(p, opts){
         writeSeasonCache(p.apiId, sn, local.data[cle]);
         if(attachSeason(p, sn, local.data[cle])) obtenues.push(sn);
       }
-      if(!p.seasonsAvailable || !p.seasonsAvailable.length) p.seasonsAvailable = local.seasons.slice();
+      // Union : notre base ne doit pas être privée d'une saison (la plus récente, souvent) par une liste plus courte déjà en place.
+      p.seasonsAvailable = [...new Set([...(p.seasonsAvailable || []), ...local.seasons])].sort((x, y) => y - x);
 
       // Saisons explicitement demandées : si on les a toutes, on s'arrête là.
       const demandees = (opts.seasons && opts.seasons.length) ? opts.seasons.map(Number)
