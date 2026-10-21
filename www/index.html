@@ -6941,18 +6941,8 @@ async function dessinerImageDePartage(btn){
   });
   ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
 
-  // --- Pied de page : le verdict, puis la marque ---
-  const marqueY = Math.min(statsTop + statsH + 46*S, H - 14*S);
-  if(n === 2 && (gagneesA || gagneesB)){
-    const total = gagneesA + gagneesB;
-    const score = Math.max(gagneesA, gagneesB);
-    const phrase = gagneesA === gagneesB
-      ? `Égalité : ${gagneesA} stat${gagneesA > 1 ? 's' : ''} partout`
-      : `${shortName(gagneesA > gagneesB ? filled[0] : filled[1])} gagne ${score} stat${score > 1 ? 's' : ''} sur ${total}`;
-    ctx.font = `800 ${15.5*S}px 'Plus Jakarta Sans', sans-serif`;
-    ctx.fillStyle = '#2FE88A'; ctx.textAlign = 'center';
-    ctx.fillText(phrase, W/2, marqueY - 22*S);
-  }
+  // --- Pied de page : la marque (le verdict « gagne X stats sur Y » a été retiré à la demande) ---
+  const marqueY = Math.min(statsTop + statsH + 34*S, H - 14*S);
   // La marque était écrite en gris sombre, presque invisible sur une image faite pour
   // circuler. Elle est maintenant lisible sans écraser le contenu.
   ctx.font = `700 ${11.5*S}px 'Plus Jakarta Sans', sans-serif`;
