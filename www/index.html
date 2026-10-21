@@ -3752,6 +3752,59 @@ function nettoyerCarriere(s){
       propre[x.saison][x.index] = null;
     }
   }
+  /* Un même bloc de statistiques crédité à deux clubs dans la même ligue et la même
+   * saison — mêmes matchs, buts, passes et minutes. Un joueur ne peut pas avoir joué
+   * 31 matchs pour Charleroi ET les mêmes 31 pour l'Union : la source a recopié le bloc
+   * (Zorgane, Pavard, Piątek… : 191 joueurs sur 5 000). On garde le club le mieux attesté
+   * cette saison-là : celui qui porte le plus d'autres lignes (coupes, Europe), puis celui
+   * déjà présent la saison précédente. Les équipes de jeunes et les sélections sont exclues. */
+  const HORS_CLUB = /\bu-?\d{2}\b|friendl|euro|world cup|nations|cup of nations|copa am|olymp/i;
+  const saisonsTriees = Object.keys(propre).sort((x, y) => Number(x) - Number(y));
+  for(const cle of saisonsTriees){
+    const lignes = propre[cle];
+    const groupes = new Map();
+    lignes.forEach((b, i) => {
+      if(!b) return;
+      const g = b.games || {}, go = b.goals || {};
+      const m = g.appearences || 0;
+      if(m < 5 || HORS_CLUB.test((b.league || {}).name || '') || HORS_CLUB.test((b.team || {}).name || '')) return;
+      if(!g.minutes && !((go.total || 0) + (go.assists || 0))) return;
+      const sig = `${(b.league || {}).name}|${m}|${go.total}|${go.assists}|${g.minutes}`;
+      if(!groupes.has(sig)) groupes.set(sig, []);
+      groupes.get(sig).push(i);
+    });
+    const precedente = propre[String(Number(cle) - 1)] || [];
+    for(const idxs of groupes.values()){
+      const equipes = new Set(idxs.map(i => (lignes[i].team || {}).id));
+      if(equipes.size < 2) continue;
+      const poids = id => lignes.filter((b, k) => b && (b.team || {}).id === id && !idxs.includes(k)).length * 10
+                        + (precedente.some(b => b && (b.team || {}).id === id) ? 1 : 0);
+      const garde = idxs.slice().sort((x, y) => poids((lignes[y].team || {}).id) - poids((lignes[x].team || {}).id) || x - y)[0];
+      const idGarde = (lignes[garde].team || {}).id;
+      for(const i of idxs){ if((lignes[i].team || {}).id !== idGarde) lignes[i] = null; }
+    }
+  }
+  /* Même recopie d'une saison à la suivante : le bloc d'un club réapparaît à l'identique
+   * (matchs, buts, passes, minutes) chez un AUTRE club l'année d'après. On garde la ligne
+   * de l'équipe la mieux attestée dans sa propre saison. */
+  for(const cle of saisonsTriees){
+    const lignes = propre[cle], avant = propre[String(Number(cle) - 1)];
+    if(!avant) continue;
+    lignes.forEach((b, i) => {
+      if(!b) return;
+      const g = b.games || {}, go = b.goals || {};
+      if((g.appearences || 0) < 10 || !g.minutes || HORS_CLUB.test((b.league || {}).name || '') || HORS_CLUB.test((b.team || {}).name || '')) return;
+      const jumelle = avant.findIndex(c => c && (c.team || {}).id !== (b.team || {}).id
+        && (c.league || {}).name === (b.league || {}).name && (c.games || {}).appearences === g.appearences
+        && (c.games || {}).minutes === g.minutes && (c.goals || {}).total === go.total && (c.goals || {}).assists === go.assists);
+      if(jumelle < 0) return;
+      const attest = (liste, id, sauf) => liste.filter((x, k) => x && (x.team || {}).id === id && k !== sauf).length;
+      const ici = attest(lignes, (b.team || {}).id, i), la = attest(avant, (avant[jumelle].team || {}).id, jumelle);
+      if(ici < la) lignes[i] = null; else if(la < ici) avant[jumelle] = null;
+    });
+    propre[cle] = lignes.filter(Boolean);
+    propre[String(Number(cle) - 1)] = avant.filter(Boolean);
+  }
   for(const cle of Object.keys(propre)) propre[cle] = propre[cle].filter(Boolean);
   return propre;
 }
