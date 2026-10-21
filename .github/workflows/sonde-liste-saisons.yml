@@ -1,0 +1,97 @@
+name: Sonde liste des saisons
+
+# Ouvre le vrai site dans un navigateur, ajoute des joueurs comme le ferait un
+# utilisateur, ouvre « Saisons de … » et compare la liste à notre base.
+
+on:
+  workflow_dispatch:
+    inputs:
+      nombre:
+        description: "Joueurs tirés au hasard en plus de la liste fixe"
+        required: false
+        default: "30"
+
+permissions:
+  contents: write
+
+jobs:
+  sonde:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Installer le navigateur
+        run: |
+          npm install --no-save playwright@1.48.0
+          npx playwright install --with-deps chromium
+      - name: Comparer
+        env:
+          NOMBRE: ${{ github.event.inputs.nombre }}
+        run: |
+          cat > sonde.mjs <<'EOS'
+          import { chromium } from "playwright";
+          import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+          const sortie = [];
+          const dire = t => { sortie.push(t); console.log(t); };
+          const SITE = "https://duelio-app.bensouna-ahmed.workers.dev/";
+          const src = readFileSync("www/index.html", "utf8");
+          const nat = new Set([...src.match(/SELECTIONS_NATIONALES = new Set\(\[([\s\S]*?)\]\)/)[1].matchAll(/"([^"]+)"/g)].map(m => m[1]));
+          const estNat = n => { n = (n || "").toLowerCase(); return /\bu-?\d{2}\b/.test(n) || nat.has(n); };
+          const top = JSON.parse(readFileSync("www/data/search-top.json", "utf8")).players;
+          const fixes = [483, 226, 278, 306, 1100, 762, 154, 874, 184, 129718, 276, 521, 629, 754, 386828, 133609];
+          let graine = 12345; const alea = () => (graine = (graine * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff;
+          const pool = top.filter(p => !fixes.includes(p.i));
+          const choisis = [];
+          for (let k = 0; k < Number(process.env.NOMBRE || 30); k++) choisis.push(pool.splice(Math.floor(alea() * pool.length), 1)[0]);
+          const liste = [...fixes.map(i => top.find(p => p.i === i)).filter(Boolean), ...choisis];
+          const navig = await chromium.launch();
+          const pg = await navig.newPage({ viewport: { width: 390, height: 844 } });
+          await pg.goto(SITE, { waitUntil: "networkidle" });
+          await pg.waitForTimeout(2500);
+          const cta = await pg.$(".welcome-cta"); if (cta) { await cta.click(); await pg.waitForTimeout(1200); }
+          let nbOk = 0, nbPb = 0, nbIntrouvable = 0;
+          for (const j of liste) {
+            const attendu = (() => { try {
+              const d = JSON.parse(readFileSync(`www/data/full/${j.i}.json`, "utf8"));
+              return Object.keys(d.s || {}).filter(y => (d.s[y] || []).some(x => !estNat(x.team && x.team.name))).map(Number).sort((a, b) => b - a);
+            } catch (e) { return null; } })();
+            try {
+              await pg.evaluate(() => { resetComparison(); });
+              await pg.waitForTimeout(500);
+              await pg.evaluate(() => { for (const s of [".col-head.empty", ".add-slot-btn", "#tutoCta"]) { const e = document.querySelector(s); if (e) { e.click(); return; } } });
+              await pg.waitForTimeout(700);
+              const mot = (j.n.split(" ").pop() || j.n).replace(/[^\p{L}]/g, "");
+              await pg.fill("#pickerSearch", ""); await pg.type("#pickerSearch", mot, { delay: 25 });
+              await pg.waitForTimeout(2500);
+              const el = await pg.$(`.picker-item[data-api="${j.i}"]`);
+              if (!el) { dire(`${j.i} ${j.n} : introuvable dans la recherche ("${mot}")`); nbIntrouvable++; await pg.keyboard.press("Escape"); continue; }
+              await el.click(); await pg.waitForTimeout(3500);
+              await pg.evaluate(() => { const b = document.querySelector("[data-season-pick]"); if (b) b.click(); });
+              await pg.waitForTimeout(1500);
+              const lignes = await pg.evaluate(() => [...document.querySelectorAll("#seasonSheetList .season-row")].map(e => ({ y: Number((e.querySelector(".yr") || {}).textContent.slice(0, 4)), c: (e.querySelector(".club") || {}).textContent })));
+              const vus = lignes.map(l => l.y);
+              const manque = (attendu || []).filter(y => !vus.includes(y));
+              const enPlus = vus.filter(y => !(attendu || []).includes(y));
+              const pays = lignes.filter(l => estNat(l.c)).map(l => l.y);
+              const pb = [];
+              if (manque.length) pb.push("manque " + manque.join(","));
+              if (enPlus.length) pb.push("en plus " + enPlus.join(","));
+              if (pays.length) pb.push("nom de pays comme club : " + pays.join(","));
+              if (pb.length) { nbPb++; dire(`${j.i} ${j.n} : ${pb.join(" ; ")}`); } else { nbOk++; dire(`${j.i} ${j.n} : ok (${vus.length} saisons)`); }
+              await pg.keyboard.press("Escape"); await pg.waitForTimeout(300);
+            } catch (e) { dire(`${j.i} ${j.n} : erreur ${e.message.slice(0, 80)}`); }
+          }
+          dire(`\nBilan : ${nbOk} conformes, ${nbPb} avec écart, ${nbIntrouvable} introuvables sur ${liste.length}`);
+          await navig.close();
+          mkdirSync("diagnostics", { recursive: true });
+          writeFileSync("diagnostics/liste-saisons.txt", sortie.join("\n") + "\n");
+          EOS
+          node sonde.mjs
+          rm sonde.mjs
+      - name: Publier le rapport
+        run: |
+          git config user.name "sonde"; git config user.email "sonde@users.noreply.github.com"
+          git add diagnostics/liste-saisons.txt
+          git commit -m "Rapport liste des saisons" || echo rien
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 3; done
