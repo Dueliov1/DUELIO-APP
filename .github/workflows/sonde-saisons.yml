@@ -21,6 +21,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Comparer
         env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
           JOUEURS: ${{ github.event.inputs.joueurs }}
         run: |
           cat > sonde.mjs <<'EOS'
@@ -37,14 +38,18 @@ jobs:
             let base = {};
             try { base = JSON.parse(readFileSync(`www/data/full/${id}.json`, "utf8")); } catch (e) {}
             const S = base.s || {};
-            let j = null, statut = "";
-            try {
-              const r = await fetch(`${PROXY}/pack?id=${id}&career=1`);
-              statut = r.status; j = await r.json();
-            } catch (e) { statut = "ERREUR " + e.message; }
-            dire(`\n=== ${id} ${base.n || "?"} — proxy: ${statut} ===`);
-            if (!j || !j.data) { dire("  pas de données : " + JSON.stringify(j).slice(0, 200)); continue; }
-            const api = j.data;
+            const api = {};
+            let refus = 0;
+            for (const y of Object.keys(S)) {
+              const r = await fetch(`https://v3.football.api-sports.io/players?id=${id}&season=${y}`, { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } });
+              const j = await r.json().catch(() => null);
+              const e = j && j.errors;
+              if (!j || (e && (Array.isArray(e) ? e.length : Object.keys(e).length))) { refus++; await new Promise(r => setTimeout(r, 7000)); continue; }
+              const rep = j.response && j.response[0];
+              if (rep && rep.statistics && rep.statistics.length) api[y] = { statistics: rep.statistics };
+              await new Promise(r => setTimeout(r, 400));
+            }
+            dire(`\n=== ${id} ${base.n || "?"} — requêtes refusées: ${refus} ===`);
             dire(`  saisons base: ${Object.keys(S).length} | saisons API: ${Object.keys(api).length}`);
             const toutes = [...new Set([...Object.keys(S), ...Object.keys(api)])].sort();
             let ecarts = 0;
