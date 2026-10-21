@@ -61,7 +61,7 @@ jobs:
               await pg.waitForTimeout(500);
               await pg.evaluate(() => { for (const s of [".col-head.empty", ".add-slot-btn", "#tutoCta"]) { const e = document.querySelector(s); if (e) { e.click(); return; } } });
               await pg.waitForTimeout(700);
-              const mot = (j.n.split(" ").pop() || j.n).replace(/[^\p{L}]/g, "");
+              const mot = (j.n.split(" ").pop() || j.n).replace(/[^\p{L}]/gu, "");
               await pg.fill("#pickerSearch", ""); await pg.type("#pickerSearch", mot, { delay: 25 });
               await pg.waitForTimeout(2500);
               const el = await pg.$(`.picker-item[data-api="${j.i}"]`);
