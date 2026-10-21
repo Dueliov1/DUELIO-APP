@@ -1291,7 +1291,8 @@
   .season-pick{ min-height:44px; }
   .scope-link{ min-height:44px; display:inline-flex; align-items:center; padding:2px 6px; margin:-2px -6px; }
 
-  .slot-swap, .search-clear, .picker-close, .nav-back{ position:relative; }
+  .search-clear, .picker-close, .nav-back{ position:relative; }
+  /* .slot-swap reste en position:absolute (coin haut gauche de la carte) : elle sert déjà de repère à sa zone tactile. */
   .slot-swap::after, .picker-close::after, .nav-back::after{
     content:''; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
     width:44px; height:44px; border-radius:50%;
