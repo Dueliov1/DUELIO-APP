@@ -1,0 +1,481 @@
+Joueurs audités : 616 (saisons 2024-2026) ; sans aucun écart : 232
+Lignes comparées : 6520 ; identiques : 6063 ; avec écart : 457
+Lignes que la source a et que nous n'avons pas : 13 ; lignes chez nous absentes de la source : 0 ; sans réponse : 0
+
+=== ÉCARTS (notre valeur → valeur de la source) ===
+48 Saúl 2026 Flamengo/CONMEBOL Libertadores : matchs 3→4, minutes 99→189, note 5.06→5.33
+48 Saúl 2026 Flamengo/Serie A : note 6.65→6.62
+280 Alisson Becker 2026 Liverpool/Premier League : matchs 6→7, minutes 540→630, note 7.02→6.96
+280 Alisson Becker 2026 Liverpool/UEFA Champions League : matchs 2→3, minutes 180→270, note 6.50→6.41
+281 C. Kelleher 2026 Brentford/Premier League : matchs 6→7, minutes 540→630, note 7.30→7.11
+318 K. Koulibaly 2026 Al-Hilal Saudi FC/Pro League : matchs 8→9, minutes 683→779, note 6.69→6.77
+324 A. Diawara 2026 Leganes/Segunda División : minutes 0→∅, note 0.00→∅
+374 João Pedro 2026 Gremio/Serie A : note 5.81→5.23
+415 W. McKennie 2026 Juventus/UEFA Europa League : matchs 1→2, minutes 60→150, note 7.09→6.69
+415 W. McKennie 2026 Juventus/Serie A : matchs 3→4, minutes 221→311, note 6.75→6.73
+417 A. Schöpf 2026 Lask Linz/Bundesliga : note 6.77→6.00
+497 M. Neuer 2026 Bayern München/Bundesliga : note 7.22→7.18
+536 D. Sinkgraven 2026 Fortuna Sittard/Eredivisie : matchs 1→2, minutes 1→21, note 0.00→6.18
+557 O. Vlachodimos 2026 Sevilla/La Liga : matchs 8→9, minutes 720→810, note 6.91→6.78
+675 A. Trubin 2026 Benfica/UEFA Europa League : matchs 3→4, minutes 90→180, note 8.60→8.21
+709 P. Kadeřábek 2026 Sparta Praha/Czech Liga : matchs 4→5, minutes 263→308, note 6.60→6.59
+726 A. Kramarić 2026 1899 Hoffenheim/UEFA Europa League : matchs 1→2, minutes 30→102, note 6.20→6.12
+726 A. Kramarić 2026 1899 Hoffenheim/Bundesliga : matchs 5→6, minutes 71→83, note 6.50→6.43
+730 T. Courtois 2026 Real Madrid/La Liga : matchs 8→9, minutes 720→810, note 7.16→7.18
+756 F. Valverde 2026 Real Madrid/La Liga : matchs 8→9, minutes 654→739, note 7.09→7.08
+861 D. Rugani 2026 Juventus/Serie A : minutes 0→∅, note 0.00→∅
+889 V. Lindelöf 2026 Aston Villa/Premier League : matchs 6→7, minutes 540→630, note 6.50→6.55
+899 Andreas Pereira 2026 Palmeiras/CONMEBOL Libertadores : matchs 8→9, minutes 660→734, note 6.81→6.76
+899 Andreas Pereira 2026 Palmeiras/Serie A : matchs 29→30, minutes 2388→2431, jaunes 3→4, rouges 0→1, note 7.21→7.17
+915 Gabriel Paulista 2026 Corinthians/Serie A : matchs 22→23, minutes 1987→2077
+919 Hugo Guillamón 2026 Sporting Gijon/Segunda División : matchs 1→2, minutes 5→25, jaunes 0→1, note 0.00→6.70
+930 Carlos Soler 2026 Real Sociedad/La Liga : matchs 8→9, minutes 539→629, note 7.00→7.02
+932 D. Wass 2026 Brondby/Superliga : matchs 6→7, minutes 68→84, note 6.63→6.53
+945 J. Lotomba 2026 Celtic/UEFA Europa League : matchs 0→1, minutes 0→13, note 0.00→2.90
+978 K. Havertz 2026 Arsenal/Premier League : matchs 6→7, minutes 501→567, note 6.93→6.85
+1082 S. Lainer 2026 Red Bull Salzburg/Bundesliga : note 6.54→3.65
+1144 L. Klostermann 2026 RB Leipzig/Bundesliga : matchs 0→1, minutes 0→59, note 0.00→2.75
+1149 D. Upamecano 2026 Bayern München/Bundesliga : matchs 5→6, minutes 405→495, note 7.52→7.44
+1150 T. Adams 2026 Bournemouth/UEFA Europa League : matchs 1→2, minutes 63→132, note 6.37→6.33
+1150 T. Adams 2026 Bournemouth/Premier League : matchs 6→7, minutes 372→461, note 6.53→6.59
+1218 E. Rigoni 2026 Belgrano Cordoba/Liga Profesional Argentina : matchs 29→30, minutes 2362→2441, note 6.64→6.66
+1262 Otávio 2026 Fluminense/Serie A : note 5.84→5.26
+1271 A. Tchouaméni 2026 Real Madrid/La Liga : matchs 4→5, minutes 268→358, passes 0→1, note 7.00→7.06
+1364 Jaílson 2026 Fortaleza EC/Serie B : matchs 0→1, minutes 0→80, jaunes 0→1, rouges 0→1, note 0.00→3.16
+1438 B. Leno 2026 Fulham/Premier League : matchs 6→7, minutes 540→630, note 6.62→6.61
+1460 B. Saka 2026 Arsenal/Premier League : matchs 6→7, minutes 508→598, note 7.52→7.38
+1484 R. Battaglia 2026 Boca Juniors/Liga Profesional Argentina : matchs 0→1, minutes 0→90, note 0.00→6.63
+1578 G. Lo Celso 2026 Real Betis/La Liga : matchs 1→2, minutes 10→74, passes 0→1, note 6.70→6.60
+1622 G. Donnarumma 2026 Manchester City/Premier League : matchs 6→7, minutes 540→630, note 7.63→7.44
+1622 G. Donnarumma 2026 Manchester City/UEFA Champions League : matchs 2→3, minutes 180→270, note 6.90→6.80
+1688 R. Funes Mori 2026 Estudiantes L.P./CONMEBOL Libertadores : matchs 1→2, minutes 1→91, note 0.00→3.46
+1688 R. Funes Mori 2026 Estudiantes L.P./Liga Profesional Argentina : note 5.98→6.83
+1854 J. Correa 2026 Estudiantes L.P./CONMEBOL Libertadores : matchs 4→5, minutes 244→266, note 6.91→6.84
+1854 J. Correa 2026 Estudiantes L.P./Liga Profesional Argentina : matchs 5→6, minutes 269→329, note 6.90→6.80
+1904 B. Kamara 2026 Aston Villa/Premier League : matchs 6→7, minutes 534→624, note 6.95→6.91
+1934 S. Berge 2026 Fulham/Premier League : matchs 6→7, minutes 442→532, passes 0→1, jaunes 0→1, note 6.97→6.96
+1986 D. Vida 2026 AEK Athens FC/Super League 1 : minutes ∅→0, note ∅→0.00
+1987 R. Yılmaz 2026 Beşiktaş/UEFA Europa League : matchs 5→6, minutes 0→1, note 0.00→3.10
+1987 R. Yılmaz 2026 Beşiktaş/Süper Lig : matchs 6→7, minutes 441→518, note 6.75→6.77
+1998 K. Yılmaz 2026 Beşiktaş/Süper Lig : matchs 2→3, minutes 31→32
+2164 T. Kędziora 2026 Dynamo Kyiv/Premier League : matchs 5→6, minutes 180→360, note 0.00→3.23
+2195 S. Boey 2026 Bayern München/Bundesliga : matchs 0→1, minutes 0→13, note 0.00→6.30
+2207 E. Camavinga 2026 Real Madrid/La Liga : matchs 7→8, minutes 253→265, note 6.97→6.94
+2286 D. Zappacosta 2026 Atalanta/UEFA Europa Conference League : matchs 0→1, minutes ∅→90, note ∅→6.90
+2286 D. Zappacosta 2026 Atalanta/Serie A : matchs 4→5, minutes 287→302, note 6.59→6.60
+2289 Jorginho 2026 Flamengo/Serie A : matchs 23→24, minutes 1722→1812, buts 2→3
+2424 M. Trauco 2026 Sport Boys/Primera División : matchs 9→10, minutes 474→499, note 6.78→6.11
+2466 W. Kannemann 2026 Gremio/Serie A : matchs 7→8, minutes 497→570, jaunes 4→5, rouges 0→1, note 6.91→6.52
+2504 R. Rojas 2026 Libertad Asuncion/Division Profesional - Clausura : note 6.76→6.77
+2568 Alexander Domínguez Carabalí 2026 LDU de Quito/Liga Pro : note 3.33→3.11
+2719 N. Amrabat 2026 Utrecht/Eredivisie : matchs 0→1, minutes 0→23, note 0.00→3.40
+2784 R. Rúnarsson 2026 FC Copenhagen/Superliga : note 3.04→2.43
+2935 H. Maguire 2026 Manchester United/Premier League : matchs 6→7, minutes 540→630, note 6.78→6.86
+3418 N. Opoku 2026 Las Palmas/Segunda División : minutes 0→∅, note 0.00→∅
+3638 E. Muçi 2026 Trabzonspor/Süper Lig : matchs 6→7, minutes 377→466, note 6.97→6.96
+5654 M. Godoy 2026 Aldosivi/Liga Profesional Argentina : matchs 8→9, minutes 487→532, note 5.72→6.42
+5794 R. Garro 2026 Corinthians/Serie A : matchs 27→28, minutes 1909→1999, jaunes 9→10, note 7.14→7.11
+5933 A. Barboza 2026 Palmeiras/CONMEBOL Libertadores : matchs 4→5, minutes 360→450, jaunes 0→1, note 7.02→6.97
+5933 A. Barboza 2026 Palmeiras/Serie A : matchs 8→9, minutes 650→740, note 7.39→7.37
+5996 E. Fernández 2026 Manchester City/Premier League : matchs 4→5, minutes 328→368, note 7.33→7.40
+5996 E. Fernández 2026 Manchester City/UEFA Champions League : matchs 2→3, minutes 179→251, note 7.07→6.94
+6028 R. Aliendro 2026 Velez Sarsfield/Liga Profesional Argentina : matchs 29→30, minutes 1869→1959, note 6.86→6.91
+6048 B. Cufré 2026 Aldosivi/Liga Profesional Argentina : matchs 5→6, minutes 461→551, note 6.76→6.78
+6330 A. Aguerre 2026 Central Cordoba de Santiago/Liga Profesional Argentina : matchs 26→27, minutes 2139→2229, note 7.07→7.05
+6364 F. Cambeses 2026 Racing Club/Liga Profesional Argentina : matchs 30→31, minutes 2788→2872
+6423 A. Martín Arias 2026 Comerciantes Unidos/Primera División : matchs 1→2, minutes 501→720, note 6.67→6.70
+6713 J. Galván 2026 Instituto Cordoba/Liga Profesional Argentina : matchs 25→26, minutes 1902→1992
+6737 G. Verón 2026 Argentinos JRS/Liga Profesional Argentina : matchs 12→13, minutes 768→851, passes 0→1, jaunes 0→1, note 6.90→6.83
+7327 A. Prass 2026 1899 Hoffenheim/UEFA Europa League : matchs 0→1, minutes 0→31, note 0.00→2.93
+7327 A. Prass 2026 1899 Hoffenheim/Bundesliga : matchs 1→2, minutes 16→106, buts 0→1, passes 0→1, jaunes 0→1, note 6.00→7.59
+8489 J. David 2026 Atletico Madrid/La Liga : matchs 4→5, minutes 205→295, note 7.48→7.28
+8489 J. David 2026 Atletico Madrid/UEFA Champions League : matchs 2→3, minutes 46→91, note 6.40→6.41
+8777 A. Touba 2026 Le Havre/Ligue 1 : matchs 5→6, minutes 450→540, note 6.85→6.87
+9218 Marlon Freitas 2026 Palmeiras/CONMEBOL Libertadores : matchs 10→11, minutes 896→986, buts 1→2, note 7.07→7.17
+9218 Marlon Freitas 2026 Palmeiras/Serie A : matchs 27→28, minutes 2391→2436, note 7.23→7.21
+9458 Léo Ortiz 2026 Flamengo/CONMEBOL Libertadores : matchs 6→7, minutes 470→560
+9458 Léo Ortiz 2026 Flamengo/Serie A : matchs 25→26, minutes 2126→2209
+9512 Ronaldo 2026 Bahia/Serie A : matchs 21→22, minutes 1788→1878, note 7.31→7.34
+9686 Zé Roberto 2026 Sport Recife/Serie B : note 6.46→6.47
+9709 Matheus Alexandre 2026 Remo/Serie A : note 6.49→5.95
+9742 Matheus Bidu 2026 Corinthians/Serie A : matchs 24→25, minutes 2090→2101, note 6.83→6.81
+9872 Igor Rabello 2026 Fluminense/Serie A : matchs 3→4, minutes 178→268, passes 0→1, note 5.25→5.64
+9933 M. Borja 2026 Club America/Liga MX : note 7.43→7.60
+9954 Rodrigo Nestor 2026 Bahia/Serie A : matchs 23→24, minutes 1384→1459, note 6.86→6.80
+10007 Yuri Alberto 2026 Corinthians/Serie A : matchs 19→20, minutes 1583→1672, buts 3→4, note 6.66→6.68
+10059 Kanu 2026 Bahia/Serie A : note 5.84→5.11
+10083 Murilo 2026 Palmeiras/CONMEBOL Libertadores : matchs 10→11, minutes 907→997, note 7.32→7.28
+10083 Murilo 2026 Palmeiras/Serie A : matchs 25→26, minutes 2225→2315, note 7.03→7.02
+10097 Éderson 2026 Atalanta/UEFA Europa Conference League : matchs 2→3, minutes 180→203, note 7.05→6.90
+10097 Éderson 2026 Atalanta/Serie A : matchs 6→7, minutes 507→597, jaunes 0→1, note 6.83→6.91
+10112 Santos 2026 Atletico Paranaense/Serie A : note 6.47→6.23
+10124 Léo Pereira 2026 Flamengo/CONMEBOL Libertadores : matchs 8→9, minutes 641→731, note 7.16→7.17
+10124 Léo Pereira 2026 Flamengo/Serie A : matchs 25→26, minutes 2226→2316, jaunes 6→7, note 7.22→7.19
+10160 Léo Duarte 2026 Atletico-MG/Serie A : matchs 2→3, minutes 157→247, note 7.12→7.18
+10161 Matheuzinho 2026 Corinthians/Serie A : matchs 25→26, minutes 2145→2235
+10163 Renê 2026 Fluminense/CONMEBOL Libertadores : note 6.92→5.93
+10163 Renê 2026 Fluminense/Serie A : matchs 20→21, minutes 1651→1741, note 6.93→6.89
+10229 Cássio 2026 Cruzeiro/Serie A : note 4.96→4.34
+10256 André Luís 2026 Vila Nova/Serie B : matchs 23→24, minutes 1570→1647, buts 8→9, note 6.93→6.94
+10258 Clayson 2026 Sport Recife/Serie B : note 6.70→6.38
+10319 Allan 2026 Corinthians/Serie A : note 6.81→6.51
+10321 Pedro 2026 Flamengo/CONMEBOL Libertadores : matchs 8→9, minutes 260→270, note 6.20→6.22
+10321 Pedro 2026 Flamengo/Serie A : matchs 30→31, minutes 2411→2487, note 6.95→6.93
+10351 David Duarte 2026 Bahia/Serie A : matchs 23→24, minutes 2004→2094, note 7.18→7.14
+10372 Marcelo Lomba 2026 Palmeiras/Serie A : note 7.00→3.50
+10997 V. Antov 2026 Monza/Serie A : minutes ∅→0, note ∅→0.00
+11756 A. Rossi 2026 Flamengo/CONMEBOL Libertadores : matchs 9→10, minutes 731→821, note 6.86→6.94
+11756 A. Rossi 2026 Flamengo/Serie A : matchs 30→31, minutes 2760→2850, note 7.06→7.00
+15884 J. Lindstrøm 2026 Red Bull Salzburg/UEFA Europa League : matchs 0→1, minutes 0→73, note 0.00→3.03
+15884 J. Lindstrøm 2026 Red Bull Salzburg/Bundesliga : matchs 2→3, minutes 86→176, buts 0→1, passes 0→1, note 6.41→7.20
+17661 J. Branthwaite 2026 Everton/Premier League : matchs 6→7, minutes 540→630, note 6.93→6.89
+18592 I. Ndiaye 2026 Manchester City/Premier League : matchs 4→5, minutes 263→353, passes 0→1, note 6.63→6.54
+18592 I. Ndiaye 2026 Manchester City/UEFA Champions League : note 6.95→4.63
+18786 W. Ndidi 2026 Beşiktaş/UEFA Europa League : matchs 3→4, minutes 19→108, note 6.34→6.37
+18786 W. Ndidi 2026 Beşiktaş/Süper Lig : matchs 6→7, minutes 162→171
+18872 L. Cook 2026 Bournemouth/UEFA Europa League : matchs 0→1, minutes 0→90, note 0.00→3.52
+18872 L. Cook 2026 Bournemouth/Premier League : matchs 6→7, minutes 198→260, jaunes 1→2, note 6.53→6.62
+18935 A. McCarthy 2026 Leicester/League One : matchs 7→9, minutes 624→804, note 6.72→6.95
+18961 D. Burn 2026 Newcastle/Premier League : matchs 1→2, minutes 1→2
+18963 L. Dunk 2026 Brighton/UEFA Europa Conference League : matchs 1→2, minutes 45→90, note 7.30→7.45
+18963 L. Dunk 2026 Brighton/Premier League : matchs 5→6, minutes 390→479, note 7.42→7.47
+18968 Y. Bissouma 2026 Ajax/Eredivisie : matchs 0→1, minutes 0→8, note 0.00→6.12
+19133 E. Alioski 2026 FC Lugano/UEFA Europa Conference League : matchs 1→2, minutes 69→80, note 7.30→7.10
+19179 T. Mings 2026 Aston Villa/Premier League : matchs 5→6, minutes 351→441, note 6.94→6.97
+19209 F. Tomori 2026 AC Milan/UEFA Europa League : matchs 0→1, minutes ∅→67, note ∅→6.94
+19209 F. Tomori 2026 AC Milan/Serie A : matchs 0→1, minutes 0→12, note 0.00→6.90
+19263 L. Kelly 2026 Juventus/Serie A : note 4.65→6.20
+19281 A. Semenyo 2026 Manchester City/Premier League : matchs 6→7, minutes 540→553, note 7.15→7.03
+19298 M. Cash 2026 Aston Villa/Premier League : matchs 5→6, minutes 388→478, note 6.40→6.55
+19599 E. Martínez 2026 Chelsea/Premier League : matchs 5→6, minutes 450→525, note 7.64→7.58
+20531 H. Maïga 2026 Ferencvarosi TC/NB I : matchs 0→1, minutes 0→88, note 0.00→3.41
+21381 J. Lefort 2026 Angers/Ligue 1 : note 6.53→6.58
+22238 Luiz Araújo 2026 Flamengo/CONMEBOL Libertadores : note 5.92→5.18
+22238 Luiz Araújo 2026 Flamengo/Serie A : note 6.90→6.52
+25350 M. Grujić 2026 Levski Sofia/UEFA Europa League : matchs 0→1, minutes 0→75, note 0.00→3.15
+25406 F. Uduokhai 2026 Union Berlin/Bundesliga : matchs 4→5, minutes 360→450, note 7.09→6.98
+25903 F. Dahmen 2026 FC Augsburg/Bundesliga : matchs 5→6, minutes 450→540, note 8.02→8.14
+25907 S. Bell 2026 FSV Mainz 05/Bundesliga : minutes 0→∅, note 0.00→∅
+25914 Aarón Martín 2026 Racing Santander/La Liga : matchs 4→5, minutes 147→157, note 5.60→5.75
+26236 C. Günter 2026 SC Freiburg/UEFA Europa Conference League : matchs 1→2, minutes 90→149, note 6.90→6.70
+26828 G. Kiriakopoulos 2026 Panathinaikos/UEFA Europa Conference League : matchs 6→7, minutes 498→588, note 6.90→6.85
+26828 G. Kiriakopoulos 2026 Panathinaikos/Super League 1 : note 6.98→5.98
+28322 D. Dibusz 2026 Ferencvarosi TC/UEFA Europa League : minutes 0→180, note 0.00→3.49
+28322 D. Dibusz 2026 Ferencvarosi TC/NB I : note 5.66→4.85
+30393 A. Lafont 2026 Amed/Süper Lig : matchs 7→8, minutes 630→720, note 6.66→6.65
+30417 M. Carnesecchi 2026 Atalanta/UEFA Europa Conference League : matchs 2→3, minutes 180→270, note 7.25→6.93
+30417 M. Carnesecchi 2026 Atalanta/Serie A : matchs 6→7, minutes 540→630, note 7.45→7.50
+30421 B. Djimsiti 2026 Al Diriyah/Pro League : matchs 6→8, minutes 540→720, note 6.72→6.84
+30553 C. Lykogiannis 2026 AEK Athens FC/Super League 1 : minutes ∅→0, note ∅→0.00
+30611 L. Montipò 2026 Venezia/Serie A : minutes 0→∅, note 0.00→∅
+30670 M. Di Gregorio 2026 Bournemouth/Premier League : minutes ∅→0, note ∅→0.00
+30763 Jandrei 2026 Juventude/Serie B : matchs 30→31, minutes 2746→2828, note 7.23→7.18
+31069 M. Sportiello 2026 Atalanta/Serie A : minutes 0→∅, note 0.00→∅
+31354 G. Vicario 2026 Juventus/UEFA Europa League : matchs 0→1, minutes 0→90, note 0.00→3.28
+31354 G. Vicario 2026 Juventus/Serie A : matchs 6→7, minutes 539→629, note 6.87→6.67
+35544 J. Vásquez 2026 Genoa/Serie A : matchs 5→6, minutes 431→521, jaunes 2→3, note 6.42→6.35
+35579 M. Cauteruccio 2026 Bolívar/Primera División : note 7.04→7.00
+35720 F. Mancuello 2026 Argentinos JRS/Liga Profesional Argentina : minutes 0→∅, note 0.00→∅
+36832 Rafael Ramos 2026 Ceara/Serie B : note 6.42→6.40
+36878 M. Bizot 2026 Aston Villa/Premier League : note 6.50→3.25
+36889 J. Svensson 2026 Rosenborg/Eliteserien : matchs 14→15, minutes 741→831, note 7.00→6.95
+37171 S. Klaiber 2026 VfL Bochum/2. Bundesliga : matchs 4→5, minutes 288→378, jaunes 1→2, note 6.62→6.32
+37246 J. Blaswich 2026 Bayer Leverkusen/UEFA Europa League : minutes ∅→0, note ∅→0.00
+37436 L. Duarte 2026 Puskas Academy/NB I : matchs 7→8, minutes 475→565, jaunes 1→2, note 6.67→6.58
+37451 M. Deijl 2026 Feyenoord/Eredivisie : note 2.67→2.22
+37818 N. Olij 2026 PSV Eindhoven/UEFA Champions League : minutes ∅→0, note ∅→0.00
+38110 S. Padt 2026 Utrecht/Eredivisie : matchs 0→1, minutes 0→90, note 0.00→3.91
+38126 D. van Kaam 2026 Heracles/Eerste Divisie : matchs 0→1, minutes 0→7, note 0.00→2.10
+38132 K. Sierhuis 2026 NEC Nijmegen/Eredivisie : matchs 4→5, minutes 231→258, note 6.69→6.56
+38734 S. Botman 2026 Newcastle/Premier League : matchs 6→7, minutes 540→630, jaunes 1→2, note 6.81→6.74
+40582 S. Walukiewicz 2026 Sassuolo/Serie A : minutes 0→∅, note 0.00→∅
+41115 Jhonatan 2026 Athletic Club/Serie B : minutes ∅→0, note ∅→0.00
+41208 Fábio Cardoso 2026 Sevilla/La Liga : minutes 0→∅, note 0.00→∅
+41293 Helton Leite 2026 Vila Nova/Serie B : matchs 32→33, minutes 2857→2941, note 7.14→7.10
+41371 Fali Candé 2026 Sassuolo/Serie A : minutes 0→∅, note 0.00→∅
+41621 Matheus Nunes 2026 Manchester City/Premier League : matchs 4→5, minutes 303→379, note 7.20→7.14
+43246 A. Laïdouni 2026 Al Wakrah/Stars League : matchs 5→6, minutes 342→432, note 6.95→7.00
+46653 David García 2026 Al-Rayyan SC/Stars League : matchs 5→6, minutes 360→450, jaunes 1→2, note 7.08→7.05
+46988 Josep Martínez 2026 Inter/Serie A : matchs 6→7, minutes 540→630, note 6.82→6.87
+47269 Álex Remiro 2026 Real Sociedad/La Liga : matchs 7→8, minutes 630→720, note 7.39→7.40
+47270 Unai Simón 2026 Athletic Club/La Liga : matchs 8→9, minutes 585→675, note 7.20→7.26
+47301 Robin Le Normand 2026 Atletico Madrid/UEFA Champions League : matchs 2→3, minutes 21→33, note 6.80→6.64
+47302 Diego Llorente 2026 Real Betis/La Liga : matchs 3→4, minutes 219→309, jaunes 0→1, note 6.90→6.60
+47303 Aihen Muñoz 2026 Real Sociedad/La Liga : matchs 2→3, minutes 39→110, note 6.45→6.37
+47315 Martín Zubimendi 2026 Arsenal/Premier League : note 6.60→5.50
+47380 Marc Cucurella 2026 Real Madrid/La Liga : matchs 8→9, minutes 475→565, jaunes 0→1, note 6.77→6.70
+47430 W. Hoedt 2026 AZ Alkmaar/UEFA Europa League : matchs 0→1, minutes ∅→90, note ∅→3.25
+47480 M. Salisu 2026 Monaco/Ligue 1 : matchs 1→2, minutes 1→67, jaunes 0→1, note 0.00→3.45
+48190 A. Sampsted 2026 GO Ahead Eagles/Eredivisie : matchs 8→9, minutes 621→692, note 6.38→6.35
+49837 M. Günok 2026 Fenerbahçe/UEFA Champions League : note 5.66→4.72
+50030 M. Talbi 2026 Lorient/Ligue 1 : matchs 6→7, minutes 540→630, note 7.22→7.24
+50046 E. Topçu 2026 Beşiktaş/UEFA Europa League : matchs 7→8, minutes 90→180, note 7.36→6.95
+50046 E. Topçu 2026 Beşiktaş/Süper Lig : matchs 5→6, minutes 373→463, jaunes 2→3, note 7.34→7.33
+51468 A. Rodríguez 2026 Rosario Central/Liga Profesional Argentina : matchs 5→6, minutes 352→442, passes 0→1, jaunes 1→2, note 6.54→6.73
+51603 A. Canobbio 2026 Fluminense/CONMEBOL Libertadores : matchs 9→10, minutes 654→717, note 6.72→6.64
+51603 A. Canobbio 2026 Fluminense/Serie A : matchs 22→23, minutes 1644→1701, jaunes 6→7, note 6.99→6.94
+51701 M. Araújo 2026 Bahia/Serie A : note 6.25→5.94
+55877 O. Karavaev 2026 Shakhtar Donetsk/Premier League : matchs 6→7, minutes 17→197, note 3.40→3.35
+59040 L. González 2026 FBC Melgar/Primera División : matchs 11→12, minutes 990→1080, note 6.95→6.93
+59229 M. Giménez 2026 Boca Juniors/Liga Profesional Argentina : note 5.06→4.67
+61820 B. Özdemir 2026 Çorum FK/Süper Lig : matchs 6→7, minutes 280→358, jaunes 0→1, note 6.83→6.89
+64256 A. Pelmard 2026 Clermont Foot/Ligue 2 : matchs 0→1, minutes 0→90, note 0.00→6.20
+67971 M. Guéhi 2026 Manchester City/Premier League : matchs 6→7, minutes 540→630, note 7.38→7.33
+67971 M. Guéhi 2026 Manchester City/UEFA Champions League : note 6.73→4.49
+70747 J. Enciso 2026 Ipswich/Premier League : matchs 6→7, minutes 486→564, note 6.95→6.86
+72457 A. Tosin 2026 Lorient/Ligue 1 : note 6.45→4.30
+81573 Omar Marmoush 2026 Tottenham/Premier League : matchs 5→6, minutes 365→452, buts 0→1, note 6.62→6.81
+84128 Y. Gboho 2026 Toulouse/Ligue 1 : note 6.82→6.80
+84128 Y. Gboho 2026 Coventry/Premier League : minutes 0→∅, note 0.00→∅
+118307 Đ. Petrović 2026 Bournemouth/UEFA Europa League : matchs 1→2, minutes 90→180, note 6.58→6.55
+118307 Đ. Petrović 2026 Bournemouth/Premier League : matchs 6→7, minutes 540→630, note 6.30→6.28
+119809 J. Florentín 2026 Independ. Rivadavia/Liga Profesional Argentina : matchs 28→29, minutes 2420→2510, buts 6→7
+119853 M. Diaw 2026 Al Shabab/Pro League : matchs 5→6, minutes 450→540, note 7.27→7.20
+125674 J. Cabal 2026 Juventus/Serie A : minutes 0→∅, note 0.00→∅
+126868 F. Domínguez 2026 Cerro Porteno/Division Profesional - Clausura : matchs 7→8, minutes 274→333, note 6.52→6.46
+126899 Z. Sanusi 2026 FC Porto/Primeira Liga : note 7.25→7.21
+126899 Z. Sanusi 2026 FC Porto/UEFA Champions League : matchs 0→1, minutes 0→69, note 0.00→3.38
+127011 A. Cambiaso 2026 Juventus/Serie A : matchs 3→4, minutes 57→73, note 6.62→6.65
+127631 V. Gendrey 2026 1899 Hoffenheim/Bundesliga : minutes 24→30, note 6.72→4.57
+129047 R. Zerrouki 2026 Twente/UEFA Europa Conference League : matchs 4→5, minutes 320→415, buts 1→2, note 7.45→7.66
+129047 R. Zerrouki 2026 Twente/Eredivisie : matchs 8→9, minutes 707→797, note 7.16→7.13
+129058 B. Verbruggen 2026 Brighton/UEFA Europa Conference League : matchs 2→3, minutes 180→270, note 7.10→7.13
+129058 B. Verbruggen 2026 Brighton/Premier League : matchs 6→7, minutes 540→630, note 7.37→7.34
+129718 J. Bellingham 2026 Real Madrid/La Liga : matchs 8→9, minutes 619→688, passes 2→3, note 7.71→7.69
+133110 T. Nianzou 2026 Lille/Ligue 1 : matchs 1→2, minutes 90→180, note 7.64→7.10
+138908 E. Anderson 2026 Manchester City/Premier League : matchs 6→7, minutes 505→518, note 7.53→7.40
+138908 E. Anderson 2026 Manchester City/UEFA Champions League : matchs 2→3, minutes 118→208, buts 0→1, note 6.91→7.34
+143368 Bruno Gomes 2026 Internacional/Serie A : matchs 29→30, minutes 2473→2563, jaunes 4→5, note 6.93→6.92
+143648 M. Okoye 2026 Udinese/Serie A : matchs 6→7, minutes 540→630, note 7.44→7.39
+147859 C. De Ketelaere 2026 Atalanta/UEFA Europa Conference League : matchs 1→2, minutes 30→99, passes 0→1, note 6.30→7.30
+147859 C. De Ketelaere 2026 Atalanta/Serie A : matchs 6→7, minutes 415→505, note 7.07→6.94
+152669 D. Yongwa 2026 Norwich/Championship : matchs 2→3, minutes 146→191, jaunes 0→1, note 4.23→6.08
+157052 R. Calafiori 2026 Arsenal/Premier League : matchs 6→7, minutes 500→590, note 6.82→6.87
+162141 K. De Winter 2026 AC Milan/UEFA Europa League : matchs 1→2, minutes 90→180, note 6.70→6.82
+162141 K. De Winter 2026 AC Milan/Serie A : matchs 6→7, minutes 520→610, note 6.84→6.83
+162188 P. Kalulu 2026 Juventus/UEFA Europa League : matchs 1→2, minutes 90→180, note 7.01→7.04
+162188 P. Kalulu 2026 Juventus/Serie A : matchs 6→7, minutes 540→630, note 6.85→6.83
+162267 A. Truffert 2026 Bournemouth/UEFA Europa League : note 5.93→2.97
+162267 A. Truffert 2026 Bournemouth/Premier League : matchs 6→7, minutes 534→624, note 6.78→6.86
+162712 Óscar Mingueza 2026 Crystal Palace/UEFA Europa League : matchs 1→2, minutes 28→103, note 6.67→6.33
+163022 P. Osterhage 2026 SC Freiburg/UEFA Europa Conference League : matchs 0→1, minutes ∅→90, jaunes 0→1, note ∅→6.90
+163022 P. Osterhage 2026 SC Freiburg/Bundesliga : matchs 0→1, minutes 0→13, note 0.00→6.13
+180731 L. Assignon 2026 VfB Stuttgart/Bundesliga : matchs 0→1, minutes 0→1, note 0.00→6.37
+180731 L. Assignon 2026 VfB Stuttgart/UEFA Champions League : matchs 1→2, minutes 4→42, note 7.33→7.23
+195512 M. Satriano 2026 Getafe/UEFA Europa Conference League : matchs 2→3, minutes 180→270, note 7.25→7.03
+195512 M. Satriano 2026 Getafe/La Liga : matchs 8→9, minutes 569→659, buts 1→2, note 6.59→6.77
+196187 A. Seidu 2026 Nice/Ligue 1 : matchs 1→2, minutes 32→41, note 3.15→6.23
+197383 Luciano Juba 2026 Bahia/Serie A : matchs 26→27, minutes 2186→2276, note 7.15→7.11
+272460 Q. Merlin 2026 Rennes/Ligue 1 : note 6.29→6.45
+284230 R. Lewis 2026 Manchester City/UEFA Champions League : matchs 0→1, minutes 0→90, passes 0→2, note 0.00→4.29
+289478 B. Kociubinski 2026 Estudiantes L.P./Liga Profesional Argentina : matchs 2→3, minutes 155→245, jaunes 0→1, note 6.96→7.40
+290046 A. Makoumbou 2026 Sampdoria/Serie B : matchs 5→6, minutes 415→492, note 6.93→6.82
+290106 Pablo Marín 2026 Real Sociedad/UEFA Europa League : matchs 0→1, minutes 0→11, note 0.00→3.20
+311067 S. Castro 2026 AS Roma/Serie A : matchs 4→5, minutes 105→195, buts 0→1, note 6.28→6.40
+311067 S. Castro 2026 AS Roma/UEFA Champions League : matchs 0→1, minutes 0→31, note 0.00→3.30
+312840 E. Poku 2026 Beşiktaş/UEFA Europa League : note 7.41→3.71
+326067 A. Hadj-Moussa 2026 Feyenoord/Eredivisie : matchs 7→8, minutes 616→706, note 8.17→8.04
+333682 Cristhian Mosquera 2026 Arsenal/Premier League : note 6.90→4.60
+336567 S. Kılıçsoy 2026 Beşiktaş/UEFA Europa League : matchs 3→4, minutes 0→5, note 0.00→3.31
+361497 D. Huijsen 2026 Real Madrid/La Liga : matchs 6→7, minutes 502→592, jaunes 0→1, note 6.93→6.99
+369674 J. Bahoya 2026 Leeds/Premier League : note 3.25→2.17
+19 J. Weigl 2026 Al-Qadisiyah FC/Pro League : matchs 7→9, minutes 630→810, jaunes 1→2, note 6.96→7.00
+155 Abel Ruiz 2026 Girona/Segunda División : matchs 8→9, minutes 490→496, note 6.46→6.42
+178 Lucas Moura 2026 Sao Paulo/Serie A : matchs 9→10, minutes 354→399, note 6.66→6.62
+258 Juan Bernat 2026 Eibar/Segunda División : matchs 8→9, minutes 666→756, note 6.76→6.72
+275 E. Choupo-Moting 2026 New York Red Bulls/Major League Soccer : matchs 19→21, minutes 504→582, buts 4→5, note 6.69→6.71
+302 Roberto Firmino 2026 Al Sadd/Stars League : matchs 5→6, minutes 270→443, buts 4→5, passes 2→4, jaunes 0→1, note 8.44→7.78
+327 A. Ounas 2026 Al-Gharafa/Stars League : matchs 2→3, minutes 116→206, note 4.82→5.18
+331 L. Insigne 2026 Sampdoria/Serie B : note 7.04→6.96
+369 Diogo Costa 2026 FC Porto/Primeira Liga : note 7.14→7.24
+369 Diogo Costa 2026 FC Porto/UEFA Champions League : matchs 2→3, minutes 180→270, note 8.00→7.51
+505 D. Alaba 2026 Udinese/Serie A : matchs 1→2, minutes 18→63, note 6.53→6.65
+521 R. Lewandowski 2026 Chicago Fire/Major League Soccer : matchs 13→15, minutes 912→1070, note 7.05→6.95
+624 N. Otamendi 2026 River Plate/Liga Profesional Argentina : matchs 11→13, minutes 1002→1182, note 7.23→7.32
+782 L. Pellegrini 2026 AS Roma/Serie A : matchs 1→2, minutes 45→72
+782 L. Pellegrini 2026 AS Roma/UEFA Champions League : matchs 1→2, minutes 27→78, note 5.66→6.43
+900 J. Lingard 2026 Corinthians/Serie A : matchs 17→18, minutes 736→815, note 6.48→6.49
+926 G. Kondogbia 2026 Marseille/Ligue 1 : matchs 3→4, minutes 144→213, note 6.79→6.73
+951 M. Aebischer 2026 Union Berlin/Bundesliga : matchs 5→6, minutes 376→466, note 6.33→6.29
+972 J. Tah 2026 Bayern München/Bundesliga : note 7.46→5.96
+1085 André Ramalho 2026 Corinthians/Serie A : note 7.11→6.32
+1166 T. Werner 2026 San Jose Earthquakes/Major League Soccer : matchs 16→18, minutes 997→1095, note 7.09→7.05
+1321 L. Majer 2026 AEK Athens FC/Super League 1 : note 7.37→7.45
+1321 L. Majer 2026 AEK Athens FC/UEFA Champions League : matchs 4→5, minutes 298→388, note 7.47→7.34
+1369 M. Zajc 2026 Dinamo Zagreb/UEFA Europa League : note 6.84→3.42
+1369 M. Zajc 2026 Dinamo Zagreb/HNL : matchs 6→7, minutes 390→420, buts 1→2, note 6.62→6.69
+1408 S. Bornauw 2026 Hamburger SV/Bundesliga : matchs 3→4, minutes 270→360, note 5.75→6.60
+1476 C. Borja 2026 Club America/Liga MX : matchs 8→9, minutes 597→612, note 6.73→6.72
+1706 C. Bacca 2026 Deportivo Cali/Primera A : matchs 5→6, minutes 101→116, note 4.65→4.90
+1707 Gerard Moreno 2026 Villarreal/La Liga : matchs 7→8, minutes 319→334, note 7.00→6.96
+1707 Gerard Moreno 2026 Villarreal/UEFA Champions League : matchs 2→3, minutes 76→88, note 6.55→6.45
+1744 J. Tavernier 2026 Maccabi Tel Aviv/Ligat Ha'al : matchs 4→5, minutes 325→415, note 6.87→6.73
+1754 G. Kamara 2026 QPR/Championship : matchs 9→10, minutes 577→658, note 6.99→6.97
+2002 A. Ljajić 2026 Novi Pazar/Super Liga : matchs 4→5, minutes 227→317, jaunes 1→2, note 6.97→6.82
+2056 Pablo Sarabia 2026 Al-Arabi SC/Stars League : matchs 5→6, minutes 385→475, buts 3→6, note 7.27→7.45
+2137 C. Osmanpaşa 2026 Sarıyer/1. Lig : matchs 10→11, minutes 892→937, note 6.93→6.91
+2215 A. Laurienté 2026 Sassuolo/Serie A : matchs 6→7, minutes 540→623, note 6.93→7.10
+2291 M. Kovačić 2026 Manchester City/Premier League : matchs 2→3, minutes 42→92, passes 0→1, note 6.65→6.83
+2443 Y. Osorio 2026 Deportes Tolima/Primera A : matchs 7→8, minutes 404→494, note 6.67→6.61
+2463 F. Armani 2026 Atletico Nacional/Primera A : matchs 10→11, minutes 912→1002, note 6.91→6.85
+2465 J. Musso 2026 Atletico Madrid/UEFA Champions League : minutes ∅→0, note ∅→0.00
+2676 Rúben Neves 2026 Al-Hilal Saudi FC/Pro League : matchs 8→9, minutes 677→773, note 7.67→7.84
+2773 W. Troost-Ekong 2026 Al Ahli Doha/Stars League : note 3.41→2.73
+2809 R. Steffen 2026 FC Lugano/UEFA Europa Conference League : matchs 6→7, minutes 498→561, passes 1→2, jaunes 1→2, note 7.18→7.14
+2910 Hwang Ui-Jo 2026 Alanyaspor/Süper Lig : matchs 7→8, minutes 334→394, note 6.60→6.61
+2917 M. Eggestein 2026 SC Freiburg/UEFA Europa Conference League : matchs 2→3, minutes 180→270, buts 0→1, note 7.55→7.87
+2917 M. Eggestein 2026 SC Freiburg/Bundesliga : matchs 5→6, minutes 450→540, note 7.32→7.06
+2918 K. Casteels 2026 Al-Qadisiyah FC/Pro League : matchs 6→8, minutes 540→720, note 7.44→7.22
+2923 Y. Carrasco 2026 Al Shabab/Pro League : note 7.37→7.36
+3008 M. Klich 2026 Cracovia Krakow/Ekstraklasa : matchs 10→11, minutes 776→850, note 7.04→6.97
+3325 Gelson Dala 2026 Al Wakrah/Stars League : matchs 4→5, minutes 39→104, note 3.89→5.55
+5554 F. Fattori 2026 Talleres Cordoba/Liga Profesional Argentina : matchs 9→10, minutes 649→707, note 6.61→6.59
+5822 L. Morales 2026 Belgrano Cordoba/Liga Profesional Argentina : matchs 30→31, minutes 2547→2631, note 6.93→6.91
+6051 J. Laso 2026 Tigre/Liga Profesional Argentina : matchs 19→20, minutes 1619→1693, jaunes 4→5, note 7.00→7.01
+6110 B. Pittón 2026 Union Santa Fe/Liga Profesional Argentina : minutes 616→622, note 6.60→6.34
+6184 A. Roa 2026 Once Caldas/Primera A : note 6.91→6.61
+6324 E. Bullaude 2026 Santos Laguna/Liga MX : matchs 11→12, minutes 942→1013, passes 2→3, jaunes 0→1
+6392 A. Urzi 2026 Levadiakos/Super League 1 : matchs 6→7, minutes 424→505, note 6.98→6.86
+6608 G. Rojas 2026 Cruzeiro/Serie A : note 6.41→5.77
+6659 T. Chancalay 2026 Minnesota United FC/Major League Soccer : matchs 28→30, minutes 1825→1908, note 6.83→6.57
+6707 C. Quintana 2026 Deportivo Riestra/Liga Profesional Argentina : matchs 6→7, minutes 510→542, note 5.69→6.56
+8586 M. Vojvoda 2026 Udinese/Serie A : matchs 6→7, minutes 501→591, note 6.84→6.74
+9525 Ramon Menezes 2026 Goias/Serie B : matchs 16→17, minutes 1254→1344, note 6.78→6.81
+9905 Diogo Barbosa 2026 Juventude/Serie B : matchs 25→26, minutes 1900→1982, note 6.86→6.81
+10015 Nino Paraíba 2026 Cuiaba/Serie B : minutes 172→166, note 7.08→4.22
+10015 Nino Paraíba 2026 Londrina/Serie B : note 6.66→5.97
+10031 Gregore 2026 Al-Rayyan SC/Stars League : matchs 5→6, minutes 360→450, note 6.52→6.50
+10065 Jean Irmer 2026 Criciuma/Serie B : note 6.30→5.67
+10122 Renan Lodi 2026 Atletico-MG/Serie A : matchs 25→26, minutes 2108→2136
+10125 Khellven 2026 Palmeiras/CONMEBOL Libertadores : note 4.18→3.48
+10125 Khellven 2026 Palmeiras/Serie A : matchs 21→22, minutes 1052→1142, note 6.68→6.67
+10218 Lourency 2026 Ajman/Pro League : matchs 5→6, minutes 269→441, buts 0→1, note 5.98→6.34
+10265 Luiz Otávio 2026 Ceara/Serie B : note 6.00→5.99
+11417 J. Insaurralde 2026 Sarmiento Junin/Liga Profesional Argentina : matchs 24→26, minutes 2145→2325, note 6.78→6.82
+18740 Jonny 2026 Alaves/La Liga : matchs 7→8, minutes 600→662, note 6.90→6.81
+18744 M. Kilman 2026 West Ham/Championship : matchs 10→11, minutes 900→990, note 7.15→7.16
+18834 A. Yarmolenko 2026 Dynamo Kyiv/Premier League : matchs 7→8, minutes 127→211, note 3.70→5.08
+18886 M. Dúbravka 2026 Tottenham/Premier League : minutes ∅→0, note ∅→0.00
+19364 N. Maupay 2026 Marseille/UEFA Europa League : matchs 1→2, minutes 67→129, note 6.27→6.20
+19364 N. Maupay 2026 Marseille/Ligue 1 : matchs 5→6, minutes 141→142, note 6.34→5.06
+20600 R. Perraud 2026 Lille/Ligue 1 : matchs 6→7, minutes 464→518, note 6.77→6.78
+22002 G. Konan 2026 Wolves/Championship : matchs 1→2, minutes 10→97, note 6.30→4.41
+22260 I. Sissoko 2026 Nantes/Ligue 2 : matchs 8→9, minutes 544→605, note 6.70→6.73
+24785 T. Horn 2026 VfL Bochum/2. Bundesliga : matchs 7→8, minutes 633→728, note 6.84→6.74
+24868 J. Vagnoman 2026 VfB Stuttgart/Bundesliga : matchs 5→6, minutes 441→531, note 7.21→7.23
+24868 J. Vagnoman 2026 VfB Stuttgart/UEFA Champions League : matchs 2→3, minutes 114→166, note 6.51→6.71
+24963 A. Karazor 2026 VfB Stuttgart/Bundesliga : matchs 1→2, minutes 90→157, note 6.60→7.19
+24963 A. Karazor 2026 VfB Stuttgart/UEFA Champions League : note 6.81→3.41
+25332 J. Sargent 2026 Toronto FC/Major League Soccer : matchs 21→23, minutes 1623→1799, note 7.11→7.05
+25458 D. Lukebakio 2026 Benfica/UEFA Europa League : matchs 4→5, minutes 90→158, note 8.50→7.36
+26248 V. Grifo 2026 SC Freiburg/UEFA Europa Conference League : matchs 2→3, minutes 38→128, buts 0→1, note 6.90→7.50
+26248 V. Grifo 2026 SC Freiburg/Bundesliga : matchs 4→5, minutes 65→72, note 6.93→6.80
+30497 Bremer 2026 Juventus/UEFA Europa League : matchs 1→2, minutes 30→50, note 6.83→6.65
+30497 Bremer 2026 Juventus/Serie A : matchs 6→7, minutes 540→630, note 7.21→7.17
+30511 V. Damaşcan 2026 Hapoel Katamon/Ligat Ha'al : matchs 4→5, minutes 218→281, buts 0→1, note 6.50→6.82
+30561 A. Deiola 2026 Cagliari/Serie A : matchs 6→7, minutes 488→497, note 6.75→6.79
+30747 F. Depaoli 2026 Sampdoria/Serie B : matchs 3→4, minutes 136→164, note 6.40→6.51
+30756 Lucas Piazón 2026 Wieczysta Kraków/Ekstraklasa : matchs 10→11, minutes 863→950, note 7.18→7.14
+30765 I. Radu 2026 Celta Vigo/UEFA Europa League : matchs 1→2, minutes 90→180, note 7.30→7.22
+30765 I. Radu 2026 Celta Vigo/La Liga : matchs 8→9, minutes 720→810, note 7.26→7.38
+30812 I. Pussetto 2026 Huracan/Liga Profesional Argentina : matchs 6→7, minutes 264→301, note 6.83→6.73
+30866 M. Lazzari 2026 Lazio/Serie A : matchs 3→4, minutes 33→44, note 6.53→6.55
+31043 K. Diks 2026 Borussia Mönchengladbach/Bundesliga : matchs 5→6, minutes 450→540, jaunes 2→3, note 6.16→6.27
+31390 P. Mazzocchi 2026 Venezia/Serie A : matchs 0→1, minutes ∅→19, note ∅→6.70
+35921 V. Malcorra 2026 Union Santa Fe/Liga Profesional Argentina : matchs 10→11, minutes 730→732, note 6.83→6.82
+36868 S. Spierings 2026 Real Salt Lake/Major League Soccer : matchs 19→21, minutes 1374→1554, jaunes 2→3
+36922 S. van den Berg 2026 Brentford/Premier League : matchs 0→1, minutes ∅→71, note ∅→6.20
+37114 A. Büttner 2026 Vitesse/Eerste Divisie : matchs 7→8, minutes 97→129, note 6.53→6.55
+37182 S. van de Streek 2026 Antalyaspor/1. Lig : matchs 10→11, minutes 811→894, buts 3→4, note 6.83→6.94
+37651 J. Idzes 2026 Sassuolo/Serie A : note 6.59→6.63
+38749 K. Taylor 2026 Lazio/Serie A : matchs 6→7, minutes 511→580, jaunes 0→1, note 7.00→6.99
+39121 C. Ejuke 2026 Sevilla/La Liga : matchs 6→7, minutes 210→255, note 5.83→6.86
+39362 M. Pedersen 2026 Olympiakos Piraeus/UEFA Europa League : note 6.60→3.30
+39362 M. Pedersen 2026 Olympiakos Piraeus/Super League 1 : matchs 3→4, minutes 176→266, note 6.63→6.87
+40547 D. Goutas 2026 Gençlerbirliği S.K./Süper Lig : matchs 7→8, minutes 630→720, note 6.67→6.84
+42984 Á. Lang 2026 Debreceni VSC/NB I : matchs 7→8, minutes 621→711, note 6.39→6.60
+43036 D. Man 2026 PSV Eindhoven/Eredivisie : matchs 3→4, minutes 53→98, note 4.80→5.05
+43036 D. Man 2026 PSV Eindhoven/UEFA Champions League : matchs 0→1, minutes ∅→9, note ∅→6.65
+44871 A. Hickey 2026 Brentford/Premier League : matchs 6→7, minutes 198→217, note 6.64→6.75
+46733 Raíllo 2026 Mallorca/Segunda División : matchs 9→10, minutes 789→879, jaunes 3→4, note 7.52→7.46
+46982 Gonzalo Villar 2026 Elche/La Liga : matchs 8→9, minutes 644→734, jaunes 2→3, note 6.78→6.68
+47298 Elustondo 2026 PAOK/Super League 1 : note 6.28→5.23
+47300 T. Hernández 2026 Al-Hilal Saudi FC/Pro League : matchs 4→5, minutes 202→278, note 7.02→7.11
+47393 Marc Cardona 2026 Bangkok United/Thai League 1 : matchs 3→4, minutes 99→132, note 6.48→6.42
+47530 Sergio Akieme 2026 Reims/Ligue 2 : note 2.95→5.90
+47543 Álvaro García 2026 Rayo Vallecano/La Liga : matchs 8→9, minutes 575→655, buts 2→3, note 6.70→6.83
+48555 C. Pickel 2026 Sharjah FC/Pro League : matchs 5→6, minutes 270→425, note 6.45→6.56
+49874 F. Novák 2026 FK Jablonec/Czech Liga : note 7.23→6.20
+49908 Guilherme Marques 2026 Atletico Goianiense/Serie B : matchs 19→20, minutes 998→1037, note 6.91→6.89
+50015 M. Fofana 2026 Keçiörengücü/1. Lig : matchs 8→9, minutes 215→242, passes 0→1, note 5.79→5.91
+50057 E. Elmalı 2026 Galatasaray/Süper Lig : matchs 7→8, minutes 198→268, note 6.56→6.60
+50200 İ. Akdağ 2026 Keçiörengücü/1. Lig : matchs 8→9, minutes 718→808, note 7.26→7.22
+50244 K. Kanatsızkuş 2026 Esenler Erokspor/1. Lig : matchs 5→7, minutes 229→326, note 6.50→6.54
+50246 U. Nayir 2026 Trabzonspor/Süper Lig : matchs 0→1, minutes ∅→2
+51409 M. Luna Diale 2026 Union Santa Fe/Liga Profesional Argentina : matchs 9→10, minutes 465→483, note 6.43→6.53
+56473 M. Gabbia 2026 AC Milan/Serie A : note 6.52→6.55
+61431 J. Kiwior 2026 FC Porto/Primeira Liga : note 7.52→7.54
+61431 J. Kiwior 2026 FC Porto/UEFA Champions League : matchs 2→3, minutes 180→270, note 6.94→6.95
+63274 B. Yılmaz 2026 Galatasaray/Süper Lig : matchs 7→8, minutes 535→596, note 6.83→6.91
+68011 C. Ibáñez 2026 Huracan/Liga Profesional Argentina : matchs 24→25, minutes 2059→2149, note 6.78→6.81
+70670 I. Pitta 2026 RB Bragantino/Serie A : note 6.69→6.45
+80173 Anderson 2026 Chapecoense-sc/Serie A : matchs 15→16
+80173 Anderson 2026 Chapecoense B/Serie A : minutes 90→180, note 6.26→7.53
+95200 J. Franco 2026 Gimnasia M./Liga Profesional Argentina : note 5.38→6.46
+104793 A. Ndiaye 2026 Lusail City/Stars League : note 2.22→1.68
+106851 S. Machino 2026 Borussia Mönchengladbach/Bundesliga : matchs 3→4, minutes 86→125, jaunes 2→3, note 6.49→6.47
+126949 C. Richards 2026 Crystal Palace/UEFA Europa League : matchs 1→2, minutes 74→164, jaunes 0→1, note 7.98→6.90
+126949 C. Richards 2026 Crystal Palace/Premier League : matchs 6→7, minutes 540→630, note 6.83→6.74
+137209 M. Kjølø 2026 Rosenborg/Eliteserien : matchs 4→5, minutes 158→228, jaunes 0→1
+138753 O. Edvardsen 2026 Ajax/Eredivisie : note 5.12→6.40
+141841 Filipe Relvas 2026 AEK Athens FC/Super League 1 : note 7.78→7.73
+141841 Filipe Relvas 2026 AEK Athens FC/UEFA Champions League : matchs 4→5, minutes 360→450, note 7.31→7.04
+161671 I. Zabarnyi 2026 Paris Saint Germain/Ligue 1 : matchs 1→2, minutes 90→180, buts 0→1, note 3.41→7.42
+161671 I. Zabarnyi 2026 Paris Saint Germain/UEFA Champions League : matchs 1→2, minutes 90→121, note 3.50→4.49
+162266 L. da Cunha 2026 Como/Serie A : matchs 6→7, minutes 394→477, note 7.18→7.14
+162761 C. Lukeba 2026 RB Leipzig/Bundesliga : matchs 3→4, minutes 253→343, note 7.36→6.93
+180236 Caio Alexandre 2026 Bahia/Serie A : matchs 19→20, minutes 727→752, note 6.86→6.85
+180961 Luan Patrick 2026 Estrela/Primeira Liga : minutes 630→540, note 6.89→6.83
+182621 Iker Muñoz 2026 Osasuna/La Liga : matchs 7→8, minutes 487→554, note 6.71→6.79
+197784 J. Kałuziński 2026 Başakşehir/Süper Lig : matchs 6→7, minutes 304→361, jaunes 0→1, note 6.98→7.03
+202696 I. Matanović 2026 SC Freiburg/UEFA Europa Conference League : matchs 2→3, minutes 147→178, note 7.75→7.37
+202696 I. Matanović 2026 SC Freiburg/Bundesliga : matchs 5→6, minutes 389→479, note 7.70→7.52
+214463 İ. Yüksek 2026 Fenerbahçe/UEFA Champions League : matchs 5→6, minutes 247→255, jaunes 1→2, note 6.81→6.65
+237129 P. Sarr 2026 Juventus/UEFA Europa League : matchs 1→2, minutes 90→180, note 6.55→6.80
+237129 P. Sarr 2026 Juventus/Serie A : matchs 3→4, minutes 154→241, note 6.87→7.00
+266267 Hércules 2026 Fluminense/CONMEBOL Libertadores : matchs 10→11, minutes 680→725, note 6.94→6.87
+266267 Hércules 2026 Fluminense/Serie A : matchs 25→26, minutes 1441→1531, note 6.91→6.92
+267771 Marcos Leonardo 2026 Ajax/UEFA Europa Conference League : matchs 5→6, minutes 232→246, note 6.24→6.30
+267771 Marcos Leonardo 2026 Ajax/Eredivisie : matchs 5→6, minutes 118→192, note 6.44→6.47
+274267 B. Locko 2026 Stade Brestois 29/Ligue 1 : matchs 6→7, minutes 538→628, jaunes 1→2, note 6.75→7.00
+291589 Kialonda Gaspar 2026 Lecce/Serie A : matchs 4→5, minutes 336→426, buts 0→1, note 6.65→6.96
+296667 Gavi 2026 Barcelona/La Liga : matchs 3→4, minutes 134→145, note 6.80→6.83
+296667 Gavi 2026 Barcelona/UEFA Champions League : matchs 2→3, minutes 19→49, note 6.70→6.48
+306706 A. Giay 2026 Palmeiras/CONMEBOL Libertadores : matchs 9→10, minutes 675→765, jaunes 1→2, note 6.99→6.91
+311071 N. Valentini 2026 Alaves/La Liga : matchs 5→6, minutes 306→396, note 6.96→6.92
+334879 B. Bouanani 2026 Rangers/Premiership : matchs 3→4, minutes 80→156, buts 0→1, note 7.15→7.16
+338839 W. Goes 2026 AZ Alkmaar/UEFA Europa League : matchs 1→2, minutes 90→180, note 6.90→6.87
+338839 W. Goes 2026 AZ Alkmaar/Eredivisie : matchs 8→9, minutes 720→784, note 7.16→7.10
+341642 J. Hato 2026 Chelsea/Premier League : matchs 4→5, minutes 260→349, note 6.60→6.74
+342970 L. Yoro 2026 Manchester United/Premier League : matchs 3→4, minutes 88→178, note 6.63→6.58
+383780 Mikel Jauregizar 2026 Athletic Club/La Liga : matchs 6→7, minutes 212→257, note 5.78→5.86
+392044 T. van Bergen 2026 Groningen/Eredivisie : matchs 8→9, minutes 715→805, buts 5→6, jaunes 0→1, note 7.56→7.46
+
+=== LIGNES MANQUANTES CHEZ NOUS ===
+2922 L. Dendoncker 2026 HNK Hajduk Split/UEFA Europa Conference League (1 m)
+3638 E. Muçi 2026 Trabzonspor/UEFA Europa Conference League (1 m)
+5297 F. Baldassarra 2026 Kauno Žalgiris/UEFA Europa Conference League (1 m)
+8694 W. Faes 2026 Shabab Al Ahli Dubai/Pro League (1 m)
+19263 L. Kelly 2026 Juventus/UEFA Europa League (1 m)
+20531 H. Maïga 2026 Ferencvarosi TC/UEFA Europa League (1 m)
+33291 G. Rodrigues 2026 Zorya Luhansk/Premier League (1 m)
+47480 M. Salisu 2026 Monaco/UEFA Europa Conference League (1 m)
+127011 A. Cambiaso 2026 Juventus/UEFA Europa League (1 m)
+129047 R. Zerrouki 2026 Twente/UEFA Europa League (2 m)
+926 G. Kondogbia 2026 Marseille/UEFA Europa League (1 m)
+56003 E. Dasa 2026 Maccabi Haifa/Ligat Ha'al (1 m)
+137209 M. Kjølø 2026 Twente/UEFA Europa League (1 m)
+
+=== LIGNES EN TROP CHEZ NOUS ===
+
+=== SANS RÉPONSE ===
