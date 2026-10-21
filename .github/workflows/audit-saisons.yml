@@ -1,0 +1,82 @@
+name: Audit des saisons
+
+# Pour chacune des fiches complètes de www/data/full, demande à la source la liste des
+# saisons qu'elle connaît et la compare à celles du fichier : saisons manquantes,
+# saisons en trop. Aucune donnée n'est modifiée ; le rapport va dans diagnostics/.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limite:
+        description: "Nombre maximum de joueurs à auditer (0 = tous)"
+        default: "0"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - name: Auditer
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          LIMITE: ${{ github.event.inputs.limite }}
+        run: |
+          cat > audit.mjs <<'EOS'
+          import { readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+          const H = { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } };
+          const attendre = ms => new Promise(r => setTimeout(r, ms));
+          async function saisons(id) {
+            for (let k = 0; k < 6; k++) {
+              try {
+                const r = await fetch(`https://v3.football.api-sports.io/players/seasons?player=${id}`, H);
+                const j = await r.json();
+                const e = j.errors;
+                if (e && (Array.isArray(e) ? e.length : Object.keys(e).length)) { await attendre(10000); continue; }
+                return (j.response || []).map(Number);
+              } catch (e) { await attendre(3000); }
+            }
+            return null;
+          }
+          const fichiers = readdirSync("www/data/full").filter(f => /^\d+\.json$/.test(f));
+          const limite = Number(process.env.LIMITE || 0) || fichiers.length;
+          const manquantes = [], enTrop = [], refuses = [];
+          let ok = 0, n = 0;
+          for (const f of fichiers.slice(0, limite)) {
+            const d = JSON.parse(readFileSync("www/data/full/" + f, "utf8"));
+            const id = d.i;
+            const nous = new Set(Object.keys(d.s || {}).filter(y => (d.s[y] || []).length).map(Number));
+            const eux = await saisons(id);
+            n++;
+            if (n % 250 === 0) console.log(`${n}/${limite} audités`);
+            if (!eux) { refuses.push(`${id} ${d.n}`); continue; }
+            const eux90 = eux.filter(y => y >= 1990);
+            const manque = eux90.filter(y => !nous.has(y));
+            // 2027 : qualifications de la Coupe d'Afrique, ramenées à la saison en cours par l'appli.
+            const trop = [...nous].filter(y => !eux90.includes(y) && y !== 2027);
+            if (manque.length) manquantes.push(`${id} ${d.n} : manque ${manque.join(",")}`);
+            if (trop.length) enTrop.push(`${id} ${d.n} : en trop ${trop.join(",")}`);
+            if (!manque.length && !trop.length) ok++;
+            await attendre(120);
+          }
+          const sortie = [
+            `Audités : ${n} ; conformes : ${ok} ; avec saisons manquantes : ${manquantes.length} ; avec saisons en trop : ${enTrop.length} ; sans réponse : ${refuses.length}`,
+            "", "=== SAISONS MANQUANTES (la source les connaît, pas notre fiche) ===", ...manquantes,
+            "", "=== SAISONS EN TROP (notre fiche les a, la source ne les liste pas) ===", ...enTrop,
+            "", "=== SANS RÉPONSE ===", ...refuses
+          ];
+          mkdirSync("diagnostics", { recursive: true });
+          writeFileSync("diagnostics/audit-saisons.txt", sortie.join("\n") + "\n");
+          console.log(sortie[0]);
+          EOS
+          node audit.mjs
+          rm audit.mjs
+      - name: Publier le rapport
+        run: |
+          git config user.name "audit"; git config user.email "audit@users.noreply.github.com"
+          git add diagnostics/audit-saisons.txt
+          git commit -m "Rapport audit des saisons" || echo rien
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 3; done
