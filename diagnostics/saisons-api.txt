@@ -1,124 +1,60 @@
 
-=== 483 K. Kvaratskhelia — proxy: 200 ===
-  saisons base: 10 | saisons API: 8
-  2017 : absente de l'API
-  2018 : absente de l'API
-  2019 : absente de l'API
-  2020 : absente de l'API
-  2022 : absente de l'API
-  2024 : absente de l'API
-
-=== 278 Kylian Mbappé — proxy: 429 ===
-  pas de données : {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
-
-=== 306 Mohamed Salah — proxy: 200 ===
-  saisons base: 18 | saisons API: 11
-  2010 : absente de l'API
-  2011 : absente de l'API
-  2013 : absente de l'API
-  2014 : absente de l'API
-  2016 : absente de l'API
-  2017 : absente de l'API
-  2019 : absente de l'API
-  2021 : absente de l'API
-  2022 : absente de l'API
-  2023 : absente de l'API
-  2026 : absente de l'API
-
-=== 1100 E. Haaland — proxy: 200 ===
-  saisons base: 11 | saisons API: 8
-  2016 : absente de l'API
-  2017 : absente de l'API
-  2018 : absente de l'API
-  2026 : absente de l'API
-
-=== 762 Vinícius Júnior — proxy: 200 ===
+=== 483 K. Kvaratskhelia — requêtes refusées: 0 ===
   saisons base: 10 | saisons API: 10
-  2017 : absente de l'API
-  2018 : absente de l'API
-  2026 : absente de l'API
+  aucun écart
 
-=== 154 L. Messi — proxy: 200 ===
+=== 278 Kylian Mbappé — requêtes refusées: 0 ===
+  saisons base: 13 | saisons API: 13
+  aucun écart
+
+=== 306 Mohamed Salah — requêtes refusées: 0 ===
+  saisons base: 18 | saisons API: 18
+  aucun écart
+
+=== 1100 E. Haaland — requêtes refusées: 0 ===
+  saisons base: 11 | saisons API: 11
+  aucun écart
+
+=== 762 Vinícius Júnior — requêtes refusées: 0 ===
+  saisons base: 10 | saisons API: 10
+  aucun écart
+
+=== 154 L. Messi — requêtes refusées: 0 ===
   saisons base: 23 | saisons API: 23
-  2004 : absente de l'API
-  2005 : absente de l'API
-  2007 : absente de l'API
-  2008 : absente de l'API
-  2009 : absente de l'API
-  2010 : absente de l'API
-  2011 : absente de l'API
-  2013 : absente de l'API
-  2014 : absente de l'API
-  2015 : absente de l'API
-  2016 : absente de l'API
-  2025 : absente de l'API
-  2026 : absente de l'API
+  aucun écart
 
-=== 874 Cristiano Ronaldo — proxy: 502 ===
-  saisons base: 25 | saisons API: 0
-  2002 : absente de l'API
-  2003 : absente de l'API
-  2004 : absente de l'API
-  2005 : absente de l'API
-  2006 : absente de l'API
-  2007 : absente de l'API
-  2008 : absente de l'API
-  2009 : absente de l'API
-  2010 : absente de l'API
-  2011 : absente de l'API
-  2012 : absente de l'API
-  2013 : absente de l'API
-  2014 : absente de l'API
-  2015 : absente de l'API
-  2016 : absente de l'API
-  2017 : absente de l'API
-  2018 : absente de l'API
-  2019 : absente de l'API
-  2020 : absente de l'API
-  2021 : absente de l'API
-  2022 : absente de l'API
-  2023 : absente de l'API
-  2024 : absente de l'API
-  2025 : absente de l'API
-  2026 : absente de l'API
+=== 874 Cristiano Ronaldo — requêtes refusées: 0 ===
+  saisons base: 25 | saisons API: 25
+  aucun écart
 
-=== 184 H. Kane — proxy: 502 ===
-  saisons base: 17 | saisons API: 0
-  2010 : absente de l'API
-  2011 : absente de l'API
-  2012 : absente de l'API
-  2013 : absente de l'API
-  2014 : absente de l'API
-  2015 : absente de l'API
-  2016 : absente de l'API
-  2017 : absente de l'API
-  2018 : absente de l'API
-  2019 : absente de l'API
-  2020 : absente de l'API
-  2021 : absente de l'API
-  2022 : absente de l'API
-  2023 : absente de l'API
-  2024 : absente de l'API
-  2025 : absente de l'API
-  2026 : absente de l'API
+=== 184 H. Kane — requêtes refusées: 0 ===
+  saisons base: 17 | saisons API: 17
+  aucun écart
 
-=== 129718 J. Bellingham — proxy: 429 ===
-  pas de données : {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+=== 129718 J. Bellingham — requêtes refusées: 0 ===
+  saisons base: 9 | saisons API: 9
+  aucun écart
 
-=== 276 Neymar — proxy: 429 ===
-  pas de données : {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+=== 276 Neymar — requêtes refusées: 0 ===
+  saisons base: 18 | saisons API: 18
+  aucun écart
 
-=== 521 R. Lewandowski — proxy: 429 ===
-  pas de données : {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+=== 521 R. Lewandowski — requêtes refusées: 0 ===
+  saisons base: 19 | saisons API: 19
+  aucun écart
 
-=== 629 K. De Bruyne — proxy: 429 ===
-  pas de données : {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+=== 629 K. De Bruyne — requêtes refusées: 0 ===
+  saisons base: 19 | saisons API: 19
+  aucun écart
 
-=== 754 L. Modrić — proxy: 429 ===
-  pas de données : {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+=== 754 L. Modrić — requêtes refusées: 0 ===
+  saisons base: 22 | saisons API: 22
+  aucun écart
 
-=== 386828 Lamine Yamal — proxy: 429 ===
-  pas de données : {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+=== 386828 Lamine Yamal — requêtes refusées: 0 ===
+  saisons base: 5 | saisons API: 5
+  aucun écart
 
-=== 133609 Pedri — proxy: 429 ===
-  pas de données : {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+=== 133609 Pedri — requêtes refusées: 0 ===
+  saisons base: 8 | saisons API: 8
+  aucun écart
