@@ -1,0 +1,104 @@
+name: Audit des statistiques
+
+# Compare, ligne par ligne (club + compétition), les statistiques de nos fiches complètes
+# avec la réponse directe de la source pour les saisons 2024 à 2026. Les joueurs audités
+# sont ceux de diagnostics/audit-stats-cibles.json (lignes suspectes + échantillon aléatoire).
+# Aucune donnée n'est modifiée ; le rapport va dans diagnostics/audit-stats.txt.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+      - name: Auditer
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          cat > audit.mjs <<'EOS'
+          import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+          const H = { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } };
+          const attendre = ms => new Promise(r => setTimeout(r, ms));
+          async function lignes(id, saison) {
+            for (let k = 0; k < 6; k++) {
+              try {
+                const r = await fetch(`https://v3.football.api-sports.io/players?id=${id}&season=${saison}`, H);
+                const j = await r.json();
+                const e = j.errors;
+                if (e && (Array.isArray(e) ? e.length : Object.keys(e).length)) { await attendre(10000); continue; }
+                const p = (j.response || [])[0];
+                return p ? (p.statistics || []) : [];
+              } catch (e) { await attendre(3000); }
+            }
+            return null;
+          }
+          const cibles = JSON.parse(readFileSync("diagnostics/audit-stats-cibles.json", "utf8"));
+          const ids = [...new Set([...cibles.cibles, ...cibles.echantillon])];
+          const CHAMPS = [["matchs", l => l.games?.appearences], ["minutes", l => l.games?.minutes],
+                          ["buts", l => l.goals?.total], ["passes", l => l.goals?.assists],
+                          ["jaunes", l => l.cards?.yellow], ["rouges", l => l.cards?.red],
+                          ["note", l => l.games?.rating == null ? null : Number(l.games.rating).toFixed(2)]];
+          const cle = l => `${l.team?.id}|${l.league?.id ?? l.league?.name}`;
+          const ecarts = [], absentes = [], enTrop = [], refus = [];
+          let lignesComparees = 0, lignesIdentiques = 0, joueurs = 0, joueursSansEcart = 0;
+          for (const id of ids) {
+            const chemin = `www/data/full/${id}.json`;
+            if (!existsSync(chemin)) continue;
+            const d = JSON.parse(readFileSync(chemin, "utf8"));
+            joueurs++;
+            let ecartJoueur = false;
+            for (const saison of [2024, 2025, 2026]) {
+              const eux = await lignes(id, saison);
+              await attendre(150);
+              if (!eux) { refus.push(`${id} ${d.n} ${saison}`); continue; }
+              const nous = d.s?.[String(saison)] || [];
+              const mapEux = new Map(eux.map(l => [cle(l), l]));
+              const mapNous = new Map(nous.map(l => [cle(l), l]));
+              for (const [k, ln] of mapNous) {
+                const le = mapEux.get(k);
+                const nom = `${id} ${d.n} ${saison} ${ln.team?.name}/${ln.league?.name}`;
+                if (!le) { if (ln.games?.appearences) { enTrop.push(nom + ` (${ln.games.appearences} m)`); ecartJoueur = true; } continue; }
+                lignesComparees++;
+                const diffs = [];
+                for (const [nomChamp, f] of CHAMPS) {
+                  const a = f(ln), b = f(le);
+                  if ((a ?? null) === (b ?? null)) continue;
+                  if (a == null || b == null) { diffs.push(`${nomChamp} ${a ?? "∅"}→${b ?? "∅"}`); continue; }
+                  if (Number(a) !== Number(b)) diffs.push(`${nomChamp} ${a}→${b}`);
+                }
+                if (diffs.length) { ecarts.push(`${nom} : ${diffs.join(", ")}`); ecartJoueur = true; } else lignesIdentiques++;
+              }
+              for (const [k, le] of mapEux) {
+                if (!mapNous.has(k) && le.games?.appearences) { absentes.push(`${id} ${d.n} ${saison} ${le.team?.name}/${le.league?.name} (${le.games.appearences} m)`); ecartJoueur = true; }
+              }
+            }
+            if (!ecartJoueur) joueursSansEcart++;
+            if (joueurs % 50 === 0) console.log(`${joueurs}/${ids.length}`);
+          }
+          const sortie = [
+            `Joueurs audités : ${joueurs} (saisons 2024-2026) ; sans aucun écart : ${joueursSansEcart}`,
+            `Lignes comparées : ${lignesComparees} ; identiques : ${lignesIdentiques} ; avec écart : ${ecarts.length}`,
+            `Lignes que la source a et que nous n'avons pas : ${absentes.length} ; lignes chez nous absentes de la source : ${enTrop.length} ; sans réponse : ${refus.length}`,
+            "", "=== ÉCARTS (notre valeur → valeur de la source) ===", ...ecarts,
+            "", "=== LIGNES MANQUANTES CHEZ NOUS ===", ...absentes,
+            "", "=== LIGNES EN TROP CHEZ NOUS ===", ...enTrop,
+            "", "=== SANS RÉPONSE ===", ...refus
+          ];
+          mkdirSync("diagnostics", { recursive: true });
+          writeFileSync("diagnostics/audit-stats.txt", sortie.join("\n") + "\n");
+          console.log(sortie.slice(0, 3).join("\n"));
+          EOS
+          node audit.mjs
+          rm audit.mjs
+      - name: Publier le rapport
+        run: |
+          git config user.name "audit"; git config user.email "audit@users.noreply.github.com"
+          git add diagnostics/audit-stats.txt
+          git commit -m "Rapport audit des statistiques" || echo rien
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 3; done
