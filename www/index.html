@@ -3055,7 +3055,9 @@ function aggregateStatisticsEntries(statisticsArray){
     sumField('games','appearences',apps);
     sumField('games','lineups',g.lineups);
     sumField('games','minutes',g.minutes);
-    if(g.rating && apps>0){ ratingWeightedSum += parseFloat(g.rating)*apps; ratingWeightTotal += apps; present['games.rating'] = true; }
+    // La source écrit « 0 » quand elle n'a pas encore de note (215 lignes de 2026) :
+    // une note nulle n'existe pas, on ne la laisse pas tirer la moyenne vers le bas.
+    if(parseFloat(g.rating) > 0 && apps>0){ ratingWeightedSum += parseFloat(g.rating)*apps; ratingWeightTotal += apps; present['games.rating'] = true; }
 
     sumField('goals','total',go.total); sumField('goals','assists',go.assists);
     sumField('goals','saves',go.saves); sumField('goals','conceded',go.conceded);
@@ -3728,7 +3730,26 @@ function nettoyerCarriere(s){
       // Des buts ou des passes sans aucun match : la ligne est inexploitable et fausse
       // en plus toutes les moyennes par match. 845 blocs dans la base.
       if(!m && ((go.total || 0) > 0 || (go.assists || 0) > 0)) return false;
+      // Minutes négatives (3 lignes dans la base) : la source s'est trompée, on oublie la valeur.
+      if(typeof g.minutes === 'number' && g.minutes < 0) g.minutes = null;
       return true;
+    });
+    /* Passes ou buts d'un autre club recopiés sur une ligne d'un ou deux matchs : Palmer
+     * crédité de 11 passes en 1 match à City (ses 11 passes de Chelsea), Grifo de 8 passes
+     * en 1 match à Hoffenheim… On efface la valeur quand elle dépasse ce qu'un match permet
+     * ET qu'un autre club de la même saison porte exactement le même chiffre avec bien plus
+     * de matchs. Un triplé en un match reste possible : pour les buts, le seuil est plus haut. */
+    propre[cle].forEach(b => {
+      const g = b.games || {}, go = b.goals || {};
+      const m = g.appearences || 0;
+      if(m < 1 || m > 3) return;
+      for(const [champ, seuil] of [['assists', 2], ['total', 3]]){
+        const v = go[champ];
+        if(!v || v <= m * seuil) continue;
+        const source = propre[cle].some(a => a !== b && (a.team || {}).id !== (b.team || {}).id
+          && ((a.games || {}).appearences || 0) > m * 3 && (a.goals || {})[champ] === v);
+        if(source) go[champ] = null;
+      }
     });
     propre[cle].forEach((b, i) => {
       const g = b.games || {}, go = b.goals || {};
