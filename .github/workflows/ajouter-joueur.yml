@@ -57,7 +57,13 @@ jobs:
           const lettre = nom.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z]/g, "")[0] || "a";
           const chemin = `www/data/search-az/${lettre}.json`;
           const idx = JSON.parse(readFileSync(chemin, "utf8"));
-          if (!idx.players.some(p => p.i === id)) {
+          const deja = idx.players.find(p => p.i === id);
+          if (deja) {
+            // Une fiche complète n'est lue par l'appli que si l'index annonce des matchs (m non nul).
+            deja.m = matchs; deja.ti = Math.max(deja.ti || 0, Math.round(matchs / 2));
+            writeFileSync(chemin, JSON.stringify(idx));
+            console.log("index : matchs mis à jour pour", id);
+          } else {
             idx.players.push({ i: id, n: profil.name, f: "", l: "", a: profil.age, c: profil.nationality, p: pos, t: (club.team && club.team.name) || "", ti: Math.round(matchs / 2), m: matchs });
             idx.count = idx.players.length;
             writeFileSync(chemin, JSON.stringify(idx));
