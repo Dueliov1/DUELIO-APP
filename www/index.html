@@ -6122,7 +6122,19 @@ function seasonRowHtml(p, sn){
 function renderSeasonSheet(){
   const p = seasonSheetPlayer; if(!p) return;
   const list = document.getElementById('seasonSheetList');
-  const seasons = (p.seasonsAvailable||[]).slice().sort((a,b)=>b-a);
+  /* Le sélecteur ne propose que des saisons de club : une année où l'on n'a
+   * que des matchs de sélection (ou de jeunes) n'a pas de club à afficher, et
+   * apparaissait sous le nom du pays (« Géorgie 2020-21 »). Tant qu'une saison
+   * n'est pas chargée on ne peut pas savoir : elle reste proposée. */
+  const natPl = { nationality: p.nation && p.nation.name };
+  const saisonDeClub = sn => {
+    const lignes = p.rawBySeason && p.rawBySeason[sn];
+    if(!lignes || !lignes.length) return true;
+    return lignes.some(st => statTeamKind(st, natPl) !== 'nation' && statTeamKind(st, natPl) !== 'youth');
+  };
+  const seasons = p.estLegende
+    ? (p.seasonsAvailable||[]).slice().sort((a,b)=>b-a)
+    : (p.seasonsAvailable||[]).filter(saisonDeClub).sort((a,b)=>b-a);
   document.getElementById('seasonSheetTitle').innerHTML = `Saisons de <b>${escapeHtml(shortName(p))}</b>`;
   const loadedCount = Object.keys(p.statsBySeason||{}).length;
   const pr = careerProgress[p.apiId];
