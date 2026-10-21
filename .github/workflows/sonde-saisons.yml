@@ -1,0 +1,76 @@
+name: Sonde saisons
+
+# Compare, joueur par joueur, ce que renvoie la source en ligne (via le proxy,
+# comme l'appli) avec notre base : saisons absentes, saisons sans club, matchs en moins.
+
+on:
+  workflow_dispatch:
+    inputs:
+      joueurs:
+        description: "Identifiants API séparés par des virgules"
+        required: false
+        default: "483,278,306,1100,762,154,874,184,129718,276,521,629,754,386828,133609"
+
+permissions:
+  contents: write
+
+jobs:
+  sonde:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Comparer
+        env:
+          JOUEURS: ${{ github.event.inputs.joueurs }}
+        run: |
+          cat > sonde.mjs <<'EOS'
+          import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+          const sortie = [];
+          const dire = t => { sortie.push(t); console.log(t); };
+          const src = readFileSync("www/index.html", "utf8");
+          const nat = new Set([...src.match(/SELECTIONS_NATIONALES = new Set\(\[([\s\S]*?)\]\)/)[1].matchAll(/"([^"]+)"/g)].map(m => m[1]));
+          const estNat = n => { n = (n || "").toLowerCase(); return /\bu-?\d{2}\b/.test(n) || nat.has(n); };
+          const matchs = L => (L || []).reduce((t, x) => t + ((x && x.games && x.games.appearences) || 0), 0);
+          const aClub = L => (L || []).some(x => !estNat(x.team && x.team.name));
+          const PROXY = "https://duelio-proxy.bensouna-ahmed.workers.dev";
+          for (const id of (process.env.JOUEURS || "").split(",").map(s => s.trim()).filter(Boolean)) {
+            let base = {};
+            try { base = JSON.parse(readFileSync(`www/data/full/${id}.json`, "utf8")); } catch (e) {}
+            const S = base.s || {};
+            let j = null, statut = "";
+            try {
+              const r = await fetch(`${PROXY}/pack?id=${id}&career=1`);
+              statut = r.status; j = await r.json();
+            } catch (e) { statut = "ERREUR " + e.message; }
+            dire(`\n=== ${id} ${base.n || "?"} — proxy: ${statut} ===`);
+            if (!j || !j.data) { dire("  pas de données : " + JSON.stringify(j).slice(0, 200)); continue; }
+            const api = j.data;
+            dire(`  saisons base: ${Object.keys(S).length} | saisons API: ${Object.keys(api).length}`);
+            const toutes = [...new Set([...Object.keys(S), ...Object.keys(api)])].sort();
+            let ecarts = 0;
+            for (const y of toutes) {
+              const a = api[y] && api[y].statistics, b = S[y];
+              const ma = matchs(a), mb = matchs(b);
+              const pb = [];
+              if (!a && b) pb.push("absente de l'API");
+              else if (a && !b) pb.push("absente de la base");
+              else {
+                if (ma < mb) pb.push(`API plus pauvre : ${ma} matchs contre ${mb}`);
+                if (!aClub(a) && aClub(b)) pb.push("API sans aucun club, base avec club");
+              }
+              if (pb.length) { ecarts++; dire(`  ${y} : ${pb.join(" ; ")}`); }
+            }
+            if (!ecarts) dire("  aucun écart");
+          }
+          mkdirSync("diagnostics", { recursive: true });
+          writeFileSync("diagnostics/saisons-api.txt", sortie.join("\n") + "\n");
+          EOS
+          node sonde.mjs
+          rm sonde.mjs
+      - name: Publier le rapport
+        run: |
+          git config user.name "sonde"; git config user.email "sonde@users.noreply.github.com"
+          git add diagnostics/saisons-api.txt
+          git commit -m "Rapport sonde saisons" || echo rien
+          git pull --rebase -q || true
+          git push || true
