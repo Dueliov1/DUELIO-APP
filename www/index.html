@@ -1330,7 +1330,7 @@
   }
   #content.reveal .col-head:not(.empty){ animation: headIn .4s cubic-bezier(.22,.9,.3,1) both; animation-delay: calc(0ms - var(--t, 0ms)); }
   #content.reveal .player-col:nth-child(2) .col-head:not(.empty){ animation-delay: calc(70ms - var(--t, 0ms)); }
-  #content.reveal .duel-vs{ animation: fadeIn .5s ease both; animation-delay: calc(150ms - var(--t, 0ms)); }
+  #content.reveal .duel-vs{ animation: vsIn .55s cubic-bezier(.3,1.1,.4,1) both; animation-delay: calc(150ms - var(--t, 0ms)); }
   .screen-in{ animation: screenIn .24s cubic-bezier(.22,.9,.3,1) both; }
   .sheet:not([hidden]){ animation: fadeIn .2s ease both; }
   .sheet:not([hidden]) .sheet-panel{ animation: sheetUp .28s cubic-bezier(.3,.9,.3,1) both; }
@@ -1340,6 +1340,43 @@
   .tabbar-btn.active svg{ transform: translateY(-1px); }
   .reset-btn:active, .add-slot-btn:active, .period-btn:active, .tab-btn:active, .icon-btn:active, .scope-link:active{ transform: scale(.97); }
   .col-head:not(.empty):active{ transform: scale(.985); }
+
+  /* ---------- Animations discrètes, suite ---------- */
+  @keyframes vsIn{
+    0%{ opacity:0; transform:translate(-50%,-50%) scale(.6); }
+    65%{ opacity:1; transform:translate(-50%,-50%) scale(1.12); }
+    100%{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+  }
+  .picker.just-opened .picker-item:nth-child(-n+9), .screen-in .browse-item:nth-child(-n+9), #content.reveal .palmares-row:nth-child(-n+12){
+    animation: revealUp .32s cubic-bezier(.22,.9,.3,1) both;
+  }
+  .picker.just-opened .picker-item:nth-child(2){ animation-delay: 56ms; }
+  .picker.just-opened .picker-item:nth-child(3){ animation-delay: 84ms; }
+  .picker.just-opened .picker-item:nth-child(4){ animation-delay: 112ms; }
+  .picker.just-opened .picker-item:nth-child(5){ animation-delay: 140ms; }
+  .picker.just-opened .picker-item:nth-child(6){ animation-delay: 168ms; }
+  .picker.just-opened .picker-item:nth-child(7){ animation-delay: 196ms; }
+  .picker.just-opened .picker-item:nth-child(8){ animation-delay: 224ms; }
+  .picker.just-opened .picker-item:nth-child(9){ animation-delay: 252ms; }
+  .screen-in .browse-item:nth-child(2){ animation-delay: 56ms; }
+  .screen-in .browse-item:nth-child(3){ animation-delay: 84ms; }
+  .screen-in .browse-item:nth-child(4){ animation-delay: 112ms; }
+  .screen-in .browse-item:nth-child(5){ animation-delay: 140ms; }
+  .screen-in .browse-item:nth-child(6){ animation-delay: 168ms; }
+  .screen-in .browse-item:nth-child(7){ animation-delay: 196ms; }
+  .screen-in .browse-item:nth-child(8){ animation-delay: 224ms; }
+  .screen-in .browse-item:nth-child(9){ animation-delay: 252ms; }
+  #content.reveal .palmares-row:nth-child(2){ animation-delay: 44ms; }
+  #content.reveal .palmares-row:nth-child(3){ animation-delay: 66ms; }
+  #content.reveal .palmares-row:nth-child(4){ animation-delay: 88ms; }
+  #content.reveal .palmares-row:nth-child(5){ animation-delay: 110ms; }
+  #content.reveal .palmares-row:nth-child(6){ animation-delay: 132ms; }
+  #content.reveal .palmares-row:nth-child(7){ animation-delay: 154ms; }
+  #content.reveal .palmares-row:nth-child(8){ animation-delay: 176ms; }
+  #content.reveal .palmares-row:nth-child(9){ animation-delay: 198ms; }
+  #content.reveal .palmares-row:nth-child(10){ animation-delay: 220ms; }
+  #content.reveal .palmares-row:nth-child(11){ animation-delay: 242ms; }
+  #content.reveal .palmares-row:nth-child(12){ animation-delay: 264ms; }
 </style>
 </head>
 <body>
@@ -5431,6 +5468,45 @@ function listeTrophees(filled){
   return (unPalmares || enCours) ? TROPHIES : TROPHIES.filter(r => !r.key.startsWith('titres'));
 }
 let _cleRevealPrecedente = '', _revealDebut = -9999;
+/* Les chiffres du comparatif « montent » jusqu'à leur valeur à l'arrivée d'un duel :
+ * une demi-seconde, une seule fois, jamais sur un redessin dû à un chargement.
+ * La valeur finale est toujours écrite exactement telle qu'elle a été calculée. */
+function compterJusqua(racine){
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cibles = [];
+  racine.querySelectorAll('.dr-val:not(.unknown), .ct-val:not(.ct-empty)').forEach(el => {
+    const noeud = [...el.childNodes].find(n => n.nodeType === 3 && n.nodeValue.trim());
+    if(!noeud) return;
+    const m = noeud.nodeValue.match(/^([\d\s\u202f\u00a0.,]+?)(\s*(?:%|\/10|min)?\s*)$/);
+    if(!m) return;
+    const brut = m[1].replace(/[\s\u202f\u00a0]/g, '').replace(',', '.');
+    const fin = Number(brut);
+    if(!isFinite(fin) || fin === 0) return;
+    const dec = (brut.split('.')[1] || '').length;
+    const ligne = el.closest('.dr-row, .ct-row');
+    const rang = ligne ? Number(getComputedStyle(ligne).getPropertyValue('--i')) || 0 : 0;
+    cibles.push({ noeud, texteFinal: noeud.nodeValue, fin, dec, suffixe: m[2], debut: performance.now() + rang * 36 + 80 });
+  });
+  if(!cibles.length) return;
+  const DUREE = 520;
+  const pas = t => {
+    let reste = false;
+    for(const c of cibles){
+      if(c.fini) continue;
+      if(!c.noeud.isConnected){ c.fini = true; continue; }
+      const k = Math.min(1, Math.max(0, (t - c.debut) / DUREE));
+      if(k >= 1){ c.noeud.nodeValue = c.texteFinal; c.fini = true; continue; }
+      reste = true;
+      const e = 1 - Math.pow(1 - k, 3);
+      c.noeud.nodeValue = (c.fin * e).toLocaleString('fr-FR', { minimumFractionDigits: c.dec, maximumFractionDigits: c.dec }) + c.suffixe;
+    }
+    if(reste) requestAnimationFrame(pas);
+  };
+  // Avant leur tour, les valeurs restent à zéro plutôt que de clignoter à leur valeur finale.
+  cibles.forEach(c => { c.noeud.nodeValue = (0).toLocaleString('fr-FR', { minimumFractionDigits: c.dec, maximumFractionDigits: c.dec }) + c.suffixe; });
+  requestAnimationFrame(pas);
+}
+
 function renderAll(){
   const content = document.getElementById('content');
   // Un identifiant sans fiche dans PLAYERS donnait {_idx} — un objet « vrai »
@@ -5769,6 +5845,7 @@ function renderAll(){
     content.style.setProperty('--t', Math.round(ecoule) + 'ms');
     content.classList.add('reveal');
   } else content.classList.remove('reveal');
+  if(content.classList.contains('reveal') && ecoule < 90) compterJusqua(content);
   wireRadars(content);
   wireCompareTutorial(content);
   if(activeTab==='trophies' && filled.length>=2){ ensureTrophiesLoaded(filled); ensureCareerForNation(filled, 'high'); }
@@ -6290,7 +6367,13 @@ function openPicker(slotIdx){
   document.getElementById('pickerTitle').textContent = `Choisir le joueur ${slotIdx+1}`;
   renderPickerList();
   const wasOpen = document.getElementById('picker').classList.contains('open');
-  document.getElementById('picker').classList.add('open');
+  const picker = document.getElementById('picker');
+  picker.classList.add('open');
+  if(!wasOpen){
+    // L'entrée échelonnée de la liste ne vaut que pour l'ouverture : pas à chaque lettre tapée.
+    picker.classList.add('just-opened');
+    clearTimeout(openPicker._t); openPicker._t = setTimeout(() => picker.classList.remove('just-opened'), 750);
+  }
   if(!wasOpen) navOverlayOpened('picker');
   document.getElementById('pickerSearch').focus({ preventScroll: true });
 }
