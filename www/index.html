@@ -3345,10 +3345,29 @@ function mapProfileToLightPlayer(pl){
 
 async function searchProfilesByName(name, opts={}){
   const MAX = opts.limit || 12;
-  const { res, json } = await fetchWithRetry(`${REAL_DATA_CONFIG.proxyUrl}/players/profiles?search=${encodeURIComponent(name)}`);
-  if(!res.ok || !json) throw new Error('Réponse proxy invalide: '+(res && res.status));
-  if(json.errors && Object.keys(json.errors).length) throw new Error(apiErrorMessage(json.errors));
-  let profiles = (json.response || []).filter(r=>r.player && r.player.id);
+  const interroger = async q => {
+    const { res, json } = await fetchWithRetry(`${REAL_DATA_CONFIG.proxyUrl}/players/profiles?search=${encodeURIComponent(q)}`);
+    if(!res.ok || !json) throw new Error('Réponse proxy invalide: '+(res && res.status));
+    if(json.errors && Object.keys(json.errors).length) throw new Error(apiErrorMessage(json.errors));
+    return (json.response || []).filter(r=>r.player && r.player.id);
+  };
+  let profiles = await interroger(name);
+  /* L'API ne comprend qu'un seul mot : « Anisse Brrou » ne renvoie rien alors que
+   * « Brrou » trouve le joueur. Sans résultat, on cherche par le mot le plus long,
+   * puis par le suivant, et on ne garde que les profils qui contiennent TOUS les mots tapés. */
+  const mots = name.trim().split(/\s+/).filter(m => m.length >= 3).sort((x, y) => y.length - x.length);
+  if(!profiles.length && mots.length > 1){
+    const tous = mots.map(_normTxt);
+    for(const mot of mots.slice(0, 2)){
+      const candidats = await interroger(mot);
+      profiles = candidats.filter(r => {
+        const pl = r.player;
+        const nom = _normTxt([pl.name, pl.firstname, pl.lastname].filter(Boolean).join(' '));
+        return tous.every(m => nom.includes(m));
+      });
+      if(profiles.length) break;
+    }
+  }
   // Un profil peut être privilégié (ex. duel suggéré : on veut « Kylian » Mbappé, pas un homonyme)
   if(typeof opts.prefer === 'function') profiles.sort((a,b)=>(opts.prefer(b.player)?1:0)-(opts.prefer(a.player)?1:0));
   const out = profiles.slice(0, MAX).map(r=>mapProfileToLightPlayer(r.player));
