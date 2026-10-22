@@ -88,7 +88,7 @@ jobs:
             writeFileSync(chemin, JSON.stringify(d));
           }
           mkdirSync("diagnostics", { recursive: true });
-          const bilan = `Saison ${SAISON} — ${now.toISOString().slice(0, 10)} : ${fichiers.length} fiches, ${modifies} mises à jour, ${ajoutes} saisons ajoutées, ${inchanges} inchangées, ${refuses} sans réponse`;
+          const bilan = `Saison ${SAISON} — ${now.toISOString().slice(0, 10)} : ${fichiers.length} fiches, ${modifies} mises à jour, ${ajoutes} saisons ajoutées, ${inchanges} inchangées, ${refuses} sans réponse — quota au départ : ${restant} appels restants sur ${limite}`;
           writeFileSync("diagnostics/saison-courante.txt", [bilan, "", ...journal].join("\n") + "\n");
           console.log(bilan);
           EOS
