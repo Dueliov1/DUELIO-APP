@@ -1,6 +1,6 @@
 name: Saison en cours
 
-# Chaque semaine, remet à jour la saison en cours dans les 5 000 fiches complètes
+# Chaque nuit, remet à jour la saison en cours dans les 5 000 fiches complètes
 # (www/data/full). L'audit du 22 octobre 2026 l'a montré : les saisons passées sont
 # identiques à la source, seule la saison en cours vieillit (une journée de retard,
 # une ligne de coupe d'Europe qui manque). On ne remplace un bloc que si la source
@@ -9,7 +9,7 @@ name: Saison en cours
 on:
   workflow_dispatch:
   schedule:
-    - cron: "17 4 * * 2"   # mardi 04:17 UTC, après les matchs du week-end et du lundi
+    - cron: "17 4 * * *"   # tous les jours à 04:17 UTC, une fois les matchs de la veille clos
 
 permissions:
   contents: write
@@ -53,6 +53,17 @@ jobs:
           }
           const matchs = L => L.reduce((s, l) => s + (l.games?.appearences || 0), 0);
           const fichiers = readdirSync("www/data/full").filter(f => /^\d+\.json$/.test(f));
+          // Quota du jour : on ne part que s'il reste de quoi faire le tour ET laisser
+          // 1 500 appels à l'appli en ligne pour la journée.
+          const sonde = await fetch("https://v3.football.api-sports.io/status", H);
+          const limite = Number(sonde.headers.get("x-ratelimit-requests-limit"));
+          const restant = Number(sonde.headers.get("x-ratelimit-requests-remaining"));
+          console.log(`Quota : ${restant} appels restants sur ${limite} aujourd'hui`);
+          if (limite && restant < fichiers.length + 1500) {
+            mkdirSync("diagnostics", { recursive: true });
+            writeFileSync("diagnostics/saison-courante.txt", `${now.toISOString().slice(0, 10)} : passage sauté, quota insuffisant (${restant} restants sur ${limite} pour ${fichiers.length} fiches)\n`);
+            process.exit(0);
+          }
           let modifies = 0, ajoutes = 0, inchanges = 0, refuses = 0, n = 0;
           const journal = [];
           for (const f of fichiers) {
