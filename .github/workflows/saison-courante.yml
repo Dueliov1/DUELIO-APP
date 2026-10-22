@@ -1,0 +1,91 @@
+name: Saison en cours
+
+# Chaque semaine, remet à jour la saison en cours dans les 5 000 fiches complètes
+# (www/data/full). L'audit du 22 octobre 2026 l'a montré : les saisons passées sont
+# identiques à la source, seule la saison en cours vieillit (une journée de retard,
+# une ligne de coupe d'Europe qui manque). On ne remplace un bloc que si la source
+# en sait au moins autant (jamais une réponse partielle par-dessus une bonne).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 2"   # mardi 04:17 UTC, après les matchs du week-end et du lundi
+
+permissions:
+  contents: write
+
+concurrency:
+  group: saison-courante
+  cancel-in-progress: false
+
+jobs:
+  rafraichir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Rafraîchir
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          cat > saison.mjs <<'EOS'
+          import { readdirSync, readFileSync, writeFileSync, mkdirSync } from "node:fs";
+          const H = { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } };
+          const attendre = ms => new Promise(r => setTimeout(r, ms));
+          const now = new Date();
+          // La saison européenne 2026-27 s'appelle « 2026 » à la source : de juillet à juin.
+          const SAISON = now.getUTCMonth() >= 6 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
+          async function lignes(id) {
+            for (let k = 0; k < 6; k++) {
+              try {
+                const r = await fetch(`https://v3.football.api-sports.io/players?id=${id}&season=${SAISON}`, H);
+                const j = await r.json();
+                const e = j.errors;
+                if (e && (Array.isArray(e) ? e.length : Object.keys(e).length)) { await attendre(10000); continue; }
+                const p = (j.response || [])[0];
+                return p ? (p.statistics || []) : [];
+              } catch (e) { await attendre(3000); }
+            }
+            return null;
+          }
+          const matchs = L => L.reduce((s, l) => s + (l.games?.appearences || 0), 0);
+          const fichiers = readdirSync("www/data/full").filter(f => /^\d+\.json$/.test(f));
+          let modifies = 0, ajoutes = 0, inchanges = 0, refuses = 0, n = 0;
+          const journal = [];
+          for (const f of fichiers) {
+            const chemin = "www/data/full/" + f;
+            const d = JSON.parse(readFileSync(chemin, "utf8"));
+            const eux = await lignes(d.i);
+            await attendre(130);
+            n++;
+            if (n % 500 === 0) console.log(`${n}/${fichiers.length}`);
+            if (eux === null) { refuses++; continue; }
+            if (!eux.length) { inchanges++; continue; }
+            const nous = (d.s || {})[String(SAISON)] || [];
+            const mEux = matchs(eux), mNous = matchs(nous);
+            // Pas moins de matchs, pas moins de lignes : sinon la source a répondu à moitié.
+            if (mEux < mNous || eux.length < nous.length) { inchanges++; continue; }
+            if (mEux === mNous && eux.length === nous.length
+                && JSON.stringify(eux) === JSON.stringify(nous)) { inchanges++; continue; }
+            d.s = d.s || {};
+            d.s[String(SAISON)] = eux;
+            if (!(d.saisons || []).includes(SAISON)) { d.saisons = [SAISON, ...(d.saisons || [])].sort((a, b) => b - a); ajoutes++; journal.push(`+ ${d.i} ${d.n} : saison ${SAISON} ajoutée (${mEux} m)`); }
+            else { modifies++; if (journal.length < 400) journal.push(`~ ${d.i} ${d.n} : ${mNous} → ${mEux} m`); }
+            writeFileSync(chemin, JSON.stringify(d));
+          }
+          mkdirSync("diagnostics", { recursive: true });
+          const bilan = `Saison ${SAISON} — ${now.toISOString().slice(0, 10)} : ${fichiers.length} fiches, ${modifies} mises à jour, ${ajoutes} saisons ajoutées, ${inchanges} inchangées, ${refuses} sans réponse`;
+          writeFileSync("diagnostics/saison-courante.txt", [bilan, "", ...journal].join("\n") + "\n");
+          console.log(bilan);
+          EOS
+          node saison.mjs
+          rm saison.mjs
+      - name: Publier
+        run: |
+          git config user.name "saison-courante"; git config user.email "saison@users.noreply.github.com"
+          git add www/data/full diagnostics/saison-courante.txt
+          git commit -m "Saison en cours : mise à jour hebdomadaire des fiches complètes" || { echo rien; exit 0; }
+          for i in 1 2 3 4; do git pull --rebase -q && git push && break; sleep 5; done
