@@ -1,6 +1,178 @@
-Saison 2026 — 2026-10-22 : 5002 fiches, 4 mises à jour, 0 saisons ajoutées, 4998 inchangées, 0 sans réponse
+Saison 2026 — 2026-10-23 : 5002 fiches, 176 mises à jour, 0 saisons ajoutées, 4826 inchangées, 0 sans réponse — quota au départ : 75000 appels restants sur 75000
 
-~ 1271 A. Tchouaméni : 14 → 14 m
-~ 5981 C. Pavón : 40 → 40 m
-~ 886 Diogo Dalot : 18 → 19 m
-~ 889 V. Lindelöf : 19 → 20 m
+~ 10004 Eduardo Sasha : 38 → 38 m
+~ 10077 Luis Henrique : 5 → 6 m
+~ 10114 Zé Ivaldo : 20 → 20 m
+~ 10152 Gabriel Batista : 10 → 10 m
+~ 10174 Gabriel Barbosa : 46 → 46 m
+~ 10233 B. Méndez : 22 → 22 m
+~ 10238 Carlos Augusto : 8 → 9 m
+~ 104 Carlos Vinícius : 51 → 51 m
+~ 10432 Júnior Santos : 25 → 25 m
+~ 106510 Ferreira : 39 → 39 m
+~ 1118 J. Toljan : 8 → 9 m
+~ 1139 P. Gulácsi : 7 → 7 m
+~ 1145 I. Konaté : 14 → 14 m
+~ 1153 A. Haidara : 10 → 11 m
+~ 119485 B. Rollheiser : 49 → 49 m
+~ 12705 Hulk : 41 → 41 m
+~ 1305 D. Livaković : 13 → 13 m
+~ 1323 Dani Olmo : 27 → 27 m
+~ 133110 T. Nianzou : 2 → 3 m
+~ 133185 J. Cardoso : 9 → 9 m
+~ 133609 Pedri : 27 → 27 m
+~ 1337 B. Özer : 8 → 9 m
+~ 138 J. Todibo : 3 → 4 m
+~ 138787 A. Gordon : 24 → 24 m
+~ 138816 I. Maatsen : 6 → 6 m
+~ 1460 B. Saka : 21 → 22 m
+~ 1476 C. Borja : 28 → 28 m
+~ 1485 Bruno Fernandes : 22 → 23 m
+~ 149551 T. Parrott : 16 → 17 m
+~ 1496 Raphinha : 32 → 32 m
+~ 152857 Ruan Tressoldi : 30 → 30 m
+~ 154839 Geny Catamo : 18 → 19 m
+~ 1561 Marc Bartra : 7 → 8 m
+~ 157052 R. Calafiori : 11 → 12 m
+~ 1577 D. Lainez : 24 → 25 m
+~ 161897 I. Saibari : 18 → 19 m
+~ 161928 Alejandro Balde : 2 → 2 m
+~ 162761 C. Lukeba : 7 → 8 m
+~ 163260 Nuno Moreira : 51 → 51 m
+~ 1640 H. Çalhanoğlu : 11 → 12 m
+~ 180496 G. Mikautadze : 16 → 16 m
+~ 182219 Álex Baena : 26 → 26 m
+~ 182519 Alberto Moleiro : 12 → 12 m
+~ 182636 Javi López : 7 → 8 m
+~ 182718 Joan García : 13 → 13 m
+~ 183849 Aitor Paredes : 7 → 7 m
+~ 184 H. Kane : 25 → 26 m
+~ 184420 Carlos Romero : 7 → 7 m
+~ 18767 A. Lookman : 12 → 12 m
+~ 1904 B. Kamara : 10 → 10 m
+~ 19071 E. Buendía : 10 → 11 m
+~ 1911 L. Ocampos : 19 → 20 m
+~ 19191 J.  McGinn : 21 → 22 m
+~ 1922 F. Thauvin : 10 → 11 m
+~ 19220 M. Mount : 5 → 6 m
+~ 19354 E. Konsa : 24 → 25 m
+~ 195103 João Gomes : 9 → 10 m
+~ 19586 E. Eze : 19 → 20 m
+~ 19959 B. White : 11 → 11 m
+~ 20525 M. Udol : 9 → 10 m
+~ 20761 F. Sotoca : 5 → 5 m
+~ 214 F. Colidio : 33 → 33 m
+~ 21509 M. Thuram : 12 → 13 m
+~ 21568 R. Aguilar : 9 → 10 m
+~ 21997 Logan Costa : 2 → 2 m
+~ 2204 B. André : 7 → 8 m
+~ 22224 Gabriel Magalhães : 32 → 33 m
+~ 22232 Thiago Mendes : 46 → 47 m
+~ 226 D. Dumfries : 20 → 20 m
+~ 2285 A. Rüdiger : 10 → 11 m
+~ 234 É. Gutiérrez : 9 → 10 m
+~ 237143 S. Simón : 13 → 13 m
+~ 237206 K. Lomónaco : 24 → 24 m
+~ 2410 Weverton : 43 → 43 m
+~ 2440 N. Ferraresi : 64 → 64 m
+~ 24882 O. Mangala : 9 → 9 m
+~ 2489 L. Díaz : 36 → 37 m
+~ 2494 S. Villa : 38 → 39 m
+~ 2500 F. Balbuena : 23 → 23 m
+~ 2521 Á. Romero : 29 → 29 m
+~ 25272 Cauly : 24 → 24 m
+~ 2550 P. Díaz : 29 → 29 m
+~ 25634 M. Cuisance : 8 → 9 m
+~ 2615 M. Gómez : 9 → 9 m
+~ 26252 R. Sallai : 12 → 13 m
+~ 265595 Gonçalo Inácio : 15 → 16 m
+~ 270509 A. Diouf : 10 → 11 m
+~ 2741 M. Ryan : 22 → 22 m
+~ 277003 N. El Aynaoui : 18 → 19 m
+~ 278 Kylian Mbappé : 24 → 25 m
+~ 279811 Lucas Barbosa : 44 → 44 m
+~ 283 T. Alexander-Arnold : 8 → 8 m
+~ 284300 Álvaro Fernández : 9 → 10 m
+~ 284324 A. Garnacho : 7 → 8 m
+~ 288699 M. Perrone : 10 → 11 m
+~ 288750 A. Costa : 27 → 28 m
+~ 2929 T. Hazard : 5 → 6 m
+~ 2937 D. Rice : 20 → 21 m
+~ 296667 Gavi : 11 → 11 m
+~ 30398 Vitor Hugo : 32 → 33 m
+~ 30399 D. Hancko : 16 → 16 m
+~ 30429 R. Tolói : 16 → 16 m
+~ 30504 W. Singo : 7 → 7 m
+~ 30510 Álex Berenguer : 9 → 9 m
+~ 31037 I. Provedel : 0 → 0 m
+~ 314266 L. Valente : 12 → 13 m
+~ 314511 A. Nusa : 23 → 24 m
+~ 326067 A. Hadj-Moussa : 15 → 16 m
+~ 328225 B. Gruda : 7 → 8 m
+~ 329 P. Zieliński : 12 → 13 m
+~ 336594 Pablo Barrios : 9 → 9 m
+~ 353034 Cuiabano : 30 → 31 m
+~ 355004 V. Gómez : 6 → 6 m
+~ 35533 E. Valencia : 32 → 33 m
+~ 356041 C. Baleba : 3 → 4 m
+~ 37451 M. Deijl : 2 → 2 m
+~ 377122 Endrick : 19 → 20 m
+~ 38746 J. Timber : 7 → 8 m
+~ 417 A. Schöpf : 12 → 13 m
+~ 46815 Pau Torres : 7 → 8 m
+~ 46988 Josep Martínez : 9 → 10 m
+~ 47007 Ruíz de Galarreta : 8 → 8 m
+~ 47237 L. Suárez : 24 → 25 m
+~ 47270 Unai Simón : 22 → 22 m
+~ 47271 Yeray : 5 → 6 m
+~ 47277 Unai Núñez : 6 → 6 m
+~ 47278 Dani Vivian : 0 → 0 m
+~ 47294 I. Williams : 11 → 12 m
+~ 47311 Mikel Merino : 24 → 25 m
+~ 47315 Martín Zubimendi : 14 → 14 m
+~ 47349 Javi Puado : 1 → 1 m
+~ 47398 Pere Milla : 6 → 6 m
+~ 47541 Santi Comesaña : 11 → 11 m
+~ 47582 C. Hernández : 16 → 16 m
+~ 50 Koke : 9 → 9 m
+~ 509 A. Davies : 10 → 11 m
+~ 511 L. Goretzka : 8 → 9 m
+~ 532 M. de Ligt : 0 → 1 m
+~ 545 N. Mazraoui : 15 → 16 m
+~ 59173 N. Losada : 36 → 36 m
+~ 5988 M. Casco : 28 → 28 m
+~ 6009 J. Álvarez : 39 → 39 m
+~ 6030 R. Carrera : 32 → 32 m
+~ 6082 N. Figal : 11 → 11 m
+~ 61431 J. Kiwior : 30 → 30 m
+~ 61837 A. Bardakcı : 16 → 17 m
+~ 6239 G. Maroni : 25 → 25 m
+~ 6324 E. Bullaude : 15 → 16 m
+~ 636 Bernardo Silva : 16 → 17 m
+~ 6369 J. Rodríguez : 15 → 15 m
+~ 70500 Sergi Cardona : 8 → 8 m
+~ 70566 M. Villasanti : 34 → 34 m
+~ 71 Luan Peres : 42 → 42 m
+~ 715 C. Baumgartner : 2 → 3 m
+~ 730 T. Courtois : 19 → 20 m
+~ 731 K. Navas : 25 → 26 m
+~ 7328 N. Seiwald : 19 → 20 m
+~ 7334 K. Adeyemi : 14 → 14 m
+~ 736 Fran García : 11 → 12 m
+~ 744 Brahim Díaz : 16 → 17 m
+~ 748 Dani Ceballos : 6 → 7 m
+~ 7541 Victor Sá : 9 → 9 m
+~ 762 Vinícius Júnior : 33 → 34 m
+~ 80552 Gabriel Sara : 11 → 12 m
+~ 84086 Robert Navarro : 8 → 8 m
+~ 8489 J. David : 21 → 21 m
+~ 851 W. Szczęsny : 1 → 1 m
+~ 855 João Cancelo : 20 → 20 m
+~ 927 Lee Kang-In : 35 → 35 m
+~ 972 J. Tah : 18 → 19 m
+~ 9862 Cleiton : 25 → 25 m
+~ 9938 Arthur Cabral : 47 → 47 m
+~ 9949 Igor Vinicius : 39 → 39 m
+~ 9958 Tchê Tchê : 43 → 43 m
+~ 9978 Everson : 36 → 36 m
+~ 9991 Lucas Veríssimo : 32 → 32 m
