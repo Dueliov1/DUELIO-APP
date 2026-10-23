@@ -12,10 +12,10 @@ on:
         default: "15000"
       budget:
         description: "Appels API maximum pour ce passage"
-        default: "50000"
+        default: "40000"
   # Cible relevée à 15 000 le 23 octobre 2026 (tous les joueurs d'au moins ~20 matchs
   # dans la base). Quota : 75 000 appels par jour ; la saison en cours en prend ~15 000
-  # à 04:17 UTC, ce passage 50 000 au plus, le reste va à l'appli en ligne.
+  # à 04:17 UTC, ce passage 40 000 au plus (5 h 30 pour 50 000 : trop juste pour la limite de 5 h 30 du passage), le reste va à l'appli en ligne.
   # Une fois la cible atteinte, le passage ne fait aucun appel.
   schedule:
     - cron: "0 6 * * *"
@@ -53,7 +53,7 @@ jobs:
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
           CIBLE: ${{ inputs.cible || '15000' }}
-          BUDGET: ${{ inputs.budget || '50000' }}
+          BUDGET: ${{ inputs.budget || '40000' }}
         run: |
           cat > carrieres.mjs <<'EOF'
           import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
