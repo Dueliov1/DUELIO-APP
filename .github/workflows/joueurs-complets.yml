@@ -9,16 +9,16 @@ on:
     inputs:
       cible:
         description: "Nombre total de joueurs à couvrir"
-        default: "5000"
+        default: "15000"
       budget:
         description: "Appels API maximum pour ce passage"
-        default: "12000"
-  # Le déclencheur horaire a été retiré le 16 octobre 2026 : les 5 000 joueurs
-  # sont moissonnés. Pour reprendre — relever la cible, rattraper des joueurs
-  # ajoutés depuis — lancez ce workflow à la main depuis l'onglet Actions, et
-  # remettez le cron ci-dessous s'il doit s'enchaîner tout seul :
-  #   schedule:
-  #     - cron: "0 * * * *"
+        default: "50000"
+  # Cible relevée à 15 000 le 23 octobre 2026 (tous les joueurs d'au moins ~20 matchs
+  # dans la base). Quota : 75 000 appels par jour ; la saison en cours en prend ~15 000
+  # à 04:17 UTC, ce passage 50 000 au plus, le reste va à l'appli en ligne.
+  # Une fois la cible atteinte, le passage ne fait aucun appel.
+  schedule:
+    - cron: "0 6 * * *"
 
 permissions:
   contents: write
@@ -52,8 +52,8 @@ jobs:
       - name: Moissonner les carrières
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-          CIBLE: ${{ inputs.cible || '5000' }}
-          BUDGET: ${{ inputs.budget || '12000' }}
+          CIBLE: ${{ inputs.cible || '15000' }}
+          BUDGET: ${{ inputs.budget || '50000' }}
         run: |
           cat > carrieres.mjs <<'EOF'
           import { readdirSync, readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
@@ -197,11 +197,43 @@ jobs:
           EOF
           node --max-old-space-size=8192 carrieres.mjs
 
+      # L'appli ne lit une fiche complète que si l'index de recherche annonce des
+      # matchs (m non nul). Sans cette étape, les nouvelles carrières resteraient
+      # invisibles (cas Brrou et Zorgane, corrigés à la main en octobre).
+      - name: Annoncer les carrières dans l'index de recherche
+        run: |
+          cat > index.mjs <<'EOF'
+          import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+          const complets = new Map();
+          for (const f of readdirSync("www/data/full")) {
+            if (!/^\d+\.json$/.test(f)) continue;
+            const d = JSON.parse(readFileSync("www/data/full/" + f, "utf8"));
+            let m = 0;
+            for (const L of Object.values(d.s || {})) for (const x of L || []) m += (x.games && x.games.appearences) || 0;
+            if (m > 0) complets.set(d.i, m);
+          }
+          let corriges = 0;
+          for (const f of readdirSync("www/data/search-az")) {
+            if (!/^[a-z]\.json$/.test(f)) continue;
+            const chemin = "www/data/search-az/" + f;
+            const idx = JSON.parse(readFileSync(chemin, "utf8"));
+            let touche = false;
+            for (const p of idx.players) {
+              const m = complets.get(p.i);
+              if (m && !p.m) { p.m = m; p.ti = Math.max(p.ti || 0, Math.round(m / 2)); touche = true; corriges++; }
+            }
+            if (touche) writeFileSync(chemin, JSON.stringify(idx));
+          }
+          console.log(corriges + " entrées d'index annoncent maintenant une carrière complète");
+          EOF
+          node index.mjs
+          rm index.mjs
+
       - name: Enregistrer dans le dépôt
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add -A www/data/full
+          git add -A www/data/full www/data/search-az
           if git diff --staged --quiet; then
             echo "Rien de nouveau à enregistrer."
             exit 0
