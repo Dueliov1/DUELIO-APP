@@ -17,8 +17,10 @@ on:
   # dans la base). Quota : 75 000 appels par jour ; la saison en cours en prend ~15 000
   # à 04:17 UTC, ce passage 40 000 au plus (5 h 30 pour 50 000 : trop juste pour la limite de 5 h 30 du passage), le reste va à l'appli en ligne.
   # Une fois la cible atteinte, le passage ne fait aucun appel.
-  schedule:
-    - cron: "0 6 * * *"
+  # Déclencheur quotidien retiré le 26 octobre 2026 : la cible de 15 000 est atteinte.
+  # Pour reprendre, relancez à la main depuis l'onglet Actions (et remettez le cron) :
+  #   schedule:
+  #     - cron: "0 6 * * *"
 
 permissions:
   contents: write
