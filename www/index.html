@@ -4293,7 +4293,7 @@ function construireLegende(l, rang){
   for(const c of (l.clubs || [])){
     if((c.m || 0) > plusDeMatchs){ plusDeMatchs = c.m || 0; clubPrincipal = c.club; }
   }
-  return {
+  const objet = {
     id: LEGENDE_ID_BASE + rang,
     apiId: null,
     estLegende: true,
@@ -4345,6 +4345,11 @@ function construireLegende(l, rang){
     note: l.note || '',
     needsStats: false
   };
+  /* Palmarès saisi à la main (champ t) : il passe par le même chemin qu'un palmarès
+   * venu de l'API, pour que compteurs, tableau et duel le traitent à l'identique.
+   * Une légende sans t garde trophiesLoaded=false : l'affichage dit « non renseigné ». */
+  if(Array.isArray(l.t) && l.t.length) applyRealTrophies(objet, l.t.map(t => ({ ...t })));
+  return objet;
 }
 
 async function chargerLegendes(){
@@ -5359,6 +5364,58 @@ const COMPETITIONS_FR = [
   [/^national 2 - group [a-d]$/i, 'National 2'],
   [/^1\. division$/i, 'Deuxième division'],
   [/^cup$/i, 'Coupe nationale'],
+  // Compétitions des palmarès saisis à la main (légendes), nommées à l'anglaise.
+  [/^uefa cup$/i, 'Coupe UEFA'],
+  [/^uefa cup winners'? cup$/i, 'Coupe des coupes'],
+  [/^uefa super cup$/i, "Supercoupe d'Europe"],
+  [/^intercontinental cup$/i, 'Coupe intercontinentale'],
+  [/^copa libertadores$/i, 'Copa Libertadores'],
+  [/^copa sudamericana$/i, 'Copa Sudamericana'],
+  [/^recopa sudamericana$/i, 'Recopa Sudamericana'],
+  [/^copa america$/i, 'Copa América'],
+  [/^africa cup of nations$/i, "Coupe d'Afrique des nations"],
+  [/^asian cup$/i, "Coupe d'Asie"],
+  [/^gold cup$/i, 'Gold Cup'],
+  [/^olympics$/i, 'Jeux olympiques'],
+  [/^confederations cup$/i, 'Coupe des confédérations'],
+  [/^caf champions league$/i, 'Ligue des champions CAF'],
+  [/^afc champions league$/i, 'Ligue des champions AFC'],
+  [/^concacaf champions cup$/i, 'Ligue des champions CONCACAF'],
+  [/^supercopa de espa[nñ]a$/i, "Supercoupe d'Espagne"],
+  [/^supercoppa italiana$/i, "Supercoupe d'Italie"],
+  [/^dfl supercup$/i, "Supercoupe d'Allemagne"],
+  [/^dfb ligapokal$/i, 'Coupe de la Ligue allemande'],
+  [/^troph[ée]e des champions$/i, 'Trophée des Champions'],
+  [/^knvb beker$/i, 'Coupe des Pays-Bas'],
+  [/^johan cruy?i?jf+ (shield|schaal)$/i, 'Supercoupe des Pays-Bas'],
+  [/^ta[cç]a de portugal$/i, 'Coupe du Portugal'],
+  [/^superta[cç]a( c[aâ]ndido de oliveira)?$/i, 'Supercoupe du Portugal'],
+  [/^primeira liga$/i, 'Championnat du Portugal'],
+  [/^scottish premiership$/i, "Championnat d'Écosse"],
+  [/^scottish cup$/i, "Coupe d'Écosse"],
+  [/^scottish league cup$/i, "Coupe de la Ligue écossaise"],
+  [/^campeonato brasileiro$/i, 'Championnat du Brésil'],
+  [/^copa do brasil$/i, 'Coupe du Brésil'],
+  [/^campeonato (paulista|carioca|mineiro|ga[uú]cho)$/i, 'Championnat $1'],
+  [/^torneio rio-s[aã]o paulo$/i, 'Tournoi Rio-São Paulo'],
+  [/^soviet top league$/i, "Championnat d'URSS"],
+  [/^soviet cup$/i, "Coupe d'URSS"],
+  [/^russian premier league$/i, 'Championnat de Russie'],
+  [/^ddr-oberliga$/i, 'Championnat de RDA'],
+  [/^fdgb-pokal$/i, 'Coupe de RDA'],
+  [/^super lig$/i, 'Championnat de Turquie'],
+  [/^turkish (cup|super cup)$/i, (m)=> /super/i.test(m[1]) ? 'Supercoupe de Turquie' : 'Coupe de Turquie'],
+  [/^j1 league$/i, 'Championnat du Japon'],
+  [/^liga mx$/i, 'Championnat du Mexique'],
+  [/^mls cup$/i, 'MLS Cup'],
+  [/^supporters'? shield$/i, 'Supporters\' Shield'],
+  [/^north american soccer league$/i, 'NASL'],
+  [/^serie b$/i, 'Serie B'],
+  [/^belgian pro league$/i, 'Championnat de Belgique'],
+  [/^greek super league$/i, 'Championnat de Grèce'],
+  [/^austrian bundesliga$/i, "Championnat d'Autriche"],
+  [/^swiss super league$/i, 'Championnat de Suisse'],
+  [/^emir of qatar cup$/i, "Coupe de l'Émir du Qatar"],
 ];
 function nomCompetitionFr(nom, pays){
   const brut = String(nom || '');
@@ -5423,9 +5480,9 @@ function palmaresDe(fp){
   // Le palmarès est déposé sur l'entrée de PLAYERS par applyRealTrophies ;
   // la colonne du duel, elle, travaille parfois sur une copie.
   const p = (typeof PLAYERS !== 'undefined' && PLAYERS.find(x=>x.id===fp.id)) || fp;
-  if(p.estLegende) return null;
+  if(p.estLegende && !p.trophiesLoaded) return null;
   let brut;
-  if(p.apiId){
+  if(p.apiId || p.estLegende){
     if(!p.trophiesLoaded) return null;
     brut = p.trophiesRaw || [];
   } else {
@@ -5467,7 +5524,11 @@ function trophyValue(fp, key){
   // Une légende connaît ses sélections et ses buts internationaux — ils ont été
   // saisis avec sa carrière — mais pas son palmarès en titres. Renvoyer 0 pour
   // les titres de Zidane serait un mensonge : c'est « — » qu'il faut afficher.
-  if(fp.estLegende) return (key === 'caps' || key === 'intGoals') ? (fp[key] || 0) : null;
+  if(fp.estLegende){
+    if(key === 'caps' || key === 'intGoals') return fp[key] || 0;
+    const real = PLAYERS.find(x=>x.id===fp.id) || fp;
+    return real.trophiesLoaded ? (real[key] || 0) : null;
+  }
   if(!fp.apiId) return fp[key] || 0;               // joueurs de la démo
   const real = PLAYERS.find(x=>x.id===fp.id) || fp;
   if(key==='caps' || key==='intGoals'){ const t = nationTotals(real); return (t && t.caps > 0) ? t[key] : null; }
@@ -5916,11 +5977,11 @@ function renderAll(){
             ? (slots.length===2 ? duelRowsHtml()
                                 : `<div class="compare-cols count-${slots.length}">${statsColsHtml}</div>`)
             : '')}
-      ${activeTab==='trophies' && filled.length>=2 && !compactView && filled.some(p=>!p.estLegende) ? `
+      ${activeTab==='trophies' && filled.length>=2 && !compactView && filled.some(p=>!p.estLegende || p.trophiesLoaded) ? `
       <div class="browse-section-label" style="margin-top:18px;">Palmarès comparé</div>
       ${palmaresDuelHtml(filled)}` : ''}
-      ${activeTab==='trophies' && filled.length>=2 && filled.some(p=>p.estLegende) ? `
-      <div class="palmares-vide">Le palmarès des légendes n'est pas encore renseigné : seules leurs sélections et leurs buts en équipe nationale sont connus.</div>` : ''}
+      ${activeTab==='trophies' && filled.length>=2 && filled.some(p=>p.estLegende && !p.trophiesLoaded) ? `
+      <div class="palmares-vide">Le palmarès de ${filled.filter(p=>p.estLegende && !p.trophiesLoaded).map(p=>escapeHtml(shortName(p))).join(' et ')} n'est pas encore renseigné : seules les sélections et les buts en équipe nationale sont connus.</div>` : ''}
       ${activeTab==='trophies' && filled.length>=2 && palmaresEnEchec(filled) ? `<div class="palmares-vide">Le palmarès n'a pas pu être chargé pour le moment. <button type="button" class="lien-inline" id="palmaresRetry">Réessayer</button></div>` : ''}
       ${activeTab==='trophies' && filled.length>=2 && realMode ? `<div class="radar-note" style="margin-top:10px; max-width:320px; text-align:center;">Sélections : matchs en équipe nationale A, amicaux compris ; peut être incomplet avant 2010. Seuls les titres gagnés comptent — ni finales perdues, ni tournois amicaux. «&nbsp;—&nbsp;»&nbsp;: donnée absente.</div>` : ''}
       ${activeTab==='stats' && filled.length>=2 && compareBasis!=='nation' && !compactView && !duelAvecLegende(filled) ? `
@@ -7584,7 +7645,7 @@ const BROWSE_STAT_GROUPS = [
 ];
 const BROWSE_TROPHIES = TROPHIES.filter(r=>r.key.startsWith('titres')); // les sélections ont déjà leur rubrique dans la fiche
 function detailTrophyRowsHtml(p){
-  if(p.estLegende) return `<div class="palmares-vide">Palmarès non renseigné pour cette légende.</div>`;
+  if(p.estLegende && !p.trophiesLoaded) return `<div class="palmares-vide">Palmarès non renseigné pour cette légende.</div>`;
   const compteurs = BROWSE_TROPHIES.map(r=>{
     const v = trophyValue(p, r.key);
     return `<div class="solo-stat-row"><span class="k">${r.label}</span><span class="v">${v===null ? trophyPlaceholder(p, r.key) : v}</span></div>`;
