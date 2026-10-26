@@ -13,10 +13,11 @@
 #    Sans ces règles, chaque fichier est revalidé à chaque demande : même inchangé,
 #    il coûte un aller-retour réseau, soit 100 à 400 ms sur mobile, payés à chaque
 #    ouverture de fiche.
-# Carrières complètes : un fichier par joueur, qui ne bouge qu'au moissonnage.
-# Une semaine de cache, et on sert l'ancienne version pendant la revalidation.
+# Carrières complètes : un fichier par joueur. Depuis le 22 octobre 2026, la saison
+# en cours y est remise à jour chaque matin : quatre heures de cache au plus, et on
+# sert l'ancienne version pendant la revalidation (jamais d'attente).
 /data/full/*
-  Cache-Control: public, max-age=604800, stale-while-revalidate=86400
+  Cache-Control: public, max-age=14400, stale-while-revalidate=86400
   Access-Control-Allow-Origin: *
 
 # Paquets par joueur : reconstruits par « Réorganiser par joueur ».

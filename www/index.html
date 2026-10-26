@@ -543,6 +543,17 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
   .sheet-head{ display:flex; align-items:center; justify-content:space-between; padding: 16px 16px 6px; }
+  .about-btn{ margin-left:auto; width:34px; opacity:.85; }
+  .about-btn svg{ width:18px; height:18px; }
+  .about-body{ padding: 4px 18px 20px; font-size:13px; line-height:1.5; color:var(--chalk); }
+  .about-body p{ margin: 8px 0; }
+  .about-body b{ color:var(--chalk); }
+  .about-links{ display:flex; flex-direction:column; gap:8px; margin:14px 0 6px; }
+  .about-links a{
+    display:flex; align-items:center; min-height:44px; padding:0 14px; border-radius:12px;
+    background:var(--surface); border:1px solid var(--line); color:var(--gold); text-decoration:none; font-weight:700;
+  }
+  .about-version{ font-size:11px; color:var(--chalk-dim); }
   .sheet-title{ font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:14px; }
   .sheet-sub{ padding: 0 16px 10px; font-size:11.5px; color:var(--chalk-dim); line-height:1.4; }
   .sheet-sub:empty{ display:none; }
@@ -1480,6 +1491,9 @@
       <span class="brand-name">Duelio</span>
     </div>
     <h1 id="headerTitle">Comparer</h1>
+    <button class="nav-back about-btn" id="aboutBtn" type="button" aria-label="À propos de Duelio" title="À propos">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>
+    </button>
   </div>
 
   <div id="globalFallbackBanner" style="display:none;"></div>
@@ -1515,6 +1529,27 @@
       </div>
       <div class="sheet-sub" id="seasonSheetSub"></div>
       <div class="sheet-list" id="seasonSheetList"></div>
+    </div>
+  </div>
+
+  <!-- À propos : source des données, crédits, pages légales -->
+  <div class="sheet" id="aboutSheet" hidden>
+    <div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="aboutSheetTitle">
+      <div class="sheet-head">
+        <div class="sheet-title" id="aboutSheetTitle">À propos</div>
+        <button class="picker-close" id="aboutSheetClose" type="button" aria-label="Fermer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </div>
+      <div class="sheet-list about-body">
+        <p>Duelio compare les footballeurs sur leurs vraies statistiques : 55 000 joueurs et les légendes du jeu, saison par saison ou carrière entière.</p>
+        <p><b>Source des données.</b> Statistiques des joueurs en activité : API-Football (API-Sports), remises à jour chaque matin pour la saison en cours. Carrières des légendes : saisies à la main à partir de sources publiques, indiquées sur chaque fiche. Les photos des légendes viennent de Wikimedia Commons sous licences libres, créditées sur leur fiche.</p>
+        <p>Duelio n'est affilié à aucune ligue, fédération, club ou joueur. Les chiffres sont fournis à titre informatif et peuvent comporter des erreurs : signalez-les, on corrige.</p>
+        <div class="about-links">
+          <a href="/legal/confidentialite.html" target="_blank" rel="noopener">Politique de confidentialité</a>
+          <a href="/legal/conditions.html" target="_blank" rel="noopener">Conditions d'utilisation</a>
+          <a href="mailto:bensouna.ahmed@hotmail.com">Nous écrire</a>
+        </div>
+        <p class="about-version">Édité par Ahmed Bensouna · Belgique</p>
+      </div>
     </div>
   </div>
 
@@ -6424,6 +6459,21 @@ function closeSeasonSheet(changed){
   if(changed && cb) cb();
 }
 document.getElementById('seasonSheetClose').addEventListener('click', ()=>closeSeasonSheet(false));
+
+/* ---------------- À propos ---------------- */
+function openAboutSheet(){
+  const el = document.getElementById('aboutSheet');
+  if(el.hidden) navOverlayOpened('aboutSheet');
+  el.hidden = false;
+}
+function closeAboutSheet(){
+  const el = document.getElementById('aboutSheet');
+  if(!el.hidden) navOverlayClosed('aboutSheet');
+  el.hidden = true;
+}
+document.getElementById('aboutBtn').addEventListener('click', openAboutSheet);
+document.getElementById('aboutSheetClose').addEventListener('click', closeAboutSheet);
+document.getElementById('aboutSheet').addEventListener('click', (e)=>{ if(e.target.id==='aboutSheet') closeAboutSheet(); });
 document.getElementById('seasonSheet').addEventListener('click', (e)=>{ if(e.target.id==='seasonSheet') closeSeasonSheet(false); });
 
 /* ---------------- Picker ---------------- */
@@ -8232,7 +8282,8 @@ let navSuppress = 0;       // nombre de « popstate » provoqués par nous-même
 const NAV_OVERLAY_CLOSERS = {
   picker: ()=>closePicker(),
   seasonSheet: ()=>closeSeasonSheet(false),
-  valueSheet: ()=>closeValueSheet()
+  valueSheet: ()=>closeValueSheet(),
+  aboutSheet: ()=>closeAboutSheet()
 };
 function navScreenEl(name){ return document.getElementById(name==='compare' ? 'content' : name==='browse' ? 'browseScreen' : 'generateScreen'); }
 function navScrollOf(name){
