@@ -1,5 +1,5 @@
 == /diag ==
-{"sortie":"DIRECTE depuis Cloudflare Workers (adresses IP partagées : API-Football peut les bloquer au niveau réseau)","cleUtiliseeParCeWorker":"d0ca…4fda (32 caractères)","api":"https://v3.football.api-sports.io","indexKV":"configuré","limiteurLocal":{"planDeclare":"ultra","origine":"variable API_PLAN","plafondReel":"450/min et 7/s","plafondApplique":"360/min et 5/s","appelsCetteMinute":0,"appelsAPI":0,"reponsesEnCache":0,"misesEnAttente":0,"refusLocaux":0,"enRetraitPendant":"non"},"heureUTC":"2026-10-28T10:52:38.473Z","httpStatus":200,"enTetesDeQuota":{},"erreurAPI":{"rateLimit":"Too many requests. You have exceeded the limit of requests per minute of your subscription."},"aLire":["Si « email » n'est pas celui de votre compte payant, ou si « abonnement » n'est pas votre offre : la clé de ce Worker n'est pas la bonne.","Si « requetesAujourdHui » est très différent du chiffre de votre tableau de bord : les deux ne parlent pas de la même clé.","Si « erreurAPI » dit « Too many requests » alors que cette page est ouverte seule : le pare-feu d'API-Football bloque la clé ET/OU l'adresse IP. Leur documentation précise que la protection « prend aussi en compte l'adresse IP » et que le blocage « peut viser la clé API, mais aussi l'adresse IP ». Les Workers Cloudflare partagent leurs adresses de sortie.","Si « plafondApplique » ne correspond pas à votre offre, réglez la variable API_PLAN (free, pro, ultra ou mega).","Si « sortie » indique DIRECTE et q
+{"sortie":"DIRECTE depuis Cloudflare Workers (adresses IP partagées : API-Football peut les bloquer au niveau réseau)","cleUtiliseeParCeWorker":"d0ca…4fda (32 caractères)","api":"https://v3.football.api-sports.io","indexKV":"configuré","limiteurLocal":{"planDeclare":"ultra","origine":"variable API_PLAN","plafondReel":"450/min et 7/s","plafondApplique":"360/min et 5/s","appelsCetteMinute":0,"appelsAPI":0,"reponsesEnCache":0,"misesEnAttente":0,"refusLocaux":0,"enRetraitPendant":"non"},"heureUTC":"2026-10-28T10:54:14.642Z","httpStatus":200,"enTetesDeQuota":{"x-ratelimit-limit":"450","x-ratelimit-remaining":"449","x-ratelimit-requests-limit":"75000","x-ratelimit-requests-remaining":"59709"},"compte":"Ahmed Bensouna","email":"be***@hotmail.com","abonnement":"Ultra","actif":true,"finAbonnement":"2026-11-12T07:03:11+00:00","requetesAujourdHui":15291,"limiteParJour":75000,"aLire":["Si « email » n'est pas celui de votre compte payant, ou si « abonnement » n'est pas votre offre : la clé de ce Worker n'est pas la bonne.","Si « requetesAujourdHui » est très différent du chiffre de votre tableau de bord : les deux ne parlent pas de la même clé.","Si « erreurAPI » dit « Too many requests » alors que cette page est ouverte seule : le pare-feu d'API-Football bloque la clé ET/OU l'adresse IP. Leur documentation précise que la protection « prend aussi en compte l'adresse IP » et que le blocage « peut viser la clé API, mais aussi l'adresse IP ». Les Workers Cloudflar
 == GET /auth/me (attendu : 401 ou JSON ok:false si les comptes existent, 404/texte sinon) ==
 HTTP 401
 {"error":"Non connecté."}
@@ -9,6 +9,10 @@ HTTP 401
 == POST /auth/register e-mail invalide (dit si la route existe) ==
 HTTP 400
 {"error":"Email invalide."}
+== POST /auth/register sonde-duelio-1793184817@example.com (dit si l'envoi d'e-mail fonctionne) ==
+HTTP 500
+error code: 1101
+
 == GET /favorites sans session ==
 HTTP 401
 {"error":"Non connecté."}
