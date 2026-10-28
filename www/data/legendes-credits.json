@@ -1102,6 +1102,41 @@
       "licence": "CC0",
       "type": "domaine public",
       "page": "https://commons.wikimedia.org/wiki/File:Gento_with_Leo_Horn_,_Di_Stefano_(cropped).jpg"
+    },
+    "michel-platini": {
+      "nom": "Michel Platini",
+      "fichier": "File:Michel Platini in Moscow.jpg",
+      "auteur": "Елена Рыбакова",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Michel_Platini_in_Moscow.jpg",
+      "aVerifier": true,
+      "metierNonConfirme": true,
+      "parRecherche": true
+    },
+    "ruud-gullit": {
+      "nom": "Ruud Gullit",
+      "fichier": "File:25th Laureus World Sports Awards - Ruud Gullit - 240422 131911 (cropped).jpg",
+      "auteur": "Barcex",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:25th_Laureus_World_Sports_Awards_-_Ruud_Gullit_-_240422_131911_(cropped).jpg"
+    },
+    "rivelino": {
+      "nom": "Rivelino",
+      "fichier": "File:Rivelino brasil figurita.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Rivelino_brasil_figurita.jpg"
+    },
+    "careca": {
+      "nom": "Careca",
+      "fichier": "File:Antonio de Oliveira Filho (Careca) 01.jpg",
+      "auteur": "Valter Campanato/ABr",
+      "licence": "CC BY 3.0 br",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Antonio_de_Oliveira_Filho_(Careca)_01.jpg"
     }
   },
   "majLe": "2026-10-28"
