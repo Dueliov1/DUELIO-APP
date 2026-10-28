@@ -1,0 +1,152 @@
+name: Saison en cours (par championnat)
+
+# Rafraîchissement LÉGER et quotidien de la saison en cours : au lieu de relire les
+# 15 000 fiches complètes une par une (80 minutes, 15 000 appels), on lit les pages de
+# statistiques des grandes compétitions (≈ 1 000 appels, quelques minutes). Chaque
+# joueur rencontré voit ses lignes de CETTE compétition remplacées, dans sa fiche
+# complète (www/data/full) ou dans son paquet léger (www/data/players). Les 40 000
+# joueurs sans fiche complète gagnent ainsi la saison en cours, que le proxy en ligne
+# ne parvient plus à leur fournir (API-Football bloque les adresses IP de Cloudflare).
+#
+# Les compétitions absentes de la liste (coupes nationales, championnats non suivis)
+# restent couvertes par le passage complet hebdomadaire (« Saison en cours »).
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * *"   # tous les jours à 04:17 UTC
+
+permissions:
+  contents: write
+
+concurrency:
+  group: saison-courante
+  cancel-in-progress: false
+
+jobs:
+  rafraichir:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Rafraîchir par championnat
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: |
+          cat > ligues.mjs <<'EOS'
+          import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+          const H = { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } };
+          const attendre = ms => new Promise(r => setTimeout(r, ms));
+          const now = new Date();
+          const SAISON = now.getUTCMonth() >= 6 ? now.getUTCFullYear() : now.getUTCFullYear() - 1;
+          const COMPETITIONS = [
+            [39, "Premier League"], [140, "La Liga"], [135, "Serie A"], [78, "Bundesliga"], [61, "Ligue 1"],
+            [94, "Primeira Liga"], [88, "Eredivisie"], [203, "Süper Lig"], [144, "Jupiler Pro League"],
+            [40, "Championship"], [141, "La Liga 2"], [136, "Serie B"], [79, "2. Bundesliga"], [62, "Ligue 2"],
+            [253, "MLS"], [307, "Saudi Pro League"], [71, "Brasileirão"], [128, "Liga Argentina"],
+            [2, "Ligue des champions"], [3, "Ligue Europa"], [848, "Ligue Conférence"],
+            [1, "Coupe du monde"], [4, "Euro"], [5, "Ligue des nations"], [6, "Coupe d'Afrique"], [9, "Copa América"],
+            [10, "Amicaux"], [29, "Qualif. CM Afrique"], [30, "Qualif. CM Asie"], [31, "Qualif. CM CONCACAF"],
+            [32, "Qualif. CM Europe"], [34, "Qualif. CM Amérique du Sud"], [960, "Qualif. Euro"]
+          ];
+          async function get(url) {
+            for (let k = 0; k < 6; k++) {
+              try {
+                const r = await fetch(url, H);
+                const j = await r.json();
+                const e = j.errors;
+                if (e && (Array.isArray(e) ? e.length : Object.keys(e).length)) {
+                  if (/too many|rate/i.test(JSON.stringify(e))) { await attendre(8000 * (k + 1)); continue; }
+                  throw new Error(JSON.stringify(e));
+                }
+                return j;
+              } catch (e) { if (k === 5) throw e; await attendre(3000); }
+            }
+          }
+          // 1. Lire toutes les pages : joueur -> { ligueId -> [lignes] }
+          const parJoueur = new Map();   // id -> { nom, age, nat, lignes: Map(ligueId -> [lignes]) }
+          let appels = 0;
+          for (const [lid, nom] of COMPETITIONS) {
+            let page = 1, total = 1, vus = 0;
+            do {
+              const j = await get(`https://v3.football.api-sports.io/players?league=${lid}&season=${SAISON}&page=${page}`);
+              appels++; await attendre(150);
+              total = (j.paging && j.paging.total) || 1;
+              for (const r of j.response || []) {
+                const p = r.player || {}; if (!p.id) continue;
+                const lignes = (r.statistics || []).filter(s => s.league && s.league.id === lid);
+                if (!lignes.length) continue;
+                const e = parJoueur.get(p.id) || { nom: p.name, age: p.age, nat: p.nationality, lignes: new Map() };
+                e.lignes.set(lid, lignes);
+                parJoueur.set(p.id, e); vus++;
+              }
+              page++;
+            } while (page <= total && page <= 80);
+            console.log(`${nom} : ${total} page(s), ${vus} joueurs`);
+          }
+          console.log(`${parJoueur.size} joueurs lus en ${appels} appels`);
+
+          // 2. Fusion : remplacer, pour la saison en cours, les lignes de chaque compétition lue.
+          const matchs = L => L.reduce((s, l) => s + (l.games?.appearences || 0), 0);
+          function fusionner(s, lignesParLigue) {
+            const avant = (s[String(SAISON)] || []);
+            const touchees = new Set(lignesParLigue.keys());
+            // On garde les lignes des compétitions non lues ; on remplace les autres,
+            // sauf si la page en savait moins (réponse partielle) que la fiche.
+            let apres = avant.filter(l => !touchees.has(l.league && l.league.id));
+            let change = false;
+            for (const [lid, nouvelles] of lignesParLigue) {
+              const anciennes = avant.filter(l => l.league && l.league.id === lid);
+              const garde = matchs(anciennes) > matchs(nouvelles) ? anciennes : nouvelles;
+              if (JSON.stringify(garde) !== JSON.stringify(anciennes)) change = true;
+              apres = apres.concat(garde);
+            }
+            if (change || apres.length !== avant.length) { s[String(SAISON)] = apres; return true; }
+            return false;
+          }
+          let fichesMaj = 0, paquetsMaj = 0, saisonsAjoutees = 0, inconnus = 0;
+          const paquetsTouches = new Map();  // n -> liste chargée
+          const NB_PAQUETS = JSON.parse(readFileSync("www/data/players/index.json", "utf8")).paquets || 1000;
+          for (const [id, e] of parJoueur) {
+            const chemin = `www/data/full/${id}.json`;
+            if (existsSync(chemin)) {
+              const d = JSON.parse(readFileSync(chemin, "utf8"));
+              d.s = d.s || {};
+              const avaitSaison = !!(d.s[String(SAISON)] || []).length;
+              if (fusionner(d.s, e.lignes)) {
+                if (!avaitSaison) saisonsAjoutees++;
+                if (!(d.saisons || []).includes(SAISON)) d.saisons = [SAISON, ...(d.saisons || [])].sort((a, b) => b - a);
+                writeFileSync(chemin, JSON.stringify(d)); fichesMaj++;
+              }
+              continue;
+            }
+            const n = id % NB_PAQUETS;
+            if (!paquetsTouches.has(n)) {
+              const f = `www/data/players/${n}.json`;
+              paquetsTouches.set(n, { liste: existsSync(f) ? JSON.parse(readFileSync(f, "utf8")) : [], change: false });
+            }
+            const pq = paquetsTouches.get(n);
+            const j = pq.liste.find(x => x.i === id);
+            if (!j) { inconnus++; continue; }   // pas dans l'index de recherche : on n'invente pas de fiche
+            j.s = j.s || {};
+            if (fusionner(j.s, e.lignes)) { pq.change = true; }
+          }
+          for (const [n, pq] of paquetsTouches) {
+            if (pq.change) { writeFileSync(`www/data/players/${n}.json`, JSON.stringify(pq.liste)); paquetsMaj++; }
+          }
+          mkdirSync("diagnostics", { recursive: true });
+          const bilan = `Saison ${SAISON} par championnat — ${now.toISOString().slice(0, 10)} : ${parJoueur.size} joueurs lus (${appels} appels), ${fichesMaj} fiches complètes mises à jour (${saisonsAjoutees} saisons ajoutées), ${paquetsMaj} paquets légers réécrits, ${inconnus} joueurs hors index ignorés`;
+          writeFileSync("diagnostics/saison-courante-ligues.txt", bilan + "\n");
+          console.log(bilan);
+          EOS
+          node --max-old-space-size=6144 ligues.mjs
+          rm ligues.mjs
+      - name: Publier
+        run: |
+          git config user.name "saison-ligues"; git config user.email "saison@users.noreply.github.com"
+          git add www/data/full www/data/players diagnostics/saison-courante-ligues.txt
+          git commit -m "Saison en cours : mise à jour quotidienne par championnat" || { echo rien; exit 0; }
+          for i in 1 2 3 4; do git pull --rebase -q && git push && break; sleep 5; done
