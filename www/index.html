@@ -3207,9 +3207,13 @@ function extractSeasonStats(entry, noSplit){
   if(!noSplit && entry.statistics && entry.statistics.length){
     const list = entry.statistics;
     const kind = st => statTeamKind(st, entry.player);
-    const officialL = list.filter(st=>kind(st)!=='friendly');
+    /* Les équipes de jeunes (U17, U19, U21, JO) ne comptent ni comme club ni comme
+     * sélection A : Palmer 2023-24 affichait 58 matchs « club + sélection » dont 9
+     * avec l'Angleterre espoirs. Elles restent lisibles à part (split.youth). */
+    const officialL = list.filter(st=>kind(st)!=='friendly' && kind(st)!=='youth');
     const clubL = list.filter(st=>kind(st)==='club');
-    const natL = list.filter(st=>kind(st)==='nation' || kind(st)==='youth');
+    const natL = list.filter(st=>kind(st)==='nation');
+    const youthL = list.filter(st=>kind(st)==='youth');
     const friendlyL = list.filter(st=>kind(st)==='friendly');
     // Total « Club + sélection » = matchs officiels seulement (les amicaux ont leur propre filtre)
     const base = extractSeasonStats({...entry, statistics: officialL}, true);
@@ -3235,11 +3239,12 @@ function extractSeasonStats(entry, noSplit){
       club: clubL.length ? extractSeasonStats({...entry, statistics: clubL}, true) : null,
       nation: natL.length ? extractSeasonStats({...entry, statistics: natL}, true) : null,
       friendly: friendlyL.length ? extractSeasonStats({...entry, statistics: friendlyL}, true) : null,
+      youth: youthL.length ? extractSeasonStats({...entry, statistics: youthL}, true) : null,
       comp: comps
     };
-    if(!officialL.length && friendlyL.length){
-      // saison avec seulement des amicaux : on garde le club pour l'affichage, les chiffres officiels restent à 0
-      const f = base.split.friendly;
+    if(!officialL.length && (friendlyL.length || youthL.length)){
+      // saison avec seulement des amicaux ou des jeunes : on garde le club pour l'affichage, les chiffres officiels restent à 0
+      const f = base.split.friendly || base.split.youth;
       base.teamName = base.teamName || f.teamName; base.teamId = base.teamId || f.teamId; base.teamLogo = base.teamLogo || f.teamLogo;
     }
     return base;
@@ -6488,10 +6493,15 @@ function seasonRowHtml(p, sn){
   const isBest = p.bestSeason === sn;
   const noData = p.seasonsNoData && p.seasonsNoData[sn];
   let nums = '';
-  if(st){
-    const bits = [`${st.appearances||0} match${(st.appearances||0)>1?'s':''}`];
-    if(p.pos==='GK'){ if(!isStatMissing(st,'saves')) bits.push(`${st.saves||0} arrêt${(st.saves||0)>1?'s':''}`); }
-    else { if(!isStatMissing(st,'buts')) bits.push(`${st.buts||0} but${(st.buts||0)>1?'s':''}`); if(!isStatMissing(st,'passesDec')) bits.push(`${st.passesDec||0} passe${(st.passesDec||0)>1?'s':''} déc.`); }
+  /* Les chiffres suivent le périmètre choisi dans le duel (club seul par défaut) :
+   * la ligne « Manchester City » ne doit pas additionner la Coupe du monde. */
+  const sc = st && !p.estLegende ? scopedSrc(st) : st;
+  if(st && !sc){
+    nums = 'Aucun match dans ce périmètre';
+  } else if(st){
+    const bits = [`${sc.appearances||0} match${(sc.appearances||0)>1?'s':''}`];
+    if(p.pos==='GK'){ if(!isStatMissing(sc,'saves')) bits.push(`${sc.saves||0} arrêt${(sc.saves||0)>1?'s':''}`); }
+    else { if(!isStatMissing(sc,'buts')) bits.push(`${sc.buts||0} but${(sc.buts||0)>1?'s':''}`); if(!isStatMissing(sc,'passesDec')) bits.push(`${sc.passesDec||0} passe${(sc.passesDec||0)>1?'s':''} déc.`); }
     nums = bits.join(' · ');
   } else nums = noData ? 'Rien dans la base pour cette saison' : 'Touchez pour charger';
   return `
@@ -6531,8 +6541,8 @@ function renderSeasonSheet(){
     ? `${seasons.length} saison${seasons.length>1?'s':''}, toutes compétitions.${noteLegende}`
     : pr
     ? `Chargement de la carrière : ${pr.done}/${pr.total} saisons…`
-    : (toutCharge ? `${seasons.length} saison${seasons.length>1?'s':''} disponible${seasons.length>1?'s':''}${p.careerSpan ? ' ('+p.careerSpan[0]+'-'+p.careerSpan[1]+')' : ''}.`
-                  : `${seasons.length} saison${seasons.length>1?'s':''} disponible${seasons.length>1?'s':''}. Touchez-en une pour la charger.`);
+    : (toutCharge ? `${seasons.length} saison${seasons.length>1?'s':''} disponible${seasons.length>1?'s':''}${p.careerSpan ? ' ('+p.careerSpan[0]+'-'+p.careerSpan[1]+')' : ''}. ${libellePerimetre()}`
+                  : `${seasons.length} saison${seasons.length>1?'s':''} disponible${seasons.length>1?'s':''}. Touchez-en une pour la charger. ${libellePerimetre()}`);
   list.innerHTML = (!toutCharge && !pr ? `<button class="sheet-action" id="loadCareerBtn" type="button">Trouver sa meilleure saison</button>` : '')
     + seasons.map(sn=>seasonRowHtml(p, sn)).join('');
   const lc = document.getElementById('loadCareerBtn');
@@ -6561,6 +6571,17 @@ function renderSeasonSheet(){
       }
     });
   });
+}
+// Ce que couvrent les chiffres de la fiche des saisons, selon le périmètre du duel.
+function libellePerimetre(){
+  if(teamScope === 'all') return 'Chiffres : club + sélection.';
+  if(teamScope === 'nation') return 'Chiffres : sélection seulement.';
+  if(teamScope === 'friendly') return 'Chiffres : amicaux seulement.';
+  if(typeof teamScope === 'string' && teamScope.indexOf('comp:') === 0){
+    const c = competitionsDisponibles().find(x => 'comp:' + x[0] === teamScope);
+    return c ? `Chiffres : ${c[1]} seulement.` : '';
+  }
+  return 'Chiffres : club seulement.';
 }
 function openSeasonSheet(p, onChange){
   if(!p) return;
