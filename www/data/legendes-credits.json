@@ -318,7 +318,791 @@
       "licence": "CC BY 4.0",
       "type": "CC BY",
       "page": "https://commons.wikimedia.org/wiki/File:Paolo_Maldini_press_conference_in_Tehran_(cropped).jpg"
+    },
+    "lev-yashin": {
+      "nom": "Lev Yashin",
+      "fichier": "File:Lev Yashin 1966.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Lev_Yashin_1966.jpg"
+    },
+    "gordon-banks": {
+      "nom": "Gordon Banks",
+      "fichier": "File:Gordon banks figurita.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Gordon_banks_figurita.jpg"
+    },
+    "dino-zoff": {
+      "nom": "Dino Zoff",
+      "fichier": "File:Dino Zoff - 1972 - Juventus FC (cropped).jpg",
+      "auteur": "Original:  Unknown authorUnknown author / Derivative work:  Heiko Gerber",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Dino_Zoff_-_1972_-_Juventus_FC_(cropped).jpg"
+    },
+    "sepp-maier": {
+      "nom": "Sepp Maier",
+      "fichier": "File:Sepp Maier, 1978.jpg",
+      "auteur": "Original:  Nationaal Archief, Den Haag, Rijksfotoarchief: Fotocollectie Algemeen Nederlands Fotopersbureau (ANEFO), 1945-1989 - negatiefstroken zwart/wit, nummer toegang 2.24.01.05, bestanddeelnummer 929-9831 / Derivative work:  Danyele",
+      "licence": "CC BY-SA 3.0 nl",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Sepp_Maier,_1978.jpg"
+    },
+    "peter-schmeichel": {
+      "nom": "Peter Schmeichel",
+      "fichier": "File:Peter Schmeichel 2012-01-25 001.jpg",
+      "auteur": "Carlsberg",
+      "licence": "CC BY 3.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Peter_Schmeichel_2012-01-25_001.jpg"
+    },
+    "oliver-kahn": {
+      "nom": "Oliver Kahn",
+      "fichier": "File:2022-07-30 Fußball, Männer, DFL-Supercup, RB Leipzig - FC Bayern München 1DX 3179 by Stepro.jpg",
+      "auteur": "Steffen Prößdorf",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:2022-07-30_Fu%C3%9Fball,_M%C3%A4nner,_DFL-Supercup,_RB_Leipzig_-_FC_Bayern_M%C3%BCnchen_1DX_3179_by_Stepro.jpg",
+      "aVerifier": true
+    },
+    "fabien-barthez": {
+      "nom": "Fabien Barthez",
+      "fichier": "File:Fabien Barthez at OM.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Fabien_Barthez_at_OM.jpg"
+    },
+    "edwin-van-der-sar": {
+      "nom": "Edwin van der Sar",
+      "fichier": "File:Edwin van der Sar side.jpg",
+      "auteur": "Paul Blank",
+      "licence": "CC BY 2.5",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Edwin_van_der_Sar_side.jpg"
+    },
+    "bobby-moore": {
+      "nom": "Bobby Moore",
+      "fichier": "File:Bobby moore elgrafico 1970.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Bobby_moore_elgrafico_1970.jpg"
+    },
+    "franco-baresi": {
+      "nom": "Franco Baresi",
+      "fichier": "File:Franco baresi panini card 1979.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Franco_baresi_panini_card_1979.jpg"
+    },
+    "fabio-cannavaro": {
+      "nom": "Fabio Cannavaro",
+      "fichier": "File:Fabio Cannavaro - 2024 (cropped).jpg",
+      "auteur": "Original:  Mech867 / Derivative work:  Danyele",
+      "licence": "CC BY 4.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Fabio_Cannavaro_-_2024_(cropped).jpg"
+    },
+    "cafu": {
+      "nom": "Cafu",
+      "fichier": "File:Cafu - 26.02.2026 - Cerimônia de apresentação das taças da Copa do Mundo de 2026.jpg",
+      "auteur": "Lula Oficial",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Cafu_-_26.02.2026_-_Cerim%C3%B4nia_de_apresenta%C3%A7%C3%A3o_das_ta%C3%A7as_da_Copa_do_Mundo_de_2026.jpg"
+    },
+    "lilian-thuram": {
+      "nom": "Lilian Thuram",
+      "fichier": "File:Lilian Thuram - Février 2013.jpg",
+      "auteur": "English : This photo has been taken by Matthieu Riegler  (User:Kyro) and released under the licenses stated below. You are free to use it for any purpose as long as you credit me as author, Wikimedia Commons as site and follow the terms of the licenses. Could you be kind enough to leave me a message on this page to inform me about your use of this picture.\nExample: © Matthieu Riegler, CC-BY\n\nFrançais : Cette photo a été prise par Matthieu Riegler (User:Kyro) et placée sous les licences ci-dessous. Vous êtes libre de la réutiliser, pour n'importe quelle utilisation, tant que vous me citez en tant qu'auteur, Wikimedia Commons en tant que site et suivez les instructions des licences. Pourriez-vous avoir l'amabilité de me laisser un message sur cette page pour m'informer de votre utilisation de cette image.\nExemple : © Matthieu Riegler, CC-BY\n\n\n\n\nThis file is licensed under the Creative Commons Attribution 3.0 Unported license.Attribution: Matthieu Riegler, CC-by\nYou are free:\nto share – to copy, distribute and transmit the work\nto remix – to adapt the work\nUnder the following conditions:\nattribution – You must give appropriate credit, provide a link to the license, and indicate if changes were made. You may do so in any reasonable manner, but not in any way that suggests the licensor endorses you or your use.\nhttps://creativecommons.org/licenses/by/3.0CC BY 3.0 Creative Commons Attribution 3.0 truetrue\n\n\n\n\nVous souhaitez faire apparaitre cette photo sans crédit ? Contactez moi ! \nIf you want to use the photo without credit, please contact me.",
+      "licence": "CC BY 3.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Lilian_Thuram_-_F%C3%A9vrier_2013.jpg"
+    },
+    "marcel-desailly": {
+      "nom": "Marcel Desailly",
+      "fichier": "File:25th Laureus World Sports Awards - Red Carpet - Marcel Desailly - 240422 192752-3 (cropped).jpg",
+      "auteur": "Barcex",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:25th_Laureus_World_Sports_Awards_-_Red_Carpet_-_Marcel_Desailly_-_240422_192752-3_(cropped).jpg"
+    },
+    "laurent-blanc": {
+      "nom": "Laurent Blanc",
+      "fichier": "File:Laurent blanc 11 11 2013 reves de Clara.jpg",
+      "auteur": "Julien Manceau",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Laurent_blanc_11_11_2013_reves_de_Clara.jpg"
+    },
+    "alessandro-nesta": {
+      "nom": "Alessandro Nesta",
+      "fichier": "File:Alessandro Nesta as Miami FC Manager.jpg",
+      "auteur": "Joerudi",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Alessandro_Nesta_as_Miami_FC_Manager.jpg"
+    },
+    "giacinto-facchetti": {
+      "nom": "Giacinto Facchetti",
+      "fichier": "File:1966–67 Inter Milan - Giacinto Facchetti.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:1966%E2%80%9367_Inter_Milan_-_Giacinto_Facchetti.jpg"
+    },
+    "daniel-passarella": {
+      "nom": "Daniel Passarella",
+      "fichier": "File:Daniel passarella en 1985.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Daniel_passarella_en_1985.jpg"
+    },
+    "lothar-matthaus": {
+      "nom": "Lothar Matthäus",
+      "fichier": "File:2019 Lothar Matthäus.jpg",
+      "auteur": "Steffen Prößdorf",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:2019_Lothar_Matth%C3%A4us.jpg"
+    },
+    "gaetano-scirea": {
+      "nom": "Gaetano Scirea",
+      "fichier": "File:1975–76 Juventus FC - Gaetano Scirea.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:1975%E2%80%9376_Juventus_FC_-_Gaetano_Scirea.jpg"
+    },
+    "tony-adams": {
+      "nom": "Tony Adams",
+      "fichier": "File:Tony Adams 2017 portrait (cropped).jpg",
+      "auteur": "Jade Moulds",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Tony_Adams_2017_portrait_(cropped).jpg"
+    },
+    "matthias-sammer": {
+      "nom": "Matthias Sammer",
+      "fichier": "File:Bundesarchiv Bild 183-1990-0602-009, 1. FC Dynamo Dresden - PSV Schwerin 2-1.jpg",
+      "auteur": "Bernd Settnik",
+      "licence": "CC BY-SA 3.0 de",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Bundesarchiv_Bild_183-1990-0602-009,_1._FC_Dynamo_Dresden_-_PSV_Schwerin_2-1.jpg",
+      "aVerifier": true
+    },
+    "ronald-koeman": {
+      "nom": "Ronald Koeman",
+      "fichier": "File:Ronald Koeman (2014) (cropped).jpg",
+      "auteur": "Richard Mulder",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Ronald_Koeman_(2014)_(cropped).jpg"
+    },
+    "jaap-stam": {
+      "nom": "Jaap Stam",
+      "fichier": "File:Jaap Stam met fan cropped.jpg",
+      "auteur": "Original:  Flovries\nDerivative work:  PeeJay2K3",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Jaap_Stam_met_fan_cropped.jpg"
+    },
+    "carlos-alberto-torres": {
+      "nom": "Carlos Alberto Torres",
+      "fichier": "File:Carlos alberto cosmos.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Carlos_alberto_cosmos.jpg"
+    },
+    "fernando-hierro": {
+      "nom": "Fernando Hierro",
+      "fichier": "File:Fernando Hierro in Spain-Iran press conference 2018-06-19.jpg",
+      "auteur": "Meghdad Madadi",
+      "licence": "CC BY 4.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Fernando_Hierro_in_Spain-Iran_press_conference_2018-06-19.jpg"
+    },
+    "andreas-brehme": {
+      "nom": "Andreas Brehme",
+      "fichier": "File:Andreas Brehme.jpg",
+      "auteur": "Dappes at German Wikipedia\n\n(Original text: Ingo Stöldt)",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Andreas_Brehme.jpg"
+    },
+    "giuseppe-bergomi": {
+      "nom": "Giuseppe Bergomi",
+      "fichier": "File:Giuseppe Bergomi.jpg",
+      "auteur": "Christophe95",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Giuseppe_Bergomi.jpg"
+    },
+    "patrick-vieira": {
+      "nom": "Patrick Vieira",
+      "fichier": "File:Patrick Vieira NYCFC.JPG",
+      "auteur": "Simon Heseltine",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Patrick_Vieira_NYCFC.JPG"
+    },
+    "claude-makelele": {
+      "nom": "Claude Makélélé",
+      "fichier": "File:Claude Makélélé (53557564951) (cropped).jpg",
+      "auteur": "Web Summit Qatar",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Claude_Mak%C3%A9l%C3%A9l%C3%A9_(53557564951)_(cropped).jpg"
+    },
+    "roy-keane": {
+      "nom": "Roy Keane",
+      "fichier": "File:Roy keane 2014.jpg",
+      "auteur": "Irish Defence Forces from Ireland",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Roy_keane_2014.jpg"
+    },
+    "michael-laudrup": {
+      "nom": "Michael Laudrup",
+      "fichier": "File:Michael Laudrup.jpg",
+      "auteur": "Paul Blank",
+      "licence": "CC BY 2.5",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Michael_Laudrup.jpg"
+    },
+    "rui-costa": {
+      "nom": "Rui Costa",
+      "fichier": "File:Rui Costa 2019.png",
+      "auteur": "Sport Lisboa e Benfica",
+      "licence": "CC BY 3.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Rui_Costa_2019.png"
+    },
+    "zico": {
+      "nom": "Zico",
+      "fichier": "File:Zico 2012.jpg",
+      "auteur": "Doha Stadium Plus",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Zico_2012.jpg"
+    },
+    "socrates": {
+      "nom": "Sócrates",
+      "fichier": "File:Socrates87660.jpg",
+      "auteur": "Foto U. Dettmar/ABr.",
+      "licence": "CC BY 3.0 br",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Socrates87660.jpg"
+    },
+    "falcao": {
+      "nom": "Falcão",
+      "fichier": "File:Paulo Roberto Falcão, Roma 1983-84.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Paulo_Roberto_Falc%C3%A3o,_Roma_1983-84.jpg"
+    },
+    "frank-rijkaard": {
+      "nom": "Frank Rijkaard",
+      "fichier": "File:Ajax selectie seizoen 1981 1982 nr. 140a E. Ophof speler, nr. 15a F. Rijka, Bestanddeelnr 253-8568.jpg",
+      "auteur": "Marcel Antonisse / Anefo",
+      "licence": "CC0",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Ajax_selectie_seizoen_1981_1982_nr._140a_E._Ophof_speler,_nr._15a_F._Rijka,_Bestanddeelnr_253-8568.jpg",
+      "aVerifier": true
+    },
+    "bryan-robson": {
+      "nom": "Bryan Robson",
+      "fichier": "File:Bryan Robson Thailand 2009-11-01 (2).jpg",
+      "auteur": "Government of Thailand",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Bryan_Robson_Thailand_2009-11-01_(2).jpg"
+    },
+    "paul-gascoigne": {
+      "nom": "Paul Gascoigne",
+      "fichier": "File:Paul Gascoigne 2021.png",
+      "auteur": "James English",
+      "licence": "CC BY 3.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Paul_Gascoigne_2021.png"
+    },
+    "gheorghe-hagi": {
+      "nom": "Gheorghe Hagi",
+      "fichier": "File:Lansarea candidaturii Gabrielei Szabo pentru Camera Deputatilor, Voluntari - 04.05 (48) (14270956179) (cropped).jpg",
+      "auteur": "Partidul Social Democrat from Romania",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Lansarea_candidaturii_Gabrielei_Szabo_pentru_Camera_Deputatilor,_Voluntari_-_04.05_(48)_(14270956179)_(cropped).jpg",
+      "aVerifier": true
+    },
+    "dragan-stojkovic": {
+      "nom": "Dragan Stojković",
+      "fichier": "File:Драган Стојковић Пикси 2021.png",
+      "auteur": "Južne vesti",
+      "licence": "CC BY 3.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:%D0%94%D1%80%D0%B0%D0%B3%D0%B0%D0%BD_%D0%A1%D1%82%D0%BE%D1%98%D0%BA%D0%BE%D0%B2%D0%B8%D1%9B_%D0%9F%D0%B8%D0%BA%D1%81%D0%B8_2021.png",
+      "aVerifier": true
+    },
+    "hidetoshi-nakata": {
+      "nom": "Hidetoshi Nakata",
+      "fichier": "File:Hidetoshi Nakata in Okinawa (cropped).jpg",
+      "auteur": "norio nakayama",
+      "licence": "CC BY-SA 2.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Hidetoshi_Nakata_in_Okinawa_(cropped).jpg"
+    },
+    "jay-jay-okocha": {
+      "nom": "Jay-Jay Okocha",
+      "fichier": "File:Match legends 2017 CC (5).jpg",
+      "auteur": "Кирилл Венедиктов",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Match_legends_2017_CC_(5).jpg",
+      "aVerifier": true
+    },
+    "abedi-pele": {
+      "nom": "Abedi Pelé",
+      "fichier": "File:Abedi Pele 2007.jpg",
+      "auteur": "Christophe95",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Abedi_Pele_2007.jpg"
+    },
+    "didier-deschamps": {
+      "nom": "Didier Deschamps",
+      "fichier": "File:Didier Deschamps France v Senegal 16 June 2026-519 (cropped).jpg",
+      "auteur": "Bryan Berlin",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Didier_Deschamps_France_v_Senegal_16_June_2026-519_(cropped).jpg"
+    },
+    "robert-pires": {
+      "nom": "Robert Pirès",
+      "fichier": "File:Robert Pirès.jpg",
+      "auteur": "Zack",
+      "licence": "CC BY 4.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Robert_Pir%C3%A8s.jpg"
+    },
+    "edgar-davids": {
+      "nom": "Edgar Davids",
+      "fichier": "File:Edgar Davids.jpg",
+      "auteur": "Paul Blank",
+      "licence": "CC BY 2.5",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Edgar_Davids.jpg"
+    },
+    "zvonimir-boban": {
+      "nom": "Zvonimir Boban",
+      "fichier": "File:Zvonimir Boban in 2018.jpg",
+      "auteur": "Russian Presidential Press and Information Office",
+      "licence": "CC BY 4.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Zvonimir_Boban_in_2018.jpg"
+    },
+    "dejan-savicevic": {
+      "nom": "Dejan Savićević",
+      "fichier": "File:Dejan Savićević.jpg",
+      "auteur": "Christophe95",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Dejan_Savi%C4%87evi%C4%87.jpg"
+    },
+    "jari-litmanen": {
+      "nom": "Jari Litmanen",
+      "fichier": "File:Jari Litmanen 2015.jpg",
+      "auteur": "Soppakanuuna",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Jari_Litmanen_2015.jpg"
+    },
+    "zbigniew-boniek": {
+      "nom": "Zbigniew Boniek",
+      "fichier": "File:Boniek Zbigniew.jpg",
+      "auteur": "Sławek",
+      "licence": "CC BY-SA 2.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Boniek_Zbigniew.jpg"
+    },
+    "raymond-kopa": {
+      "nom": "Raymond Kopa",
+      "fichier": "File:Raymond Kopa, Estadio, 1962-03-01.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Raymond_Kopa,_Estadio,_1962-03-01.jpg"
+    },
+    "johan-neeskens": {
+      "nom": "Johan Neeskens",
+      "fichier": "File:Johan Neeskens 1974.jpg",
+      "auteur": "Mieremet, Rob / Anefo",
+      "licence": "CC BY-SA 3.0 nl",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Johan_Neeskens_1974.jpg"
+    },
+    "gunter-netzer": {
+      "nom": "Günter Netzer",
+      "fichier": "File:Günter Netzer.jpg",
+      "auteur": "Christophe95",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:G%C3%BCnter_Netzer.jpg"
+    },
+    "michael-ballack": {
+      "nom": "Michael Ballack",
+      "fichier": "File:Michael Ballack 2022 BHO-0832.jpg",
+      "auteur": "Bernhard Holub",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Michael_Ballack_2022_BHO-0832.jpg"
+    },
+    "enzo-francescoli": {
+      "nom": "Enzo Francescoli",
+      "fichier": "File:Enzo Francescoli 2011.jpg",
+      "auteur": "Christophe95",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Enzo_Francescoli_2011.jpg"
+    },
+    "carlos-valderrama": {
+      "nom": "Carlos Valderrama",
+      "fichier": "File:Pibe Valderrama 2022.jpg",
+      "auteur": "Maritza Ariza Periodista",
+      "licence": "CC BY 3.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Pibe_Valderrama_2022.jpg"
+    },
+    "fernando-redondo": {
+      "nom": "Fernando Redondo",
+      "fichier": "File:Фернандо Редондо 2019.png",
+      "auteur": "Un Metro Adelantado",
+      "licence": "CC BY 3.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:%D0%A4%D0%B5%D1%80%D0%BD%D0%B0%D0%BD%D0%B4%D0%BE_%D0%A0%D0%B5%D0%B4%D0%BE%D0%BD%D0%B4%D0%BE_2019.png",
+      "aVerifier": true
+    },
+    "gianni-rivera": {
+      "nom": "Gianni Rivera",
+      "fichier": "File:Gianni Rivera - AC Milan (San Siro, January 1971).jpg",
+      "auteur": "Rolls Press / Popperfoto / Getty Images",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Gianni_Rivera_-_AC_Milan_(San_Siro,_January_1971).jpg"
+    },
+    "ruud-van-nistelrooy": {
+      "nom": "Ruud van Nistelrooy",
+      "fichier": "File:Ruud van Nistelrooy 2017.jpg",
+      "auteur": "Ardfern",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Ruud_van_Nistelrooy_2017.jpg"
+    },
+    "hernan-crespo": {
+      "nom": "Hernán Crespo",
+      "fichier": "File:Hernán Crespo.png",
+      "auteur": "Omgosh30",
+      "licence": "CC0",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Hern%C3%A1n_Crespo.png"
+    },
+    "gary-lineker": {
+      "nom": "Gary Lineker",
+      "fichier": "File:Gary Lineker (cropped).jpg",
+      "auteur": "Liton Ali",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Gary_Lineker_(cropped).jpg"
+    },
+    "kevin-keegan": {
+      "nom": "Kevin Keegan",
+      "fichier": "File:Kevin keegan panini card (cropped).jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Kevin_keegan_panini_card_(cropped).jpg"
+    },
+    "ian-rush": {
+      "nom": "Ian Rush",
+      "fichier": "File:Ian Rush in Singapore.jpg",
+      "auteur": "AceKindred",
+      "licence": "CC BY-SA 2.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Ian_Rush_in_Singapore.jpg"
+    },
+    "kenny-dalglish": {
+      "nom": "Kenny Dalglish",
+      "fichier": "File:Kenny Dalglish 2009 Singapore.jpg",
+      "auteur": "Saw from Singapore",
+      "licence": "CC BY-SA 2.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Kenny_Dalglish_2009_Singapore.jpg"
+    },
+    "denis-law": {
+      "nom": "Denis Law",
+      "fichier": "File:Denis Law.jpg",
+      "auteur": "Danny Molyneux",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Denis_Law.jpg"
+    },
+    "jimmy-greaves": {
+      "nom": "Jimmy Greaves",
+      "fichier": "File:Jimmy Greaves (cropped).jpg",
+      "auteur": "Jack de Nijs for Anefo  / Anefo",
+      "licence": "CC BY-SA 3.0 nl",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Jimmy_Greaves_(cropped).jpg"
+    },
+    "garrincha": {
+      "nom": "Garrincha",
+      "fichier": "File:Manoel Francisco dos Santos-Garrincha.jpg",
+      "auteur": "El Gráfico, n° 2233",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Manoel_Francisco_dos_Santos-Garrincha.jpg"
+    },
+    "jairzinho": {
+      "nom": "Jairzinho",
+      "fichier": "File:Jairzinho 1970s.jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Jairzinho_1970s.jpg"
+    },
+    "tostao": {
+      "nom": "Tostão",
+      "fichier": "File:Tostão (Eduardo Gonçalves de Andrade, 1970).jpg",
+      "auteur": "Panini",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Tost%C3%A3o_(Eduardo_Gon%C3%A7alves_de_Andrade,_1970).jpg"
+    },
+    "bebeto": {
+      "nom": "Bebeto",
+      "fichier": "File:Bebeto brazil (cropped).jpg",
+      "auteur": "Sergio Savarese from Sao Paulo City  /  Ipiranga, Brasil",
+      "licence": "CC BY-SA 2.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Bebeto_brazil_(cropped).jpg"
+    },
+    "mario-kempes": {
+      "nom": "Mario Kempes",
+      "fichier": "File:Mario Kempes Argentina v Spain 19 July 2026-036 (cropped).jpg",
+      "auteur": "Bryan Berlin",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Mario_Kempes_Argentina_v_Spain_19_July_2026-036_(cropped).jpg"
+    },
+    "hugo-sanchez": {
+      "nom": "Hugo Sánchez",
+      "fichier": "File:Hugo Sánchez 1988 (cropped).jpg",
+      "auteur": "Rob Bogaerts for Anefo",
+      "licence": "CC BY-SA 3.0 nl",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Hugo_S%C3%A1nchez_1988_(cropped).jpg"
+    },
+    "teofilo-cubillas": {
+      "nom": "Teófilo Cubillas",
+      "fichier": "File:Teofilo cubillas panini card (cropped).jpg",
+      "auteur": "Unknown authorUnknown author",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Teofilo_cubillas_panini_card_(cropped).jpg"
+    },
+    "ivan-zamorano": {
+      "nom": "Iván Zamorano",
+      "fichier": "File:Iván Zamorano.jpg",
+      "auteur": "11-06-2013_Partido_Chile-Bolivia.jpg: tu Foto con el Presidente\nderivative work: Rec79",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Iv%C3%A1n_Zamorano.jpg"
+    },
+    "marcelo-salas": {
+      "nom": "Marcelo Salas",
+      "fichier": "File:Marcelo Salas.jpg",
+      "auteur": "Alechuncho",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Marcelo_Salas.jpg"
+    },
+    "roger-milla": {
+      "nom": "Roger Milla",
+      "fichier": "File:Milla2008cropped.jpg",
+      "auteur": "Jmex60",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Milla2008cropped.jpg"
+    },
+    "rabah-madjer": {
+      "nom": "Rabah Madjer",
+      "fichier": "File:FC Porto (in verband met wedstrijd om Super Cup tegen Ajax) speler Madjer (l) e, Bestanddeelnr 934-1340 (cropped).jpg",
+      "auteur": "Bart Molendijk / Anefo",
+      "licence": "CC0",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:FC_Porto_(in_verband_met_wedstrijd_om_Super_Cup_tegen_Ajax)_speler_Madjer_(l)_e,_Bestanddeelnr_934-1340_(cropped).jpg"
+    },
+    "george-weah": {
+      "nom": "George Weah",
+      "fichier": "File:George Weah in 2019 (cropped) mod-2.jpg",
+      "auteur": "File:George Weah in 2019 (cropped).jpg: U.S. Embassy in Monrovia, Liberia\nderivative work: Boros.i",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:George_Weah_in_2019_(cropped)_mod-2.jpg"
+    },
+    "nwankwo-kanu": {
+      "nom": "Nwankwo Kanu",
+      "fichier": "File:1 nwankwo kanu 2017 (edited).jpg",
+      "auteur": "Original:  Chensiyuan / Derivative work:  Danyele",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:1_nwankwo_kanu_2017_(edited).jpg"
+    },
+    "ali-daei": {
+      "nom": "Ali Daei",
+      "fichier": "File:علی دایی.jpg",
+      "auteur": "Enthekhabat-e Azad",
+      "licence": "CC0",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:%D8%B9%D9%84%DB%8C_%D8%AF%D8%A7%DB%8C%DB%8C.jpg",
+      "aVerifier": true
+    },
+    "jean-pierre-papin": {
+      "nom": "Jean-Pierre Papin",
+      "fichier": "File:PapinJP1997 (cropped).jpg",
+      "auteur": "Leo Medvedev/Лев Леонидович Медведев",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:PapinJP1997_(cropped).jpg"
+    },
+    "eric-cantona": {
+      "nom": "Eric Cantona",
+      "fichier": "File:Eric Cantona Cannes 2009.jpg",
+      "auteur": "Georges Biard",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Eric_Cantona_Cannes_2009.jpg"
+    },
+    "just-fontaine": {
+      "nom": "Just Fontaine",
+      "fichier": "File:Just Fontaine en 1958.jpg",
+      "auteur": "Panini",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Just_Fontaine_en_1958.jpg"
+    },
+    "davor-suker": {
+      "nom": "Davor Šuker",
+      "fichier": "File:Football against poverty 2014 - Davor Šuker (cropped).jpg",
+      "auteur": "Ludovic Péron",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Football_against_poverty_2014_-_Davor_%C5%A0uker_(cropped).jpg"
+    },
+    "oleg-blokhin": {
+      "nom": "Oleg Blokhin",
+      "fichier": "File:Oleg Blokhin2013.jpg",
+      "auteur": "Илья Хохлов",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Oleg_Blokhin2013.jpg"
+    },
+    "henrik-larsson": {
+      "nom": "Henrik Larsson",
+      "fichier": "File:Henrik Larsson 2 (cropped).jpg",
+      "auteur": "Ricardo Alvarez",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Henrik_Larsson_2_(cropped).jpg"
+    },
+    "jurgen-klinsmann": {
+      "nom": "Jürgen Klinsmann",
+      "fichier": "File:Austria vs. USA 2013-11-19 (066) - Jürgen Klinsmann (cropped).jpg",
+      "auteur": "Original:  Steindy\nDerivative work:  Danyele",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Austria_vs._USA_2013-11-19_(066)_-_J%C3%BCrgen_Klinsmann_(cropped).jpg"
+    },
+    "rudi-voller": {
+      "nom": "Rudi Völler",
+      "fichier": "File:Rudi Völler Bühne (cropped).jpg",
+      "auteur": "9EkieraM1",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Rudi_V%C3%B6ller_B%C3%BChne_(cropped).jpg"
+    },
+    "karl-heinz-rummenigge": {
+      "nom": "Karl-Heinz Rummenigge",
+      "fichier": "File:2015-02-06 Rummenigge 0400.JPG",
+      "auteur": "Michael Lucan",
+      "licence": "CC BY-SA 3.0 de",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:2015-02-06_Rummenigge_0400.JPG"
+    },
+    "uwe-seeler": {
+      "nom": "Uwe Seeler",
+      "fichier": "File:Uwe Seeler – Tag der Legenden 2016 03.jpg",
+      "auteur": "Frank Schwichtenberg",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Uwe_Seeler_%E2%80%93_Tag_der_Legenden_2016_03.jpg"
+    },
+    "patrick-kluivert": {
+      "nom": "Patrick Kluivert",
+      "fichier": "File:Patrick Kluivert at Web Summit 2024 (cropped 2).jpg",
+      "auteur": "Web Summit",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Patrick_Kluivert_at_Web_Summit_2024_(cropped_2).jpg"
+    },
+    "paolo-rossi": {
+      "nom": "Paolo Rossi",
+      "fichier": "File:Paolo Rossi Vicenza (cropped).jpg",
+      "auteur": "The original uploader was Snake90 at Italian Wikipedia.",
+      "licence": "Public domain",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Paolo_Rossi_Vicenza_(cropped).jpg"
+    },
+    "gianluca-vialli": {
+      "nom": "Gianluca Vialli",
+      "fichier": "File:Gianluca Vialli.jpg",
+      "auteur": "RISE",
+      "licence": "CC BY 2.0",
+      "type": "CC BY",
+      "page": "https://commons.wikimedia.org/wiki/File:Gianluca_Vialli.jpg"
+    },
+    "filippo-inzaghi": {
+      "nom": "Filippo Inzaghi",
+      "fichier": "File:Filippo Inzaghi 2011.jpg",
+      "auteur": "Delfort",
+      "licence": "CC BY-SA 3.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:Filippo_Inzaghi_2011.jpg"
+    },
+    "emilio-butragueno": {
+      "nom": "Emilio Butragueño",
+      "fichier": "File:25th Laureus World Sports Awards - Red Carpet - Emilio Butragueño - 240422 191751-2 (cropped).jpg",
+      "auteur": "Barcex",
+      "licence": "CC BY-SA 4.0",
+      "type": "CC BY-SA",
+      "page": "https://commons.wikimedia.org/wiki/File:25th_Laureus_World_Sports_Awards_-_Red_Carpet_-_Emilio_Butrague%C3%B1o_-_240422_191751-2_(cropped).jpg"
+    },
+    "francisco-gento": {
+      "nom": "Francisco Gento",
+      "fichier": "File:Gento with Leo Horn , Di Stefano (cropped).jpg",
+      "auteur": "Wim van Rossem for Anefo",
+      "licence": "CC0",
+      "type": "domaine public",
+      "page": "https://commons.wikimedia.org/wiki/File:Gento_with_Leo_Horn_,_Di_Stefano_(cropped).jpg"
     }
   },
-  "majLe": "2026-10-20"
+  "majLe": "2026-10-28"
 }
