@@ -1,0 +1,54 @@
+name: Sonde du proxy (pack)
+
+# Mesure, depuis l'extérieur, si le proxy sert les joueurs hors base statique :
+# appels /pack?id=…&season=2026 pour 40 joueurs hors base + 10 en base. Rapport
+# diagnostics/sonde-proxy-pack.txt.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sonder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sonder
+        run: |
+          node - <<'EOS'
+          const fs = require("node:fs");
+          const B = "https://duelio-proxy.bensouna-ahmed.workers.dev";
+          const c = JSON.parse(fs.readFileSync("diagnostics/sonde-proxy-cibles.json", "utf8"));
+          const attendre = ms => new Promise(r => setTimeout(r, ms));
+          (async () => {
+            const lignes = [];
+            for (const [nom, ids] of [["hors base statique", c.horsBase], ["en base statique", c.enBase]]) {
+              let ok = 0, vide = 0, erreur = 0, http = 0;
+              for (const id of ids) {
+                try {
+                  const t0 = Date.now();
+                  const r = await fetch(`${B}/pack?id=${id}&season=2026`);
+                  const txt = await r.text();
+                  let j = null; try { j = JSON.parse(txt); } catch (e) {}
+                  const ms = Date.now() - t0;
+                  if (!r.ok) { http++; lignes.push(`  ${id} HTTP ${r.status} (${ms} ms) ${txt.slice(0, 120).replace(/\n/g, " ")}`); }
+                  else if (!j || j.erreur || j.errors) { erreur++; lignes.push(`  ${id} erreur (${ms} ms) ${txt.slice(0, 160).replace(/\n/g, " ")}`); }
+                  else if (!j.data || !Object.keys(j.data).length) { vide++; lignes.push(`  ${id} vide (${ms} ms) cache=${r.headers.get("x-duelio-cache")}`); }
+                  else { ok++; lignes.push(`  ${id} ok (${ms} ms) saisons=${Object.keys(j.data).join(",")} cache=${r.headers.get("x-duelio-cache")}`); }
+                } catch (e) { erreur++; lignes.push(`  ${id} exception ${e.message}`); }
+                await attendre(400);
+              }
+              lignes.unshift(`== ${nom} : ${ids.length} joueurs — ok ${ok}, vides ${vide}, erreurs ${erreur}, HTTP non-200 ${http}`);
+            }
+            fs.writeFileSync("diagnostics/sonde-proxy-pack.txt", lignes.join("\n") + "\n");
+            console.log(lignes.join("\n"));
+          })();
+          EOS
+      - name: Publier
+        run: |
+          git config user.name "sonde"; git config user.email "sonde@users.noreply.github.com"
+          git add diagnostics/sonde-proxy-pack.txt; git commit -m "Sonde du proxy (pack)" || echo rien
+          for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 3; done
