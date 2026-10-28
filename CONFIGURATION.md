@@ -141,3 +141,57 @@ L'invitation apparaît après trois duels, jamais à la première ouverture. L'�
 dans « À propos » (bouton ⓘ). Le site web n'envoie rien : tout ceci ne concerne que
 l'application iOS/Android (plugins `@capacitor/push-notifications` et
 `@capacitor-community/fcm`).
+
+---
+
+## 6. Comptes utilisateurs (Firebase Authentication + Firestore)
+
+Mis en place le 28 octobre 2026. Tout passe par Firebase : inscription, e-mails de
+confirmation et de mot de passe oublié, connexion Google et Apple, duels sauvegardés.
+Rien n'est déployé côté Cloudflare. Sans configuration, aucun bouton de compte n'apparaît.
+
+### À faire une fois (même projet Firebase que les notifications)
+
+1. **Authentication → Méthodes de connexion** : activer « E-mail/Mot de passe »,
+   « Google » (choisir une adresse d'assistance) et, quand le compte Apple Developer
+   existe, « Apple » (il faut un Services ID et une clé créés chez Apple, Firebase donne
+   la marche à suivre).
+2. **Authentication → Paramètres → Domaines autorisés** : ajouter le domaine du site
+   (`duelio-app.bensouna-ahmed.workers.dev`, puis le futur domaine). Sans cela, la
+   connexion Google sur le web est refusée.
+3. **Authentication → Modèles** : les e-mails (confirmation, mot de passe oublié) partent
+   d'une adresse `noreply@<projet>.firebaseapp.com`. Un expéditeur personnalisé demande un
+   domaine vérifié ; à faire quand le nom de domaine sera choisi.
+4. **Firestore Database** : créer la base (mode production, région `europe-west1`
+   de préférence), puis coller dans l'onglet Règles :
+   ```
+   rules_version = '2';
+   service cloud.firestore {
+     match /databases/{database}/documents {
+       match /users/{uid}/{document=**} {
+         allow read, write: if request.auth != null && request.auth.uid == uid;
+       }
+     }
+   }
+   ```
+5. **Paramètres du projet → Vos applications → Application Web** (en créer une si
+   besoin) : copier l'objet de configuration (`apiKey`, `authDomain`, `projectId`,
+   `appId`…) dans le fichier `www/firebase-config.json` du dépôt. Cette configuration
+   est publique par conception (la sécurité repose sur les règles ci-dessus). Clés
+   facultatives dans ce fichier : `"apple": true` pour afficher le bouton Apple sur le
+   web, `"google": false` pour cacher Google.
+
+### Dans l'application native
+
+Google et Apple passent par `@capacitor-firebase/authentication` (déjà dans
+`package.json` et `capacitor.config.json`). Android : `google-services.json` suffit (secret
+`GOOGLE_SERVICES_JSON`). iOS : `GoogleService-Info.plist` + la capacité « Sign in with
+Apple » dans Xcode ; à brancher au moment de l'emballage iOS.
+
+### Où sont les données
+
+`users/{uid}` (e-mail, date de création) et `users/{uid}/duels/{id}` (nom, identifiants des
+joueurs, date). Suppression du compte : depuis l'application (« Mon compte » → « Supprimer
+mon compte »), qui efface les duels puis le compte. Comptes inactifs : à purger à la main
+dans la console (Authentication → Utilisateurs, trier par dernière connexion), comme la
+politique de confidentialité le promet (trois ans).
