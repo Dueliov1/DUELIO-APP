@@ -105,3 +105,39 @@ Pour vérifier lequel des deux chemins est utilisé, ouvrir `…workers.dev/diag
 - Resend
 - GitHub
 - La machine qui héberge le relais
+
+
+---
+
+## 5. Notifications push (Firebase Cloud Messaging)
+
+Mis en place le 28 octobre 2026. Rien n'est stocké chez nous : chaque appareil qui active
+les notifications s'abonne au sujet FCM `duelio-tous`, et l'envoi part de GitHub.
+
+### À faire une fois (par le propriétaire du compte)
+
+1. Créer un projet sur https://console.firebase.google.com (gratuit).
+2. **Android** : ajouter une application Android, package `app.duelio`, puis télécharger
+   `google-services.json`. Coller son contenu entier dans le secret GitHub
+   `GOOGLE_SERVICES_JSON` (Settings → Secrets and variables → Actions). Sans ce secret,
+   l'APK se compile sans notifications.
+3. **iOS** : ajouter une application iOS, bundle `app.duelio`, télécharger
+   `GoogleService-Info.plist`. Dans le compte Apple Developer, créer une clé APNs
+   (Certificates, Identifiers & Profiles → Keys → Apple Push Notifications service) et la
+   téléverser dans Firebase (Paramètres du projet → Cloud Messaging → Configuration de
+   l'application Apple). À brancher dans le projet Xcode au moment de l'emballage iOS.
+4. **Envoi** : Paramètres du projet → Comptes de service → « Générer une nouvelle clé
+   privée ». Coller le JSON téléchargé dans le secret GitHub `FCM_SERVICE_ACCOUNT`.
+
+### Envoyer
+
+Onglet Actions → « Envoyer une notification » → Run workflow : titre, message, et
+éventuellement un duel à ouvrir (`278,1100` = Mbappé contre Haaland). Le mode test
+(`oui`) prépare tout sans envoyer.
+
+### Dans l'application
+
+L'invitation apparaît après trois duels, jamais à la première ouverture. L'état se gère
+dans « À propos » (bouton ⓘ). Le site web n'envoie rien : tout ceci ne concerne que
+l'application iOS/Android (plugins `@capacitor/push-notifications` et
+`@capacitor-community/fcm`).

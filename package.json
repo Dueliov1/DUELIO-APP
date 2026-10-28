@@ -9,6 +9,7 @@
     "add:ios": "cap add ios"
   },
   "dependencies": {
+    "@capacitor-community/fcm": "^7.0.0",
     "@capacitor/android": "^7.0.0",
     "@capacitor/core": "^7.0.0",
     "@capacitor/haptics": "^7.0.0",

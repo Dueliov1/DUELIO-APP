@@ -1,0 +1,84 @@
+name: Envoyer une notification
+
+# Envoie une notification push à tous les appareils abonnés (sujet FCM « duelio-tous »).
+# À lancer à la main depuis l'onglet Actions : titre, message, et éventuellement un duel
+# à ouvrir quand on touche la notification (deux identifiants API-Football, ex. 278,1100).
+#
+# Il faut le secret FCM_SERVICE_ACCOUNT : le JSON d'un compte de service du projet
+# Firebase (Paramètres du projet → Comptes de service → Générer une nouvelle clé privée).
+
+on:
+  workflow_dispatch:
+    inputs:
+      titre:
+        description: "Titre (court)"
+        required: true
+      message:
+        description: "Message"
+        required: true
+      duel:
+        description: "Duel à ouvrir au toucher : deux identifiants séparés par une virgule (facultatif)"
+        default: ""
+      sujet:
+        description: "Sujet FCM"
+        default: "duelio-tous"
+      test:
+        description: "Mode test : prépare tout sans envoyer (oui/non)"
+        default: "non"
+
+permissions:
+  contents: read
+
+jobs:
+  envoyer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Envoyer
+        env:
+          FCM_SERVICE_ACCOUNT: ${{ secrets.FCM_SERVICE_ACCOUNT }}
+          TITRE: ${{ inputs.titre }}
+          MESSAGE: ${{ inputs.message }}
+          DUEL: ${{ inputs.duel }}
+          SUJET: ${{ inputs.sujet }}
+          TEST: ${{ inputs.test }}
+        run: |
+          cat > envoi.mjs <<'EOS'
+          import { createSign } from "node:crypto";
+          const sa = process.env.FCM_SERVICE_ACCOUNT;
+          if (!sa) { console.error("Secret FCM_SERVICE_ACCOUNT absent."); process.exit(1); }
+          const compte = JSON.parse(sa);
+          const duel = (process.env.DUEL || "").trim();
+          if (duel && !/^\d+\s*,\s*\d+$/.test(duel)) { console.error("Duel invalide : attendu « 278,1100 »."); process.exit(1); }
+
+          // Jeton d'accès Google (JWT RS256 signé avec la clé du compte de service).
+          const b64 = (o) => Buffer.from(typeof o === "string" ? o : JSON.stringify(o)).toString("base64url");
+          const now = Math.floor(Date.now() / 1000);
+          const entete = b64({ alg: "RS256", typ: "JWT" });
+          const corps = b64({ iss: compte.client_email, scope: "https://www.googleapis.com/auth/firebase.messaging",
+                              aud: "https://oauth2.googleapis.com/token", iat: now, exp: now + 3600 });
+          const signature = createSign("RSA-SHA256").update(`${entete}.${corps}`).sign(compte.private_key, "base64url");
+          const jwt = `${entete}.${corps}.${signature}`;
+          const message = {
+            topic: process.env.SUJET || "duelio-tous",
+            notification: { title: process.env.TITRE, body: process.env.MESSAGE },
+            data: duel ? { duel: duel.replace(/\s/g, "") } : {},
+            android: { priority: "high", notification: { channel_id: "duelio", sound: "default" } },
+            apns: { payload: { aps: { sound: "default" } } },
+          };
+          console.log("Message :", JSON.stringify(message, null, 2));
+          if ((process.env.TEST || "non").toLowerCase() === "oui") { console.log("Mode test : rien n'est envoyé."); process.exit(0); }
+          const tok = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer", assertion: jwt }),
+          }).then((r) => r.json());
+          if (!tok.access_token) { console.error("Jeton Google refusé :", JSON.stringify(tok)); process.exit(1); }
+          const r = await fetch(`https://fcm.googleapis.com/v1/projects/${compte.project_id}/messages:send`, {
+            method: "POST", headers: { authorization: `Bearer ${tok.access_token}`, "content-type": "application/json" },
+            body: JSON.stringify({ message }),
+          });
+          const rep = await r.text();
+          console.log(r.ok ? "Envoyée :" : "Refusée :", rep);
+          if (!r.ok) process.exit(1);
+          EOS
+          node envoi.mjs

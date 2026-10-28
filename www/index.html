@@ -554,6 +554,18 @@
     background:var(--surface); border:1px solid var(--line); color:var(--gold); text-decoration:none; font-weight:700;
   }
   .about-version{ font-size:11px; color:var(--chalk-dim); }
+  .about-notifs{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px 0 4px; padding:10px 14px; border-radius:12px; background:var(--surface); border:1px solid var(--line); }
+  .about-notifs-txt{ display:flex; flex-direction:column; gap:2px; font-size:13px; }
+  .about-notifs-txt span{ color:var(--chalk-dim); font-size:11.5px; }
+  .about-notifs-btn{ min-height:38px; padding:0 14px; border-radius:999px; border:1px solid var(--gold); background:none; color:var(--gold); font:inherit; font-weight:700; cursor:pointer; }
+  .invite-notifs{
+    margin:14px auto 0; max-width:360px; padding:12px 14px; border-radius:14px;
+    background:var(--grad-soft); border:1px solid var(--line); display:flex; flex-direction:column; gap:10px; text-align:center;
+  }
+  .invite-notifs p{ margin:0; font-size:13px; line-height:1.45; }
+  .invite-notifs .btns{ display:flex; gap:8px; justify-content:center; }
+  .invite-notifs button{ min-height:40px; padding:0 16px; border-radius:999px; font:inherit; font-weight:700; cursor:pointer; border:1px solid var(--line); background:var(--surface); color:var(--chalk); }
+  .invite-notifs button.oui{ background:var(--grad-action); color:#04231a; border-color:transparent; }
   .sheet-title{ font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:14px; }
   .sheet-sub{ padding: 0 16px 10px; font-size:11.5px; color:var(--chalk-dim); line-height:1.4; }
   .sheet-sub:empty{ display:none; }
@@ -1543,6 +1555,10 @@
         <p>Duelio compare les footballeurs sur leurs vraies statistiques : 55 000 joueurs et les légendes du jeu, saison par saison ou carrière entière.</p>
         <p><b>Source des données.</b> Statistiques des joueurs en activité : API-Football (API-Sports), remises à jour chaque matin pour la saison en cours. Carrières des légendes : saisies à la main à partir de sources publiques, indiquées sur chaque fiche. Les photos des légendes viennent de Wikimedia Commons sous licences libres, créditées sur leur fiche.</p>
         <p>Duelio n'est affilié à aucune ligue, fédération, club ou joueur. Les chiffres sont fournis à titre informatif et peuvent comporter des erreurs : signalez-les, on corrige.</p>
+        <div class="about-notifs" id="aboutNotifs" hidden>
+          <div class="about-notifs-txt"><b>Notifications</b><span id="aboutNotifsEtat">Désactivées</span></div>
+          <button type="button" class="about-notifs-btn" id="aboutNotifsBtn">Activer</button>
+        </div>
         <div class="about-links">
           <a href="/legal/confidentialite.html" target="_blank" rel="noopener">Politique de confidentialité</a>
           <a href="/legal/conditions.html" target="_blank" rel="noopener">Conditions d'utilisation</a>
@@ -5749,6 +5765,7 @@ function renderAll(){
   const chosen = slots
     .map((id, idx)=>{ const src = id ? PLAYERS.find(p=>p.id===id) : null; return src ? {...src, _idx: idx} : null; });
   const filled = chosen.filter(Boolean);
+  compterDuel(filled);
   const uniquePositions = [...new Set(filled.map(p=>p.pos))];
   const samePos = uniquePositions.length===1 ? uniquePositions[0] : null;
   const activeStats = getActiveStatsList(filled);
@@ -6064,8 +6081,10 @@ function renderAll(){
       ${filled.length<2 ? compareTutorialHtml(filled, isDemo) : ''}
       ${slots.length < MAX_SLOTS && filled.length>=2 ? '<button class="add-slot-btn" id="addSlotCard" type="button">+ Ajouter un joueur</button>' : ''}
       ${filled.length>=2 ? '<button class="reset-btn" id="resetBtn" type="button">Nouveau duel</button>' : ''}
+      ${filled.length>=2 ? invitationNotifsHtml() : ''}
     </div>
   `;
+  wireInvitationNotifs(content);
   content.scrollTop = defilementGarde;
   /* Animation d'arrivée : seulement quand l'utilisateur a changé quelque chose
    * (joueurs, onglet, période, vue). Un redessin dû à un chargement ne la rejoue pas. */
@@ -6600,11 +6619,107 @@ function closeSeasonSheet(changed){
 }
 document.getElementById('seasonSheetClose').addEventListener('click', ()=>closeSeasonSheet(false));
 
+/* ---------------- Notifications (application native seulement) ----------------
+ * Le site web n'envoie rien. Dans l'application iOS/Android, l'utilisateur peut
+ * s'abonner aux « grands duels » : on demande la permission au bon moment (après
+ * quelques duels, jamais à la première ouverture), l'appareil s'inscrit à un sujet
+ * FCM, et aucun identifiant n'est stocké chez nous. L'envoi se fait depuis GitHub
+ * (workflow « Envoyer une notification »). Une notification peut ouvrir un duel :
+ * données { duel: "278,1100" } = deux identifiants API-Football. */
+const NOTIFS_SUJET = 'duelio-tous';
+function notifsPlugins(){
+  const C = window.Capacitor;
+  if(!C || !C.isNativePlatform || !C.isNativePlatform()) return null;
+  const P = C.Plugins || {};
+  return (P.PushNotifications && P.FCM) ? { push: P.PushNotifications, fcm: P.FCM } : null;
+}
+function notifsEtat(){ try{ return localStorage.getItem('duelio_notifs') || 'jamais'; }catch(e){ return 'jamais'; } }
+function notifsNoter(v){ try{ localStorage.setItem('duelio_notifs', v); }catch(e){} }
+async function activerNotifications(){
+  const pl = notifsPlugins(); if(!pl) return false;
+  try{
+    let perm = await pl.push.checkPermissions();
+    if(perm.receive !== 'granted') perm = await pl.push.requestPermissions();
+    if(perm.receive !== 'granted'){ notifsNoter('refuse'); return false; }
+    // Android : un canal nommé, sinon les notifications de FCM sont muettes sur Android 8+. Sans effet sur iOS.
+    try{ await pl.push.createChannel({ id: 'duelio', name: 'Duelio', description: 'Les grands duels de la semaine', importance: 4, visibility: 1 }); }catch(e){}
+    await pl.push.register();
+    await pl.fcm.subscribeTo({ topic: NOTIFS_SUJET });
+    notifsNoter('on');
+    return true;
+  }catch(e){ console.warn('notifications :', e && e.message); return false; }
+}
+async function desactiverNotifications(){
+  const pl = notifsPlugins(); if(!pl) return;
+  try{ await pl.fcm.unsubscribeFrom({ topic: NOTIFS_SUJET }); }catch(e){}
+  try{ await pl.push.unregister(); }catch(e){}
+  notifsNoter('off');
+}
+// Un duel vu = les deux joueurs choisis ; au troisième, on propose les notifications.
+var _dernierDuelCompte = '';
+function compterDuel(filled){
+  if(filled.length < 2) return;
+  const cle = filled.map(p => p.id).sort().join(',');
+  if(cle === _dernierDuelCompte) return;
+  _dernierDuelCompte = cle;
+  try{ localStorage.setItem('duelio_duels_vus', String((parseInt(localStorage.getItem('duelio_duels_vus') || '0', 10) || 0) + 1)); }catch(e){}
+}
+function invitationNotifsHtml(){
+  if(!notifsPlugins() || notifsEtat() !== 'jamais') return '';
+  let vus = 0; try{ vus = parseInt(localStorage.getItem('duelio_duels_vus') || '0', 10) || 0; }catch(e){}
+  if(vus < 3) return '';
+  return `<div class="invite-notifs" id="inviteNotifs">
+      <p><b>Les grands duels de la semaine, directement sur ton téléphone ?</b><br>Une notification de temps en temps, jamais de publicité. Tu peux arrêter quand tu veux.</p>
+      <div class="btns"><button type="button" class="oui" data-notifs="oui">Activer</button><button type="button" data-notifs="non">Non merci</button></div>
+    </div>`;
+}
+function wireInvitationNotifs(root){
+  const box = root.querySelector('#inviteNotifs'); if(!box) return;
+  box.querySelectorAll('[data-notifs]').forEach(b => b.addEventListener('click', async ()=>{
+    if(b.dataset.notifs === 'oui'){
+      b.disabled = true; b.textContent = 'Activation…';
+      const ok = await activerNotifications();
+      box.innerHTML = `<p>${ok ? 'C\'est fait : tu recevras les grands duels.' : 'Pas de notification pour le moment. Tu peux réessayer depuis « À propos ».'}</p>`;
+      setTimeout(()=>{ if(box.isConnected) box.remove(); }, 2500);
+    } else { notifsNoter('off'); box.remove(); }
+  }));
+}
+function majAboutNotifs(){
+  const bloc = document.getElementById('aboutNotifs'); if(!bloc) return;
+  const pl = notifsPlugins();
+  bloc.hidden = !pl;
+  if(!pl) return;
+  const on = notifsEtat() === 'on';
+  document.getElementById('aboutNotifsEtat').textContent = on ? 'Activées : les grands duels de la semaine' : 'Désactivées';
+  document.getElementById('aboutNotifsBtn').textContent = on ? 'Désactiver' : 'Activer';
+}
+document.getElementById('aboutNotifsBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('aboutNotifsBtn'); btn.disabled = true;
+  if(notifsEtat() === 'on') await desactiverNotifications(); else await activerNotifications();
+  btn.disabled = false; majAboutNotifs();
+});
+// Ouverture d'un duel depuis une notification touchée.
+(function brancherNotifications(){
+  const pl = notifsPlugins(); if(!pl) return;
+  try{
+    pl.push.addListener('pushNotificationActionPerformed', (ev)=>{
+      const data = (ev && ev.notification && ev.notification.data) || {};
+      const m = String(data.duel || '').match(/^(\d+)\s*,\s*(\d+)$/);
+      if(!m) return;
+      const cote = id => ({ id: Number(id), q: '', first: '', label: 'Joueur' });
+      loadSuggestedDuel({ a: cote(m[1]), b: cote(m[2]) }, ()=>{});
+    });
+    // Un appareil déjà abonné se ré-enregistre à chaque lancement (le jeton peut changer).
+    if(notifsEtat() === 'on') pl.push.register().catch(()=>{});
+  }catch(e){}
+})();
+
 /* ---------------- À propos ---------------- */
 function openAboutSheet(){
   const el = document.getElementById('aboutSheet');
   if(el.hidden) navOverlayOpened('aboutSheet');
   el.hidden = false;
+  majAboutNotifs();
 }
 function closeAboutSheet(){
   const el = document.getElementById('aboutSheet');

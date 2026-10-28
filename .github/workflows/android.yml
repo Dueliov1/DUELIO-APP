@@ -30,6 +30,26 @@ jobs:
           npx cap add android
           npx cap sync android
 
+      # Notifications (Firebase Cloud Messaging). Le fichier google-services.json
+      # vient du projet Firebase (Paramètres du projet → Vos applications → Android,
+      # package app.duelio) et est stocké dans le secret GOOGLE_SERVICES_JSON.
+      # Sans ce secret, l'application se compile quand même, sans notifications.
+      - name: Brancher Firebase (notifications)
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then
+            echo "Secret GOOGLE_SERVICES_JSON absent : APK sans notifications."
+            exit 0
+          fi
+          printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          # Le plugin Gradle de Google Services, une seule fois chacun.
+          grep -q "com.google.gms:google-services" android/build.gradle || \
+            sed -i "s/dependencies {/dependencies {\n        classpath 'com.google.gms:google-services:4.4.2'/" android/build.gradle
+          grep -q "com.google.gms.google-services" android/app/build.gradle || \
+            printf "\napply plugin: 'com.google.gms.google-services'\n" >> android/app/build.gradle
+          echo "Firebase branché."
+
       # Capacitor recopie tout www/ dans l'APK, base de données comprise :
       # 417 Mo de JSON qui ne seraient jamais lus, puisque l'application
       # appelle ses données par leur adresse complète sur Cloudflare. On les
