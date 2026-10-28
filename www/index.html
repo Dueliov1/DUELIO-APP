@@ -1460,7 +1460,7 @@
         <div class="welcome-subtitle">Qui est le meilleur&nbsp;?</div>
         <p class="welcome-tagline">Comparez vos joueurs favoris, statistique par statistique, en quelques secondes.</p>
         <button class="welcome-cta" type="button">Comparer</button>
-        <div class="welcome-foot">55 000 joueurs et 40 légendes, de Pelé à Mbappé</div>
+        <div class="welcome-foot">55 000 joueurs et 140 légendes, de Yashin à Mbappé</div>
       </div>
     </div>
     <div class="welcome-half welcome-bottom">
@@ -1477,7 +1477,7 @@
         <div class="welcome-subtitle">Qui est le meilleur&nbsp;?</div>
         <p class="welcome-tagline">Comparez vos joueurs favoris, statistique par statistique, en quelques secondes.</p>
         <button class="welcome-cta" type="button">Comparer</button>
-        <div class="welcome-foot">55 000 joueurs et 40 légendes, de Pelé à Mbappé</div>
+        <div class="welcome-foot">55 000 joueurs et 140 légendes, de Yashin à Mbappé</div>
       </div>
     </div>
   </div>
@@ -5472,6 +5472,8 @@ const COMPETITIONS_FR = [
   [/^ukrainian super cup$/i, "Supercoupe d'Ukraine"],
   [/^uzbekistan super league$/i, "Championnat d'Ouzbékistan"],
   [/^uzbekistan cup$/i, "Coupe d'Ouzbékistan"],
+  [/^german championship$/i, "Championnat d'Allemagne"],
+  [/^primera division (nacional|apertura|clausura|metropolitano)$/i, 'Championnat $1'],
 ];
 function nomCompetitionFr(nom, pays){
   const brut = String(nom || '');
