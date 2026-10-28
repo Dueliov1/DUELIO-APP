@@ -1,0 +1,52 @@
+== en base statique : 10 joueurs — ok 0, vides 0, erreurs 0, HTTP non-200 10
+== hors base statique : 40 joueurs — ok 16, vides 0, erreurs 0, HTTP non-200 24
+  222752 ok (2720 ms) saisons=2016 cache=null
+  208984 HTTP 429 (67 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  125195 HTTP 429 (122 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  396363 HTTP 429 (33 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  437929 HTTP 429 (85 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  17922 HTTP 502 (1818 ms) {"id":17922,"seasons":[],"data":{},"erreur":{"rateLimit":"Too many requests. You have exceeded the limit of requests per
+  529859 HTTP 429 (85 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  201373 HTTP 429 (65 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  116837 HTTP 429 (43 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  83071 HTTP 429 (63 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  277305 ok (2055 ms) saisons=2025 cache=null
+  324835 ok (1359 ms) saisons=2025 cache=null
+  568269 ok (1708 ms) saisons=2026 cache=null
+  82074 HTTP 429 (63 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  414393 HTTP 429 (27 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  380643 HTTP 429 (63 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  15322 HTTP 429 (35 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  196138 ok (3346 ms) saisons=2023 cache=null
+  107599 HTTP 429 (56 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  47848 HTTP 429 (32 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  15315 HTTP 429 (30 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  336599 HTTP 429 (29 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  457593 HTTP 429 (39 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  342117 ok (2855 ms) saisons=2024 cache=null
+  43020 ok (544 ms) saisons=2022 cache=null
+  185179 ok (511 ms) saisons=2020 cache=null
+  264329 ok (1677 ms) saisons=2026 cache=null
+  63552 ok (384 ms) saisons=2024 cache=null
+  77792 ok (1672 ms) saisons=2026 cache=null
+  128417 ok (2827 ms) saisons=2024 cache=null
+  30018 ok (2167 ms) saisons=2020 cache=null
+  69269 ok (400 ms) saisons=2026 cache=null
+  8986 ok (1340 ms) saisons=2026 cache=null
+  275353 HTTP 429 (29 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  94258 HTTP 429 (33 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  208913 HTTP 429 (29 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  17899 HTTP 429 (34 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  282276 HTTP 429 (35 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  77623 ok (794 ms) saisons=2026 cache=null
+  66815 HTTP 502 (1181 ms) {"id":66815,"seasons":[],"data":{},"erreur":{"rateLimit":"Too many requests. You have exceeded the limit of requests per
+  41401 HTTP 429 (38 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  9535 HTTP 429 (37 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  11074 HTTP 429 (80 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  72048 HTTP 429 (32 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  36312 HTTP 502 (1933 ms) {"id":36312,"seasons":[],"data":{},"erreur":{"rateLimit":"Too many requests. You have exceeded the limit of requests per
+  180927 HTTP 429 (65 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  56473 HTTP 429 (32 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  327831 HTTP 429 (36 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  18971 HTTP 429 (29 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
+  31482 HTTP 429 (33 ms) {"errors":{"rateLimit":"Trop de demandes en cours. Réessayez dans quelques secondes."},"results":0,"response":[]}
