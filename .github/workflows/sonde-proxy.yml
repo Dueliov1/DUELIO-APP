@@ -5,6 +5,10 @@ name: Sonde du proxy
 
 on:
   workflow_dispatch:
+    inputs:
+      email_test:
+        description: "Adresse à laquelle tenter une inscription (vide = ne pas tester l'envoi d'e-mail)"
+        default: ""
 
 permissions:
   contents: write
@@ -16,6 +20,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Sonder
+        env:
+          EMAIL_TEST: ${{ inputs.email_test }}
         run: |
           B=https://duelio-proxy.bensouna-ahmed.workers.dev
           {
@@ -26,6 +32,10 @@ jobs:
             curl -sS -m 20 -o /tmp/login.txt -w "HTTP %{http_code}\n" -X POST -H 'content-type: application/json' -d '{}' "$B/auth/login"; head -c 400 /tmp/login.txt; echo
             echo "== POST /auth/register e-mail invalide (dit si la route existe) =="
             curl -sS -m 20 -o /tmp/reg.txt -w "HTTP %{http_code}\n" -X POST -H 'content-type: application/json' -d '{"email":"x","password":"y"}' "$B/auth/register"; head -c 400 /tmp/reg.txt; echo
+            if [ -n "$EMAIL_TEST" ]; then
+              echo "== POST /auth/register $EMAIL_TEST (dit si l'envoi d'e-mail fonctionne) =="
+              curl -sS -m 25 -o /tmp/reg2.txt -w "HTTP %{http_code}\n" -X POST -H 'content-type: application/json' -d "{\"email\":\"$EMAIL_TEST\",\"password\":\"SondeDuelio2026!\"}" "$B/auth/register"; head -c 600 /tmp/reg2.txt; echo
+            fi
             echo "== GET /favorites sans session =="
             curl -sS -m 20 -o /tmp/fav.txt -w "HTTP %{http_code}\n" "$B/favorites"; head -c 400 /tmp/fav.txt; echo
           } > diagnostics/sonde-proxy.txt 2>&1
