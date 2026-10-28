@@ -179,6 +179,38 @@ jobs:
             };
           }
 
+          // --- Repli : recherche de fichiers sur Commons ------------------------
+          // Quand Wikidata n'a pas d'image, ou que son image n'est pas libre, on
+          // cherche parmi les fichiers de Commons dont le nom contient celui du
+          // joueur, et on prend le premier dont la licence est libre. Le choix est
+          // marqué « à vérifier » : un homonyme reste possible, un œil humain tranche.
+          async function chercherParRecherche(nom, exclure) {
+            const sansAccents = (s) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+            const morceaux = sansAccents(nom).split(/\s+/).filter((x) => x.length > 3);
+            const rech = await api("commons.wikimedia.org", {
+              action: "query", list: "search", srnamespace: "6", srlimit: "25",
+              srsearch: `"${nom}" filetype:bitmap`,
+            });
+            for (const r of rech.query?.search || []) {
+              const fichier = r.title;
+              if (fichier === exclure) continue;
+              const nf = sansAccents(fichier);
+              if (!morceaux.every((x) => nf.includes(x))) continue;   // les deux mots du nom
+              if (/stadium|stade|estadio|logo|signature|autograph|trophy|statue|plaque|grave|tomb/i.test(nf)) continue;
+              const inf = await api("commons.wikimedia.org", {
+                action: "query", titles: fichier, prop: "imageinfo",
+                iiprop: "extmetadata|url|size", iiurlwidth: "600",
+              });
+              const ii = (inf.query?.pages || [])[0]?.imageinfo?.[0];
+              if (!ii || (ii.width || 0) < 200) continue;
+              const lic = licenceLibre(ii.extmetadata || {});
+              if (!lic.ok) continue;
+              return { fichier, meta: ii.extmetadata || {}, miniature: ii.thumburl || ii.url,
+                       page: ii.descriptionurl, footballeur: false, aVerifier: true, parRecherche: true };
+            }
+            return null;
+          }
+
           // --- Déroulé -----------------------------------------------------------
           const doc = JSON.parse(readFileSync("www/data/legendes.json", "utf8"));
           mkdirSync(DOSSIER, { recursive: true });
@@ -194,18 +226,30 @@ jobs:
             const sortie = `${DOSSIER}/${l.id}.jpg`;
             if (existsSync(sortie) && !REFAIRE) { sautes++; continue; }
             try {
-              const p = await chercherPhoto(l.n);
-              if (!p) {
-                absents++; journal.push(`${l.n} : aucune image trouvée`);
-                console.log(`  —  ${l.n} : aucune image`);
-                continue;
+              // Une photo choisie à la main dans legendes.json (champ photo = "File:…")
+              // passe avant tout le reste ; elle reste soumise au contrôle de licence.
+              let p = null;
+              if (l.photo) {
+                const inf = await api("commons.wikimedia.org", {
+                  action: "query", titles: l.photo, prop: "imageinfo",
+                  iiprop: "extmetadata|url|size", iiurlwidth: "600",
+                });
+                const ii = (inf.query?.pages || [])[0]?.imageinfo?.[0];
+                if (ii) p = { fichier: l.photo, meta: ii.extmetadata || {}, miniature: ii.thumburl || ii.url,
+                              page: ii.descriptionurl, footballeur: true, aVerifier: false };
               }
-              const lic = licenceLibre(p.meta);
-              if (!lic.ok) {
-                refuses++;
-                journal.push(`${l.n} : REFUSÉE (${lic.pourquoi})`);
-                console.log(`  ✗  ${l.n} : refusée — ${lic.pourquoi}`);
-                continue;
+              if (!p) p = await chercherPhoto(l.n);
+              let lic = p ? licenceLibre(p.meta) : null;
+              if (!p || !lic.ok) {
+                const motif = !p ? "aucune image via Wikidata" : `Wikidata refusée (${lic.pourquoi})`;
+                const r = await chercherParRecherche(l.n, p && p.fichier);
+                if (!r) {
+                  if (!p) { absents++; journal.push(`${l.n} : aucune image trouvée`); console.log(`  —  ${l.n} : aucune image`); }
+                  else { refuses++; journal.push(`${l.n} : REFUSÉE (${lic.pourquoi})`); console.log(`  ✗  ${l.n} : refusée — ${lic.pourquoi}`); }
+                  continue;
+                }
+                console.log(`  ~  ${l.n} : ${motif} → trouvée par recherche : ${r.fichier}`);
+                p = r; lic = licenceLibre(p.meta);
               }
 
               const img = await fetch(p.miniature, { headers: { "User-Agent": AGENT } });
@@ -234,6 +278,7 @@ jobs:
                 page: p.page,
                 ...(p.aVerifier ? { aVerifier: true } : {}),
                 ...(p.footballeur ? {} : { metierNonConfirme: true }),
+                ...(p.parRecherche ? { parRecherche: true } : {}),
               };
               pris++;
               console.log(`  ✓  ${l.n} : ${lic.type}`
