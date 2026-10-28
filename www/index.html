@@ -3457,7 +3457,10 @@ function currentSeasonYear(){ const d = new Date(); return d.getMonth() >= 6 ? d
  * Une saison terminée ne change plus jamais : elle est gardée 30 jours sur l'appareil.
  * La saison en cours est gardée 6 h. Chaque saison = 1 appel API, jamais refait inutilement.
  */
-const SEASON_CACHE_PREFIX = 'duelio_season_v1:';
+// v2 depuis le 28 octobre 2026 : les tournois d'été ont changé de saison (Coupe du monde 2026
+// en 2025-26) ; un cache v1 plus « riche » aurait bloqué la correction. Les clés v1 sont purgées.
+const SEASON_CACHE_PREFIX = 'duelio_season_v2:';
+try{ Object.keys(localStorage).filter(k => k.startsWith('duelio_season_v1:')).forEach(k => localStorage.removeItem(k)); }catch(e){}
 function seasonCacheTtl(season){ return season < currentSeasonYear() ? 30*24*3600*1000 : 6*3600*1000; }
 function readSeasonCache(apiId, season){
   try{
@@ -3748,6 +3751,41 @@ function ramenerSaisonsFutures(saisons){
   return sortie;
 }
 
+/* Les tournois d'été portent eux aussi l'année civile : la Coupe du monde 2026
+ * (juin-juillet 2026) arrive sous « 2026 », c'est-à-dire la saison 2026-27, alors
+ * qu'elle clôt la saison 2025-26. Pour le joueur, elle appartient à la saison qui
+ * vient de finir : on la recale d'un an en arrière. Les exceptions sont connues et
+ * finies : Euro 2020 et JO 2020 joués en 2021 (donc bien en 2020-21), Coupe du
+ * monde 2022 jouée en novembre (donc en 2022-23), CAN à cheval sur l'hiver depuis
+ * 2021, Coupe d'Asie depuis 2023, Mondial des clubs joué en décembre avant 2025.
+ * Les qualifications, étalées sur deux saisons, ne bougent pas. */
+const TOURNOIS_D_ETE = [
+  [/^(fifa )?world cup$/i,               a => a !== 2022],
+  [/^euro championship$/i,               a => a !== 2020],
+  [/^copa america$/i,                    () => true],
+  [/^olympics( men)?$/i,                 a => a !== 2020],
+  [/^(concacaf )?gold cup$/i,            () => true],
+  [/^confederations cup$/i,              () => true],
+  [/^fifa club world cup$/i,             a => a >= 2025],
+  [/^africa cup of nations$/i,           a => a <= 2019],
+  [/^asian cup$/i,                       a => a <= 2019],
+];
+function recalerTournoisDEte(saisons){
+  const sortie = {};
+  for(const cle of Object.keys(saisons)) sortie[cle] = [];
+  for(const cle of Object.keys(saisons)){
+    const a = Number(cle);
+    for(const bloc of (saisons[cle] || [])){
+      const nom = (bloc.league || {}).name || '';
+      const regle = TOURNOIS_D_ETE.find(([re]) => re.test(nom));
+      const cible = (regle && regle[1](a)) ? String(a - 1) : cle;
+      (sortie[cible] = sortie[cible] || []).push(bloc);
+    }
+  }
+  for(const cle of Object.keys(sortie)) if(!sortie[cle].length) delete sortie[cle];
+  return sortie;
+}
+
 function scorePlausibilite(nomLigue, matchs){
   const n = normalizeSearch(nomLigue || '');
   let s = 0;
@@ -3888,7 +3926,7 @@ async function packStatique(apiId){
    *
    * Une saison, pour un joueur, c'est l'année où il a joué. Ces blocs sont donc
    * reversés dans la saison en cours : c'est là qu'il est entré sur le terrain. */
-  const saisons = ramenerSaisonsFutures(nettoyerCarriere(fiche.s));
+  const saisons = ramenerSaisonsFutures(recalerTournoisDEte(nettoyerCarriere(fiche.s)));
 
   /* Année de naissance déduite de l'âge — et c'est plus subtil qu'il n'y paraît.
    * L'âge que porte la fiche n'est PAS l'âge d'aujourd'hui : c'est celui du
