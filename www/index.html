@@ -2256,9 +2256,15 @@ const RADAR_AXES = [
   {key:'gardien', label:'Gardien'}
 ];
 
+// L'axe « Gardien » n'a de sens que si un gardien est dans le duel : sans lui, c'est
+// une pointe morte à 40 sur tous les joueurs, et un hexagone de moins lisible.
+function axesRadarPour(players){
+  return (players || []).some(p => p && p.pos === 'GK') ? RADAR_AXES : RADAR_AXES.filter(a => a.key !== 'gardien');
+}
 function radarChartSVG(players, colors, animKey){
   const size = 270, cx = size/2, cy = size/2 - 6, maxR = 74;
-  const n = RADAR_AXES.length;
+  const AXES = axesRadarPour(players);
+  const n = AXES.length;
   const angleFor = i => (Math.PI*2*i/n) - Math.PI/2;
   const pt = (i, val) => {
     const r = (val/99) * maxR;
@@ -2268,12 +2274,12 @@ function radarChartSVG(players, colors, animKey){
 
   // grille (anneaux concentriques)
   const rings = [0.25,0.5,0.75,1].map(f=>{
-    const pts = RADAR_AXES.map((_,i)=> pt(i,99*f).join(',')).join(' ');
+    const pts = AXES.map((_,i)=> pt(i,99*f).join(',')).join(' ');
     return `<polygon points="${pts}" fill="none" stroke="var(--line)" stroke-width="1" opacity="0.6"/>`;
   }).join('');
 
   // axes + labels
-  const axesLines = RADAR_AXES.map((ax,i)=>{
+  const axesLines = AXES.map((ax,i)=>{
     const [x,y] = pt(i,99);
     const [lx,ly] = pt(i,112);
     return `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="var(--line)" stroke-width="1" opacity="0.6"/>
@@ -2282,7 +2288,7 @@ function radarChartSVG(players, colors, animKey){
 
   // polygones joueurs. Avec une clé d'animation, ils partent de 0 (ou de ce qui est déjà affiché)
   // et grandissent jusqu'à leur valeur quand le graphique arrive à l'écran (voir wireRadars).
-  const target = players.map(p=>RADAR_AXES.map(ax=>Math.max(0, Math.min(99, Number(p.radar && p.radar[ax.key]) || 0))));
+  const target = players.map(p=>AXES.map(ax=>Math.max(0, Math.min(99, Number(p.radar && p.radar[ax.key]) || 0))));
   let start = target;
   if(animKey && radarCanAnimate()){
     const st = radarState[animKey] || (radarState[animKey] = { visible:false, cur:null });
@@ -2307,9 +2313,10 @@ function radarCanAnimate(){
 function setRadarVals(st, vals){
   st.cur = vals.map(v=>v.slice());
   const el = st.el; if(!el) return;
-  const cx = +el.dataset.cx, cy = +el.dataset.cy, maxR = +el.dataset.maxr, n = RADAR_AXES.length;
+  const cx = +el.dataset.cx, cy = +el.dataset.cy, maxR = +el.dataset.maxr;
   el.querySelectorAll('.radar-poly').forEach((poly,pi)=>{
     const v = vals[pi]; if(!v) return;
+    const n = v.length;
     poly.setAttribute('points', v.map((val,i)=>{
       const a = (Math.PI*2*i/n) - Math.PI/2, r = (val/99)*maxR;
       return (cx + r*Math.cos(a)).toFixed(2)+','+(cy + r*Math.sin(a)).toFixed(2);
@@ -2321,7 +2328,7 @@ function animateRadar(st, from, to){
   const fromN = to.map((v,pi)=> (from && from[pi] && from[pi].length===v.length) ? from[pi] : v.map(()=>0));
   if(fromN.every((v,pi)=>v.every((x,j)=>Math.abs(x-to[pi][j])<0.01))){ setRadarVals(st, to); return; }
   const D = 850, STAGGER = 140, AXIS_LAG = 45; // chaque joueur un peu après l'autre, chaque axe un peu après le précédent
-  const total = D + STAGGER*(to.length-1) + AXIS_LAG*(RADAR_AXES.length-1);
+  const total = D + STAGGER*(to.length-1) + AXIS_LAG*(((to[0] || []).length || 1)-1);
   const t0 = performance.now();
   const step = now=>{
     const el = now - t0;
@@ -3424,12 +3431,19 @@ function extractSeasonStats(entry, noSplit){
   const overallRaw = Math.round(rating*10);
   const overall = Math.max(45, Math.min(94, overallRaw || 60));
 
-  const radarAttaque = Math.max(12, Math.min(99, Math.round(buts*1.8 + shotsOnTarget*0.55 + precisionTirs*0.25)));
-  const radarPasse = Math.max(15, Math.min(99, Math.round(passesReussies*0.65 + passesDec*1.4 + keyPasses*0.4)));
-  const radarDribble = Math.max(12, Math.min(99, Math.round(dribblesAttempts*0.35 + dribblesRate*9)));
-  const radarDefense = Math.max(12, Math.min(99, Math.round(tacles*9 + interceptions*9 + clearances*0.3 + duelsWon*0.12)));
-  const radarPhysique = Math.max(25, Math.min(99, Math.round(duelsAeriens*8 + foulsCommitted*0.35 + 40)));
-  const radarGardien = Math.max(40, Math.min(99, Math.round(saves*0.35 + (100-goalsConceded)*0.3)));
+  /* Profil d'attributs : des RYTHMES par match et des pourcentages, jamais des volumes.
+   * Avec des totaux, une carrière entière saturait tous les axes à 99 et deux joueurs
+   * quelconques affichaient le même hexagone (Bellingham = Mbappé). Par match, une
+   * saison, un cumul et une carrière se lisent sur la même échelle, et un défenseur
+   * ne devient pas « attaquant 99 » parce qu'il a joué longtemps. */
+  const pm = v => appearances > 0 ? (v || 0) / appearances : 0;
+  const borne = (lo, v) => Math.max(lo, Math.min(99, Math.round(v)));
+  const radarAttaque  = borne(12, pm(buts)*55 + pm(shotsOnTarget)*12 + precisionTirs*0.25);
+  const radarPasse    = borne(15, passesReussies*0.5 + pm(passesDec)*50 + pm(keyPasses)*15);
+  const radarDribble  = borne(12, dribblesRate*22 + pm(dribblesAttempts)*6);
+  const radarDefense  = borne(12, tacles*14 + interceptions*14 + pm(clearances)*5 + pm(duelsWon)*4);
+  const radarPhysique = borne(25, pm(duelsWon)*8 + pm(foulsCommitted)*6 + 30);
+  const radarGardien  = (saves || goalsConceded) ? borne(40, pm(saves)*14 + (1.6 - pm(goalsConceded))*25 + 30) : 40;
 
   return {
     overall, buts, passesDec, touches: passesTotal>0 && appearances>0 ? Math.round(passesTotal/appearances) : 0,
