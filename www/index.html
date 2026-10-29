@@ -599,6 +599,7 @@
   }
   .save-duel-btn svg{ width:16px; height:16px; }
   .save-duel-btn.ok{ color:var(--win); border-color:rgba(47,232,138,.5); }
+  .about-notifs[hidden]{ display:none; }
   .about-notifs{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:14px 0 4px; padding:10px 14px; border-radius:12px; background:var(--surface); border:1px solid var(--line); }
   .about-notifs-txt{ display:flex; flex-direction:column; gap:2px; font-size:13px; }
   .about-notifs-txt span{ color:var(--chalk-dim); font-size:11.5px; }
@@ -1409,6 +1410,21 @@
   .tabbar-btn.active svg{ transform: translateY(-1px); }
   .reset-btn:active, .add-slot-btn:active, .period-btn:active, .tab-btn:active, .icon-btn:active, .scope-link:active{ transform: scale(.97); }
   .col-head:not(.empty):active{ transform: scale(.985); }
+  .share-chip:active, .account-btn:active, .season-row:active, .picker-item:active, .welcome-cta:active, .duel-chip:active,
+  .save-duel-btn:active, .share-generate-btn:active, .share-format-btn:active, .about-links a:active, .duel-saved .nom:active{ transform: scale(.97); }
+  .share-chip, .account-btn, .season-row, .picker-item, .welcome-cta, .duel-chip, .save-duel-btn, .share-generate-btn, .share-format-btn, .about-links a{ transition: transform .12s ease; }
+  /* Le duel sauvegardé : le signet se remplit d'un coup, pas de doute sur ce qui s'est passé. */
+  @keyframes signet{ 0%{ transform:scale(1); } 40%{ transform:scale(1.25) rotate(-6deg); } 100%{ transform:scale(1); } }
+  .save-duel-btn.ok svg{ fill: currentColor; animation: signet .45s cubic-bezier(.3,1.2,.4,1) both; }
+  /* Barre d'onglets : le trait actif glisse d'un onglet à l'autre. */
+  .tabbar{ position:relative; }
+  .tabbar::before{
+    content:''; position:absolute; top:-1px; left:0; height:2px; width:calc(100% / 3); background:var(--gold);
+    transform: translateX(calc(var(--tab, 0) * 100%)); transition: transform .26s cubic-bezier(.3,.9,.3,1); pointer-events:none;
+  }
+  .tabbar-btn.active{ border-top-color: transparent; }
+  /* Sélecteurs à pilule : la pilule glisse (FLIP, voir glisserPilules) au lieu de sauter. */
+  .tab-btn.active, .period-btn.active{ will-change: transform; }
 
   /* ---------- Animations discrètes, suite ---------- */
   @keyframes vsIn{
@@ -4826,7 +4842,11 @@ function searchScore(nameWords, allWords, sNorm, qw, nq){
   if(qw.every(x => nameWords.some(w => w.startsWith(x)))){
     // Un mot tapé EN ENTIER vaut mieux qu'une simple amorce : « messi » doit remonter
     // L. Messi avant Messias, dont le nom ne fait que commencer par ces lettres.
-    return qw.every(x => nameWords.some(w => w === x)) ? 110 : 100;
+    if(qw.every(x => nameWords.some(w => w === x))){
+      // Le nom entier, sans un mot de plus : « Pelé » cherche Pelé, pas Abedi Pelé.
+      return nameWords.length === qw.length ? 120 : 110;
+    }
+    return 100;
   }
   if(qw.every(x => allWords.some(w => w.startsWith(x)))) return 90;
   if(sNorm.includes(nq)) return 50;
@@ -5859,8 +5879,40 @@ function compterJusqua(racine){
   requestAnimationFrame(pas);
 }
 
+/* Les sélecteurs à pilule (Stats/Trophées, Saison/Même âge/Carrière) sont redessinés
+ * entiers à chaque rendu : la pilule active sautait d'un bouton à l'autre. On relève
+ * sa position avant le rendu, et après, on la fait glisser depuis l'ancienne place
+ * (technique FLIP : seulement un transform, rien qui force la mise en page). */
+const _pilulesAvant = new Map();
+function relevePilules(root){
+  _pilulesAvant.clear();
+  root.querySelectorAll('.tab-switch .tab-btn.active, .period-seg .period-btn.active').forEach(el => {
+    const grp = el.closest('.tab-switch') ? 'tab' : 'period';
+    _pilulesAvant.set(grp, el.getBoundingClientRect());
+  });
+}
+function glisserPilules(root){
+  if(!_pilulesAvant.size) return;
+  root.querySelectorAll('.tab-switch .tab-btn.active, .period-seg .period-btn.active').forEach(el => {
+    const grp = el.closest('.tab-switch') ? 'tab' : 'period';
+    const avant = _pilulesAvant.get(grp); if(!avant) return;
+    const apres = el.getBoundingClientRect();
+    const dx = avant.left - apres.left, dw = avant.width / Math.max(1, apres.width);
+    if(Math.abs(dx) < 1 && Math.abs(dw - 1) < .01) return;
+    el.style.transition = 'none';
+    el.style.transformOrigin = 'left center';
+    el.style.transform = `translateX(${dx}px) scaleX(${dw})`;
+    requestAnimationFrame(()=>{ el.style.transition = 'transform .26s cubic-bezier(.3,.9,.3,1)'; el.style.transform = ''; });
+  });
+  _pilulesAvant.clear();
+}
+// Léger retour haptique dans l'application native (sans effet sur le web).
+function haptique(style){
+  try{ const C = window.Capacitor; const H = C && C.Plugins && C.Plugins.Haptics; if(H && C.isNativePlatform && C.isNativePlatform()) H.impact({ style: style || 'light' }); }catch(e){}
+}
 function renderAll(){
   const content = document.getElementById('content');
+  relevePilules(content);
   // Un identifiant sans fiche dans PLAYERS donnait {_idx} — un objet « vrai »
   // sans nom ni poste — et le rendu plantait sur la première photo. On le
   // traite comme un emplacement vide.
@@ -6194,7 +6246,9 @@ function renderAll(){
   content.scrollTop = defilementGarde;
   /* Animation d'arrivée : seulement quand l'utilisateur a changé quelque chose
    * (joueurs, onglet, période, vue). Un redessin dû à un chargement ne la rejoue pas. */
-  const cleReveal = [slots.join(','), activeTab, compareBasis, compareMode, teamScope, compareAgeValue, compareSeasonValue, compactView].join('|');
+  const cleReveal = [slots.join(','), activeTab, compareBasis, compareMode, teamScope, compareAgeValue, compareSeasonValue, compactView,
+                     filled.map(p => p.seasonShown).join(',')].join('|');
+  glisserPilules(content);
   const maintenant = performance.now();
   if(cleReveal !== _cleRevealPrecedente){ _cleRevealPrecedente = cleReveal; _revealDebut = maintenant; }
   /* Un redessin pendant l'animation la reprend là où elle en était (délai négatif)
@@ -6864,7 +6918,7 @@ function wireSaveDuel(root, filled){
     const ids = filled.map(p => p.apiId || ('L:' + p.legendeId));
     const nom = filled.map(p => shortName(p)).join(' vs ');
     btn.disabled = true; btn.textContent = 'Sauvegarde…';
-    try{ await Compte.sauvegarderDuel(nom, ids); renderAll(); }
+    try{ await Compte.sauvegarderDuel(nom, ids); haptique('medium'); renderAll(); }
     catch(e){ btn.disabled = false; btn.textContent = Compte.messageErreur(e); }
   });
 }
@@ -7815,6 +7869,7 @@ async function dessinerImageDePartage(btn){
     const area = document.getElementById('sharePreviewArea');
     const file = new File([blob], `duelio-${Date.now()}.png`, {type:'image/png'});
     const canNativeShare = !!(navigator.share && navigator.canShare && navigator.canShare({files:[file]}));
+    haptique('medium');
     area.innerHTML = `
       <div class="share-preview-wrap">
         <div class="share-ready">Votre image est prête.</div>
@@ -7824,6 +7879,8 @@ async function dessinerImageDePartage(btn){
           <button class="share-download-btn ${canNativeShare ? 'secondary' : 'primary'}" id="shareDownloadBtn" type="button">Télécharger</button>
         </div>
       </div>`;
+    // L'image apparaît sous la liste des stats : on l'amène sous les yeux, en douceur.
+    try{ area.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }catch(e){}
     const sticky = document.getElementById('shareSticky'); if(sticky) sticky.style.display = 'none';
     const previewCanvas = document.getElementById('sharePreviewCanvas');
     previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
@@ -8004,7 +8061,7 @@ function renderPickerList(){
             .catch(err=>{ el.classList.remove('loading'); setPickerStatus(apiErrorMessage((err && err.message) || String(err)), true); });
           return;
         }
-        slots[target] = id;
+        slots[target] = id; haptique('light');
         closePicker();
       });
     });
@@ -8039,7 +8096,7 @@ function renderPickerList(){
         setPickerStatus(`Chargement des statistiques de ${pl.name}…`);
         loadPlayerStats(pl).then(()=>{
           if(pickerTarget !== target || pickerSession !== session) return; // fermé ou rouvert entre-temps
-          slots[target] = id;
+          slots[target] = id; haptique('light');
           closePicker();
         }).catch(err=>{
           el.classList.remove('loading');
@@ -8047,7 +8104,7 @@ function renderPickerList(){
         });
         return;
       }
-      slots[target] = id;
+      slots[target] = id; haptique('light');
       closePicker();
     });
   });
@@ -9002,6 +9059,7 @@ function applyScreen(name){
   document.getElementById('generateScreen').style.display = name==='generate' ? 'flex' : 'none';
   // `aria-current` dit à voix haute sur quel écran on se trouve : la classe
   // `active` ne le signale que par une couleur.
+  document.querySelector('.tabbar').style.setProperty('--tab', { compare: 0, browse: 1, generate: 2 }[name] || 0);
   for(const [id, ecran] of [['tabCompare','compare'], ['tabBrowse','browse'], ['tabGenerate','generate']]){
     const b = document.getElementById(id);
     b.classList.toggle('active', name === ecran);
