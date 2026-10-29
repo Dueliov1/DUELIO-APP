@@ -7956,10 +7956,10 @@ async function dessinerGrille(o){
   const ex = W/2 - (logoW + (logoImg ? 7*S : 0) + motW)/2;
   if(logoImg) ctx.drawImage(logoImg, ex, y, logoW, logoH);
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ombre(()=>{ ctx.fillStyle = T.texte; ctx.fillText('DUELIO', ex + logoW + (logoImg ? 7*S : 0), y + logoH/2 + 1*S); }, 8*S);
+  ombre(()=>{ ctx.fillStyle = T.texte; ecrire(ctx, 'DUELIO', ex + logoW + (logoImg ? 7*S : 0), y + logoH/2 + 1*S, S, stade); }, 8*S);
   const st = sousTitreDuel(filled);
   y += logoH + 8*S;
-  y += dessinerContexte(ctx, W, y, S, st, papier) + 10*S;
+  y += dessinerContexte(ctx, W, y, S, st, papier, stade) + 10*S;
   if(papier){ ctx.strokeStyle = T.cadre; ctx.lineWidth = 1.5*S; ctx.beginPath(); ctx.moveTo(m + 16*S, y); ctx.lineTo(W - m - 16*S, y); ctx.stroke(); y += 14*S; }
 
   // 3. Une colonne par joueur.
@@ -7990,12 +7990,12 @@ async function dessinerGrille(o){
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     const nom = shortName(p).toUpperCase();
     const fs = ajusterPolice(ctx, nom, maxW, (n === 3 ? 12 : 10)*S, 6*S, TITRE);
-    ombre(()=>{ ctx.fillStyle = T.texte; ctx.fillText(nom, cx, y + fs); }, 8*S);
+    ombre(()=>{ ctx.fillStyle = T.texte; ecrire(ctx, nom, cx, y + fs, S, stade); }, 8*S);
     let h = fs + 11*S;
     const sous = [p.posLabel, p.club].filter(Boolean).join(' · ').toUpperCase();
-    if(sous){ ajusterPolice(ctx, sous, maxW, 6.5*S, 4.5*S, f => TEXTE(f)); ombre(()=>{ ctx.fillStyle = papier ? T.sec : COUL[i]; ctx.fillText(sous, cx, y + h); }, 6*S); h += 9*S; }
+    if(sous){ ajusterPolice(ctx, sous, maxW, (stade ? 7 : 6.5)*S, 4.5*S, f => TEXTE(f)); ombre(()=>{ ctx.fillStyle = papier ? T.sec : stade ? '#fff' : COUL[i]; ecrire(ctx, sous, cx, y + h, S, stade); }, 6*S); h += 9.5*S; }
     const per = st.periode(p);
-    if(per){ ajusterPolice(ctx, per, maxW, 6.5*S, 4.5*S, f => TEXTE(f)); ombre(()=>{ ctx.fillStyle = T.sec; ctx.fillText(per, cx, y + h); }, 6*S); h += 9*S; }
+    if(per){ ajusterPolice(ctx, per, maxW, (stade ? 7 : 6.5)*S, 4.5*S, f => TEXTE(f)); ombre(()=>{ ctx.fillStyle = stade ? '#fff' : T.sec; ecrire(ctx, per, cx, y + h, S, stade); }, 6*S); h += 9.5*S; }
     hNoms = Math.max(hNoms, h);
   });
   y += hNoms + 10*S;
@@ -8037,9 +8037,9 @@ async function dessinerGrille(o){
   y += ph + 4*S;
 
   // 5. Pied.
-  ctx.font = TEXTE(7*S); ctx.fillStyle = papier ? T.sec : 'rgba(255,255,255,.5)'; ctx.textAlign = 'center';
+  ctx.font = TEXTE(7*S); ctx.fillStyle = papier ? T.sec : stade ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.5)'; ctx.textAlign = 'center';
   const piedY = Math.min(y + 14*S, H - m - 8*S);
-  ctx.fillText('D U E L I O   ·   C O M P A R E   T E S   J O U E U R S', W/2, piedY);
+  ecrire(ctx, 'D U E L I O   ·   C O M P A R E   T E S   J O U E U R S', W/2, piedY, S, stade);
   const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - m - 6*S) / 2));
   ctxFond.drawImage(calque, 0, decalage);
   publierImage(canvas, btn, W, H);
@@ -8129,18 +8129,24 @@ function sousTitreDuel(filled){
 /* La base de la comparaison, en tête de l'image : la période dans une pastille — verte et
  * plus grande quand on compare « à l'âge de… », pour que ça se voie — et le périmètre
  * dessous, en petit. Rend la hauteur occupée. */
-function dessinerContexte(ctx, W, y, S, st, clair){
+/* Sur la pelouse, le texte passe sur les lignes blanches : un contour vert sombre
+ * le détache quoi qu'il y ait derrière. */
+function ecrire(ctx, t, x, y, S, contour){
+  if(contour){ ctx.save(); ctx.lineJoin = 'round'; ctx.lineWidth = 3.5*S; ctx.strokeStyle = 'rgba(6,38,18,.9)'; ctx.strokeText(t, x, y); ctx.restore(); }
+  ctx.fillText(t, x, y);
+}
+function dessinerContexte(ctx, W, y, S, st, clair, contour){
   ctx.textAlign = 'center';
   let h;
   if(st.age){
     // Comme un titre d'affiche : « TOUS LES DEUX À » en petit, puis l'âge en très grand
     // entre deux filets.
     ctx.font = `700 ${8*S}px 'Plus Jakarta Sans', sans-serif`; ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = clair ? '#6B6F7A' : 'rgba(255,255,255,.8)'; ctx.fillText(st.avant, W/2, y + 8*S);
+    ctx.fillStyle = clair ? '#6B6F7A' : (contour ? '#fff' : 'rgba(255,255,255,.8)'); ecrire(ctx, st.avant, W/2, y + 8*S, S, contour);
     const fs = 30*S; ctx.font = `800 ${fs}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
     const tw = ctx.measureText(st.mode).width, ty = y + 12*S + fs*0.95;
     ctx.save(); if(!clair){ ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 12*S; }
-    ctx.fillStyle = clair ? '#111318' : '#fff'; ctx.fillText(st.mode, W/2, ty); ctx.restore();
+    ctx.fillStyle = clair ? '#111318' : '#fff'; ecrire(ctx, st.mode, W/2, ty, S, contour); ctx.restore();
     const ly = ty - fs*0.36, lg = Math.min(70*S, (W - tw)/2 - 24*S);
     if(lg > 10*S){
       ctx.strokeStyle = clair ? '#111318' : 'rgba(255,255,255,.7)'; ctx.lineWidth = 1.5*S;
@@ -8151,7 +8157,7 @@ function dessinerContexte(ctx, W, y, S, st, clair){
     const fs = 9*S;
     ctx.font = `800 ${fs}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
     const tw = ctx.measureText(st.mode).width, padX = 12*S, ph = fs + 10*S, pw = tw + 2*padX, px = W/2 - pw/2;
-    roundRect(ctx, px, y, pw, ph, ph/2); ctx.fillStyle = clair ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,.12)'; ctx.fill();
+    roundRect(ctx, px, y, pw, ph, ph/2); ctx.fillStyle = clair ? 'rgba(0,0,0,0)' : (contour ? 'rgba(6,38,18,.75)' : 'rgba(255,255,255,.12)'); ctx.fill();
     ctx.lineWidth = 1.2*S; ctx.strokeStyle = clair ? '#111318' : 'rgba(255,255,255,.55)'; ctx.stroke();
     ctx.fillStyle = clair ? '#111318' : '#fff';
     ctx.textBaseline = 'middle'; ctx.fillText(st.mode, W/2, y + ph/2 + 1*S);
@@ -8159,8 +8165,8 @@ function dessinerContexte(ctx, W, y, S, st, clair){
   }
   ctx.textBaseline = 'alphabetic';
   if(st.perim){
-    ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = clair ? '#6B6F7A' : 'rgba(255,255,255,.78)';
-    ctx.fillText(st.perim, W/2, y + h + 12*S); h += 15*S;
+    ctx.font = `700 ${(contour ? 8.5 : 7.5)*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = clair ? '#6B6F7A' : (contour ? '#fff' : 'rgba(255,255,255,.78)');
+    ecrire(ctx, st.perim, W/2, y + h + 12*S, S, contour); h += 15*S;
   }
   return h;
 }
@@ -8185,10 +8191,10 @@ async function dessinerStade(o){
   const motW = ctx.measureText('DUELIO').width, ex = W/2 - (logoW + 8*S + motW)/2;
   if(logoImg) ctx.drawImage(logoImg, ex, y, logoW, logoH);
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ombre(()=>{ ctx.fillStyle = '#fff'; ctx.fillText('DUELIO', ex + logoW + 8*S, y + logoH/2 + 1*S); }, 8*S);
+  ombre(()=>{ ctx.fillStyle = '#fff'; ecrire(ctx, 'DUELIO', ex + logoW + 8*S, y + logoH/2 + 1*S, S, true); }, 8*S);
   const st = sousTitreDuel(filled);
   y += logoH + 8*S;
-  y += dessinerContexte(ctx, W, y, S, st, false) + 12*S;
+  y += dessinerContexte(ctx, W, y, S, st, false, true) + 12*S;
   // Portraits
   const imgs = await Promise.all(filled.map(p => loadImageForCanvas(p)));
   const R = (story ? 78 : 70)*S, cxA = W*0.27, cxB = W*0.73, cy = y + R + 8*S;
@@ -8210,12 +8216,12 @@ async function dessinerStade(o){
   const nom = (i, cx) => {
     const p = filled[i], t = shortName(p).toUpperCase(), maxW = W*0.44;
     const fs = ajusterPolice(ctx, t, maxW, 18*S, 9*S, f => `800 ${f}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`);
-    ombre(()=>{ ctx.fillStyle = '#fff'; ctx.fillText(t, cx, y + fs); }, 10*S);
+    ombre(()=>{ ctx.fillStyle = '#fff'; ecrire(ctx, t, cx, y + fs, S, true); }, 10*S);
     const sous = [p.posLabel, p.club].filter(Boolean).join('  ·  ').toUpperCase();
-    ajusterPolice(ctx, sous, maxW, 8.5*S, 5.5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`);
-    ombre(()=>{ ctx.fillStyle = '#fff'; ctx.fillText(sous, cx, y + fs + 13*S); }, 6*S);
+    ajusterPolice(ctx, sous, maxW, 9*S, 5.5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`);
+    ctx.fillStyle = '#fff'; ecrire(ctx, sous, cx, y + fs + 14*S, S, true);
     const per = st.periode(p); let h = fs;
-    if(per){ ajusterPolice(ctx, per, maxW, 7.5*S, 5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`); ombre(()=>{ ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillText(per, cx, y + fs + 25*S); }, 6*S); h += 12*S; }
+    if(per){ ajusterPolice(ctx, per, maxW, 8.5*S, 5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`); ctx.fillStyle = '#fff'; ecrire(ctx, per, cx, y + fs + 27*S, S, true); h += 13*S; }
     return h;
   };
   y += Math.max(nom(0, cxA), nom(1, cxB)) + 28*S;
