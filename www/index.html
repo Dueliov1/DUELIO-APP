@@ -429,16 +429,30 @@
   .wl-score .l b{ display:block; color:#fff; font-size:12.5px; }
   @keyframes wlFlip{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:none; } }
   /* Le programme : les duels prêts, comme une liste de matchs. */
-  .wl-prog{ margin-top:16px; margin-bottom:18px; animation: welcomeIn .4s ease both .78s; }
-  .wl-prog-h{ display:flex; justify-content:space-between; align-items:baseline; font-size:11px; font-weight:700; color:var(--chalk-dim); padding-bottom:6px; border-bottom:1px solid rgba(255,255,255,.22); }
-  .wl-prog-h b{ color:#fff; font-size:12.5px; }
+  .wl-prog{ margin-top:14px; margin-bottom:16px; animation: welcomeIn .4s ease both .78s; }
+  .wl-prog-h{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:11px; font-weight:600; color:var(--chalk-dim); padding-bottom:8px; }
+  .wl-prog-h b{ color:#fff; font-size:13px; font-weight:800; }
+  /* Chaque duel est un bouton qui se voit : fond, bord, les deux visages, et « Comparer » à droite. */
   .wl-m{
-    display:flex; align-items:center; justify-content:space-between; width:100%; padding:11px 0; gap:10px;
-    background:none; border:0; border-bottom:1px solid rgba(255,255,255,.12); color:#fff; font:inherit; font-weight:700; font-size:14.5px; text-align:left; cursor:pointer;
+    display:flex; align-items:center; width:100%; gap:10px; padding:8px 10px 8px 8px; margin-top:6px;
+    background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.16); border-radius:12px;
+    color:#fff; font:inherit; font-weight:700; font-size:14px; text-align:left; cursor:pointer;
+    transition: background .15s ease, border-color .15s ease, transform .12s ease;
   }
-  .wl-m .vs{ font-family:'Unbounded', sans-serif; font-size:9px; color:var(--gold); margin:0 7px; }
-  .wl-m small{ font-size:11px; font-weight:600; color:var(--chalk-dim); white-space:nowrap; }
-  .wl-m:active{ background:rgba(255,255,255,.05); }
+  .wl-m:hover{ background:rgba(255,255,255,.11); border-color:rgba(255,255,255,.3); }
+  .wl-m:active{ transform:scale(.985); background:rgba(255,255,255,.12); }
+  .wl-minis{ display:flex; flex-shrink:0; }
+  .wl-mini{
+    position:relative; width:30px; height:30px; border-radius:50%; overflow:hidden; display:grid; place-items:center; font-style:normal;
+    background:linear-gradient(180deg, #16234A, #0B1730); box-shadow:0 0 0 2px #050B18;
+  }
+  .wl-mini b{ font-family:'Unbounded', sans-serif; font-weight:800; font-size:9px; color:#fff; }
+  .wl-mini img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 15%; }
+  .wl-mini + .wl-mini{ margin-left:-8px; }
+  .wl-mt{ flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .wl-mt .vs{ font-family:'Unbounded', sans-serif; font-size:9px; color:var(--gold); margin:0 7px; }
+  .wl-go{ flex-shrink:0; font-size:11.5px; font-weight:800; color:#04231a; background:#22D3EE; padding:6px 11px; border-radius:20px; }
+  @media (max-width: 350px){ .wl-go{ font-size:10.5px; padding:5px 8px; } .wl-mt .vs{ margin:0 4px; } .wl-m{ gap:7px; } }
   .welcome-cta{
     display:block; width:100%; margin-top:auto; padding:17px; border:0; border-radius:10px; cursor:pointer;
     background:#22D3EE; color:#04231a; font-family:'Plus Jakarta Sans', sans-serif; font-weight:800; font-size:15.5px;
@@ -449,22 +463,25 @@
   .wl-foot{ margin-top:12px; font-size:11px; color:var(--chalk-dim); font-weight:600; animation: welcomeIn .4s ease both .9s; }
   @media (min-height: 900px){
     .wl-title{ font-size:40px; margin-top:30px; }
-    .wl-duel{ height:300px; margin-top:16px; }
+    .wl-duel{ height:290px; margin-top:12px; }
     .wl-p{ width:168px; height:168px; font-size:42px; }
     .wl-p.b{ top:66px; } .wl-n.a{ top:184px; } .wl-n.b{ top:244px; }
     .wl-vs{ top:100px; }
     .wl-prog{ margin-top:22px; }
   }
+  @media (max-height: 900px){ .wl-m:nth-child(n+5){ display:none; } }
   @media (max-height: 720px){
     .wl-title{ font-size:31px; margin-top:16px; }
     .wl-lead{ display:none; }
-    .wl-duel{ height:236px; }
-    .wl-p{ width:124px; height:124px; font-size:32px; }
-    .wl-score{ margin-top:6px; }
-    .wl-m{ padding:9px 0; }
+    .wl-duel{ height:222px; }
+    .wl-p{ width:116px; height:116px; font-size:30px; }
+    .wl-score{ margin-top:4px; }
+    .wl-m{ padding:6px 8px 6px 6px; margin-top:5px; }
+    .wl-mini{ width:26px; height:26px; }
     .wl-prog{ margin-top:10px; margin-bottom:12px; }
-    .wl-p.b{ top:50px; } .wl-n.a{ top:138px; } .wl-n.b{ top:188px; }
-    .wl-vs{ top:76px; }
+    .wl-p.b{ top:46px; } .wl-n.a{ top:128px; } .wl-n.b{ top:174px; }
+    .wl-vs{ top:70px; }
+    .welcome-cta{ padding:15px; }
     .wl-m:nth-child(n+5){ display:none; }
     .wl-foot{ display:none; }
   }
@@ -475,7 +492,8 @@
     .wl-p.b{ top:40px; } .wl-n.a{ top:112px; } .wl-n.b{ top:152px; }
     .wl-vs{ top:62px; width:36px; height:36px; margin-left:-18px; }
     .wl-score{ margin-top:8px; min-height:46px; padding:7px 14px; } .wl-score .n{ font-size:22px; }
-    .wl-prog{ margin-top:10px; } .wl-m{ padding:8px 0; font-size:13.5px; }
+    .wl-prog{ margin-top:8px; margin-bottom:8px; } .wl-m{ padding:5px 8px 5px 5px; font-size:13px; }
+    .wl-prog-h span{ display:none; }
     .wl-m:nth-child(n+4){ display:none; }
     .welcome-cta{ margin-top:12px; padding:14px; }
   }
@@ -9654,7 +9672,8 @@ function accueilHtml(){
   const d = SUGGESTED_DUELS[DUEL_ACCUEIL];
   const portrait = (side, cls) => `<span class="wl-p ${cls}"><span>${escapeHtml((side.first[0] + side.label[0]).toUpperCase())}</span><img alt="" src="https://media.api-sports.io/football/players/${side.id}.png" onerror="this.remove()"></span>`;
   const nom = (side, cls) => `<span class="wl-n ${cls}">${escapeHtml(side.label)}<small data-sub="${side.id}">&nbsp;</small></span>`;
-  const programme = [0, 2, 3, 1].map(i => { const x = SUGGESTED_DUELS[i]; return x ? `<button class="wl-m" type="button" data-aduel="${i}"><span>${x.a.label}<span class="vs">VS</span>${x.b.label}</span></button>` : ''; }).join('');
+  const mini = side => `<i class="wl-mini"><b>${escapeHtml((side.first[0] + side.label[0]).toUpperCase())}</b><img alt="" src="https://media.api-sports.io/football/players/${side.id}.png" onerror="this.remove()"></i>`;
+  const programme = [0, 2, 3, 1].map(i => { const x = SUGGESTED_DUELS[i]; return x ? `<button class="wl-m" type="button" data-aduel="${i}"><span class="wl-minis">${mini(x.a)}${mini(x.b)}</span><span class="wl-mt">${x.a.label}<span class="vs">VS</span>${x.b.label}</span><span class="wl-go">Comparer</span></button>` : ''; }).join('');
   return `
     <div class="wl-split"></div>
     <div class="wl-inner">
@@ -9666,10 +9685,11 @@ function accueilHtml(){
       </button>
       <div class="wl-score" aria-live="polite"></div>
       <div class="wl-prog">
-        <div class="wl-prog-h"><b>Duels du jour</b><span>55 000 joueurs, 140 légendes</span></div>
+        <div class="wl-prog-h"><b>Duels prêts à lancer</b><span>Touche un duel pour l'ouvrir</span></div>
         ${programme}
       </div>
       <button class="welcome-cta" type="button">Choisir mes joueurs</button>
+      <div class="wl-foot">55 000 joueurs et 140 légendes, de Yashin à Mbappé</div>
     </div>`;
 }
 function fermerAccueil(){
