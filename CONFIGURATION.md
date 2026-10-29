@@ -195,3 +195,38 @@ joueurs, date). Suppression du compte : depuis l'application (« Mon compte » �
 mon compte »), qui efface les duels puis le compte. Comptes inactifs : à purger à la main
 dans la console (Authentication → Utilisateurs, trier par dernière connexion), comme la
 politique de confidentialité le promet (trois ans).
+
+---
+
+## 7. Le relais à IP fixe (dossier `relais/`)
+
+API-Football bloque les adresses IP partagées de Cloudflare Workers : mesuré le 28 octobre
+2026, 34 appels refusés sur 50. Le relais est une petite machine (4 à 5 €/mois chez
+Hetzner, OVH, DigitalOcean…) à adresse IP fixe, par laquelle le Worker fait passer ses
+appels. Le Worker est déjà prévu pour (`RELAY_URL` + `RELAY_SECRET`).
+
+### Mise en place (une fois, sans ligne de commande)
+
+1. Ouvrir `relais/cloud-init.yaml`, remplacer `REMPLACER_PAR_LA_CLE_API_FOOTBALL` par la
+   clé API-Football et `REMPLACER_PAR_UN_SECRET` par un mot de passe long et aléatoire
+   (30 caractères, lettres et chiffres). Ne pas enregistrer ce fichier modifié dans le dépôt.
+2. Créer un serveur chez l'hébergeur : Ubuntu, le plus petit modèle, en collant le contenu
+   du fichier dans le champ « Cloud config » / « User data ».
+3. Attendre 5 minutes, puis ouvrir `https://<IP>.sslip.io/sante` : la page doit afficher
+   `{"ok":true,…}`.
+4. Dans Cloudflare → Workers → duelio-proxy → Settings → Variables and Secrets : ajouter
+   `RELAY_URL` = `https://<IP>.sslip.io` (texte) et `RELAY_SECRET` = le mot de passe (secret).
+5. Vérifier sur `…workers.dev/diag` : « sortie » doit indiquer « RELAIS à IP dédiée ».
+
+### Ce que fait le relais
+
+`relais/serveur.js` : accepte uniquement les GET portant le bon secret, sur les chemins
+d'API autorisés, transmet à API-Football avec la clé, renvoie la réponse et les en-têtes
+de quota. `/sante` (sans secret) donne le nombre d'appels. HTTPS fourni par Caddy via un
+nom `<IP>.sslip.io` (certificat Let's Encrypt automatique).
+
+### Avant le relais : demander au support
+
+`relais/MESSAGE-SUPPORT.md` contient un message prêt à envoyer à API-Football pour demander
+si leur protection IP peut être assouplie pour la clé. S'ils acceptent, le relais devient
+inutile.
