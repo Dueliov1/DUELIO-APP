@@ -7725,7 +7725,9 @@ async function dessinerAfficheDuel(o){
       const hImg = H * (story ? .5 : .62), sc = hImg / img.height, wImg = img.width * sc;
       const x = gauche ? -wImg*0.12 : W - wImg*0.88, y = -hImg*0.04;
       const t = document.createElement('canvas'); t.width = W; t.height = H; const tc = t.getContext('2d');
-      try{ tc.filter = `grayscale(1) contrast(1.35) brightness(1.05) blur(${Math.max(1, 1.2*S)}px)`; }catch(e){}
+      // Un flou large : les photos sont petites (150 px) et seraient pixelisées une fois agrandies.
+      const flou = Math.max(6*S, sc*2.2);
+      try{ tc.filter = `grayscale(1) contrast(1.35) brightness(1.05) blur(${flou}px)`; }catch(e){}
       tc.drawImage(img, x, y, wImg, hImg);
       try{ tc.filter = 'none'; }catch(e){}
       tc.globalCompositeOperation = 'multiply';
