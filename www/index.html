@@ -1091,7 +1091,8 @@
   .share-style-btn{ flex-direction:column; gap:6px; padding:10px 6px; }
   .share-style-btn .apercu{ display:block; width:100%; height:34px; border-radius:8px; border:1px solid rgba(255,255,255,.12); }
   .share-style-btn.affiche .apercu{ background: linear-gradient(115deg, rgba(56,189,248,.55) 0 48%, rgba(255,255,255,.8) 48% 50%, rgba(255,176,32,.55) 50%), #0d2a44; }
-  .share-style-btn.neon .apercu{ background: radial-gradient(circle at 30% 40%, rgba(34,211,238,.6), transparent 45%), radial-gradient(circle at 70% 60%, rgba(255,176,32,.5), transparent 45%), #05060f; box-shadow: inset 0 0 0 1px rgba(34,211,238,.4); }
+  .share-style-btn.stade .apercu{ background: linear-gradient(90deg, rgba(255,255,255,.85) 0 2px, transparent 2px) 50% 0 / 2px 100% no-repeat, repeating-linear-gradient(90deg, #1f7a3b 0 12px, #1c6f36 12px 24px); position:relative; }
+  .share-style-btn.stade .apercu::after{ content:''; position:absolute; left:50%; top:50%; width:14px; height:14px; border:2px solid rgba(255,255,255,.85); border-radius:50%; transform:translate(-50%,-50%); }
   .share-style-btn.papier .apercu{ background: repeating-linear-gradient(0deg, #F5F1E8 0 7px, #E3DCCB 7px 8px); border-color:#C9C1AE; }
   .share-stat-check-unused{
     display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--surface); border:1px solid var(--line);
@@ -7218,9 +7219,9 @@ document.getElementById('pickerClose').addEventListener('click', closePicker);
 const SHARE_STAT_LIMIT = 5;
 let shareSelectedStats = [];
 let shareFormat = 'square'; // 'square' | 'story'
-// Trois styles d'image, au choix : « affiche » (stade, diagonale), « neon » (nuit, lumière), « papier » (clair, journal).
+// Trois styles d'image, au choix : « affiche » (photo, diagonale), « stade » (pelouse et tableau d'affichage), « papier » (clair, journal).
 let shareStyle = 'affiche';
-try{ const v = localStorage.getItem('duelio_share_style'); if(['affiche','neon','papier'].includes(v)) shareStyle = v; }catch(e){}
+try{ const v = localStorage.getItem('duelio_share_style'); if(['affiche','stade','papier'].includes(v)) shareStyle = v; }catch(e){}
 let shareGeneratedBlobUrl = null;
 
 function renderGenerate(){
@@ -7268,7 +7269,7 @@ function renderGenerateBody(){
       <div class="share-section-label">Style</div>
       <div class="share-format-row share-style-row">
         <button class="share-format-btn share-style-btn affiche ${shareStyle==='affiche'?'active':''}" data-style="affiche" type="button"><span class="apercu"></span>Affiche</button>
-        <button class="share-format-btn share-style-btn neon ${shareStyle==='neon'?'active':''}" data-style="neon" type="button"><span class="apercu"></span>Néon</button>
+        <button class="share-format-btn share-style-btn stade ${shareStyle==='stade'?'active':''}" data-style="stade" type="button"><span class="apercu"></span>Stade</button>
         <button class="share-format-btn share-style-btn papier ${shareStyle==='papier'?'active':''}" data-style="papier" type="button"><span class="apercu"></span>Papier</button>
       </div>
       <div class="share-section-label">Statistiques</div>
@@ -7652,7 +7653,7 @@ async function dessinerImageDePartage(btn){
   if(n === 2 && shareStyle !== 'affiche'){
     const ctxC = calque.getContext('2d'); ctxC.imageSmoothingEnabled = true; ctxC.imageSmoothingQuality = 'high';
     const o = { ctx: ctxC, ctxFond, calque, canvas, W, H, S, filled, list, btn };
-    await (shareStyle === 'neon' ? dessinerNeon(o) : dessinerPapier(o));
+    await (shareStyle === 'stade' ? dessinerStade(o) : dessinerPapier(o));
     return;
   }
 
@@ -8156,95 +8157,111 @@ function sousTitreDuel(filled){
            periode: p => memeContexte ? '' : (playerContextLabel(p) || '').replace(/^Saison /, '').replace(/ · \d+ saisons?$/, '').toUpperCase() };
 }
 
-/* ---------- Style « Néon » : la nuit, la lumière ----------
- * Fond noir bleuté quadrillé, deux halos aux couleurs des joueurs, portraits cerclés de
- * néon, noms qui rayonnent, et les chiffres en colonnes sous chaque joueur : le vainqueur
- * de chaque ligne s'allume en vert. Pas de barres : la lumière suffit. */
-async function dessinerNeon(o){
+/* ---------- Style « Stade » : la pelouse et le tableau d'affichage ----------
+ * Une pelouse vue du ciel, tondue en bandes, avec ses lignes blanches ; les deux joueurs
+ * cerclés de blanc de part et d'autre ; et, posé sur le terrain, un tableau d'affichage
+ * sombre où chaque statistique s'affiche comme un score, le vainqueur en vert. */
+async function dessinerStade(o){
   const { ctx, ctxFond, calque, canvas, W, H, S, filled, list, btn } = o;
   const story = shareFormat === 'story';
   const COUL = [SLOT_COLORS[filled[0]._idx] || '#38BDF8', SLOT_COLORS[filled[1]._idx] || '#FFB020'];
   const VERT = '#2FE88A';
-  // Fond
-  const fond = ctxFond.createLinearGradient(0, 0, 0, H); fond.addColorStop(0, '#07091a'); fond.addColorStop(1, '#03040c');
-  ctxFond.fillStyle = fond; ctxFond.fillRect(0, 0, W, H);
-  ctxFond.strokeStyle = 'rgba(120,160,255,.07)'; ctxFond.lineWidth = 1;
-  const pas = 54*S;
-  for(let x = (W/2) % pas; x < W; x += pas){ ctxFond.beginPath(); ctxFond.moveTo(x, 0); ctxFond.lineTo(x, H); ctxFond.stroke(); }
-  for(let yy = 0; yy < H; yy += pas){ ctxFond.beginPath(); ctxFond.moveTo(0, yy); ctxFond.lineTo(W, yy); ctxFond.stroke(); }
-  const halo = (x, y, r, c) => { const g = ctxFond.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgbaDe(c, .38)); g.addColorStop(1, 'rgba(0,0,0,0)'); ctxFond.fillStyle = g; ctxFond.fillRect(0, 0, W, H); };
-  halo(W*0.2, H*0.3, W*0.55, COUL[0]); halo(W*0.8, H*0.35, W*0.55, COUL[1]);
-  // Vignette
-  const vig = ctxFond.createRadialGradient(W/2, H/2, H*0.25, W/2, H/2, H*0.8); vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.55)');
+  // Pelouse : bandes de tonte
+  const bandes = story ? 12 : 8, hb = H / bandes;
+  for(let i = 0; i < bandes; i++){ ctxFond.fillStyle = i % 2 ? '#1c6f36' : '#1f7a3b'; ctxFond.fillRect(0, i*hb, W, hb + 1); }
+  // Lumière de projecteur en haut, ombre en bas
+  const lum = ctxFond.createLinearGradient(0, 0, 0, H); lum.addColorStop(0, 'rgba(255,255,255,.10)'); lum.addColorStop(.5, 'rgba(0,0,0,0)'); lum.addColorStop(1, 'rgba(0,0,0,.45)');
+  ctxFond.fillStyle = lum; ctxFond.fillRect(0, 0, W, H);
+  // Lignes blanches : touche, médiane, rond central, surfaces
+  ctxFond.strokeStyle = 'rgba(255,255,255,.82)'; ctxFond.lineWidth = 3*S; ctxFond.lineJoin = 'round';
+  const mx = 26*S, my = story ? 40*S : 20*S;
+  ctxFond.strokeRect(mx, my, W - 2*mx, H - 2*my);
+  ctxFond.beginPath(); ctxFond.moveTo(mx, H/2); ctxFond.lineTo(W - mx, H/2); ctxFond.stroke();
+  ctxFond.beginPath(); ctxFond.arc(W/2, H/2, (story ? 90 : 70)*S, 0, Math.PI*2); ctxFond.stroke();
+  ctxFond.beginPath(); ctxFond.arc(W/2, H/2, 3*S, 0, Math.PI*2); ctxFond.fillStyle = 'rgba(255,255,255,.82)'; ctxFond.fill();
+  const sw = W*0.62, sh = (story ? 110 : 70)*S, bw = W*0.3, bh = (story ? 42 : 28)*S;
+  for(const haut of [true, false]){
+    const yS = haut ? my : H - my - sh, yB = haut ? my : H - my - bh;
+    ctxFond.strokeRect(W/2 - sw/2, yS, sw, sh); ctxFond.strokeRect(W/2 - bw/2, yB, bw, bh);
+    ctxFond.beginPath(); ctxFond.arc(W/2, haut ? my + sh*0.72 : H - my - sh*0.72, 3*S, 0, Math.PI*2); ctxFond.fill();
+  }
+  // Vignette douce
+  const vig = ctxFond.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.85); vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.35)');
   ctxFond.fillStyle = vig; ctxFond.fillRect(0, 0, W, H);
 
-  const neon = (fn, couleur, flou) => { ctx.save(); ctx.shadowColor = couleur; ctx.shadowBlur = flou; fn(); fn(); ctx.restore(); };
-  let y = 18*S;
+  const ombre = (fn, flou, c) => { ctx.save(); ctx.shadowColor = c || 'rgba(0,0,0,.55)'; ctx.shadowBlur = flou; fn(); ctx.restore(); };
+  let y = 22*S;
   // Marque
-  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  const logoImg = await logoDuelio();
+  const logoH = 24*S, logoW = logoImg ? logoH*(logoImg.width/logoImg.height) : logoH*1.24;
   ctx.font = `800 ${14*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
-  neon(()=>{ ctx.fillStyle = '#9ff3ff'; ctx.fillText('D U E L I O', W/2, y + 14*S); }, '#22D3EE', 18*S);
+  const motW = ctx.measureText('DUELIO').width, ex = W/2 - (logoW + 8*S + motW)/2;
+  if(logoImg) ctx.drawImage(logoImg, ex, y, logoW, logoH);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ombre(()=>{ ctx.fillStyle = '#fff'; ctx.fillText('DUELIO', ex + logoW + 8*S, y + logoH/2 + 1*S); }, 8*S);
   const st = sousTitreDuel(filled);
-  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.6)';
-  ctx.fillText(st.texte, W/2, y + 30*S);
-  y += 50*S;
+  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ombre(()=>{ ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillText(st.texte, W/2, y + logoH + 14*S); }, 6*S);
+  y += logoH + 30*S;
   // Portraits
   const imgs = await Promise.all(filled.map(p => loadImageForCanvas(p)));
-  const R = (story ? 82 : 74)*S, cxA = W*0.27, cxB = W*0.73, cy = y + R + 10*S;
+  const R = (story ? 78 : 70)*S, cxA = W*0.27, cxB = W*0.73, cy = y + R + 8*S;
   const portrait = (i, cx) => {
     const { img } = imgs[i] || {};
-    neon(()=>{ ctx.beginPath(); ctx.arc(cx, cy, R + 6*S, 0, Math.PI*2); ctx.lineWidth = 3*S; ctx.strokeStyle = COUL[i]; ctx.stroke(); }, COUL[i], 26*S);
+    ombre(()=>{ ctx.beginPath(); ctx.arc(cx, cy, R + 7*S, 0, Math.PI*2); ctx.fillStyle = COUL[i]; ctx.fill(); }, 20*S, 'rgba(0,0,0,.5)');
+    ctx.beginPath(); ctx.arc(cx, cy, R + 3*S, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill();
     ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.clip();
-    ctx.fillStyle = '#0a0f24'; ctx.fillRect(cx - R, cy - R, 2*R, 2*R);
+    ctx.fillStyle = '#0B1730'; ctx.fillRect(cx - R, cy - R, 2*R, 2*R);
     if(img){ const sc = Math.max((2*R)/img.width, (2*R)/img.height) * 1.02; const iw = img.width*sc, ih = img.height*sc; ctx.drawImage(img, cx - iw/2, cy - R - Math.max(0, (ih - 2*R)*0.15), iw, ih); }
     ctx.restore();
-    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.lineWidth = 1.5*S; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke();
   };
   portrait(0, cxA); portrait(1, cxB);
-  ctx.font = `800 ${26*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; ctx.textBaseline = 'middle';
-  neon(()=>{ ctx.fillStyle = '#ffffff'; ctx.fillText('VS', W/2, cy); }, '#ffffff', 22*S);
-  ctx.textBaseline = 'alphabetic';
-  y = cy + R + 20*S;
-  // Noms
+  // VS sur une pastille blanche
+  ombre(()=>{ ctx.beginPath(); ctx.arc(W/2, cy, 22*S, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); }, 14*S);
+  ctx.font = `800 ${14*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = '#0B1730'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('VS', W/2, cy + 1*S); ctx.textBaseline = 'alphabetic';
+  y = cy + R + 18*S;
   const nom = (i, cx) => {
     const p = filled[i], t = shortName(p).toUpperCase(), maxW = W*0.44;
-    const fs = ajusterPolice(ctx, t, maxW, 19*S, 9*S, f => `800 ${f}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`);
-    neon(()=>{ ctx.fillStyle = '#fff'; ctx.fillText(t, cx, y + fs); }, COUL[i], 16*S);
+    const fs = ajusterPolice(ctx, t, maxW, 18*S, 9*S, f => `800 ${f}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`);
+    ombre(()=>{ ctx.fillStyle = '#fff'; ctx.fillText(t, cx, y + fs); }, 10*S);
     const sous = [p.posLabel, p.club].filter(Boolean).join('  ·  ').toUpperCase();
     ajusterPolice(ctx, sous, maxW, 8.5*S, 5.5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`);
-    ctx.fillStyle = rgbaDe(COUL[i], 1); ctx.fillText(sous, cx, y + fs + 13*S);
+    ombre(()=>{ ctx.fillStyle = '#fff'; ctx.fillText(sous, cx, y + fs + 13*S); }, 6*S);
     const per = st.periode(p); let h = fs;
-    if(per){ ajusterPolice(ctx, per, maxW, 7.5*S, 5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`); ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.fillText(per, cx, y + fs + 25*S); h += 12*S; }
+    if(per){ ajusterPolice(ctx, per, maxW, 7.5*S, 5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`); ombre(()=>{ ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillText(per, cx, y + fs + 25*S); }, 6*S); h += 12*S; }
     return h;
   };
-  y += Math.max(nom(0, cxA), nom(1, cxB)) + 30*S;
-  // Chiffres en colonnes
+  y += Math.max(nom(0, cxA), nom(1, cxB)) + 28*S;
+  // Tableau d'affichage
   const lignes = lignesDuDuel(filled, list);
-  const basMax = H - 40*S; let pitch = (story ? 46 : 40)*S;
-  if(lignes.length && y + lignes.length*pitch > basMax) pitch = Math.max(28*S, (basMax - y)/lignes.length);
-  // Ligne verticale centrale, fine, en lumière
-  neon(()=>{ ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1*S; ctx.beginPath(); ctx.moveTo(W/2, y - 6*S); ctx.lineTo(W/2, y + lignes.length*pitch - 10*S); ctx.stroke(); }, '#ffffff', 10*S);
+  const basMax = H - 34*S; let pitch = (story ? 44 : 36)*S;
+  const px = 30*S, pw = W - 2*px, pad = 10*S;
+  if(lignes.length && y + lignes.length*pitch + 2*pad + 30*S > basMax) pitch = Math.max(26*S, (basMax - y - 2*pad - 30*S)/lignes.length);
+  const ph = lignes.length*pitch + 2*pad + 24*S;
+  ombre(()=>{ roundRect(ctx, px, y, pw, ph, 16*S); ctx.fillStyle = 'rgba(8,14,30,.88)'; ctx.fill(); }, 30*S);
+  roundRect(ctx, px, y, pw, ph, 16*S); ctx.lineWidth = 2*S; ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.stroke();
+  // Bandeau de couleurs en haut du tableau : la moitié de chacun
+  ctx.save(); roundRect(ctx, px, y, pw, ph, 16*S); ctx.clip();
+  ctx.fillStyle = COUL[0]; ctx.fillRect(px, y, pw/2, 5*S); ctx.fillStyle = COUL[1]; ctx.fillRect(px + pw/2, y, pw/2, 5*S);
+  ctx.restore();
+  let ry = y + pad + 8*S;
   lignes.forEach((l, i) => {
-    const ry = y + i*pitch;
-    // Libellé au centre, sur un fond sombre qui coupe la ligne
-    ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`;
-    const lw = ctx.measureText(l.label.toUpperCase()).width + 16*S;
-    ctx.fillStyle = '#05071a'; ctx.fillRect(W/2 - lw/2, ry + 4*S, lw, 14*S);
-    ctx.fillStyle = 'rgba(255,255,255,.62)'; ctx.textAlign = 'center'; ctx.fillText(l.label.toUpperCase(), W/2, ry + 14*S);
-    const val = (t, x, align, gagne, c) => {
-      ctx.font = `800 ${(gagne ? 24 : 19)*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
-      ctx.textAlign = align; ctx.textBaseline = 'middle';
-      if(gagne) neon(()=>{ ctx.fillStyle = VERT; ctx.fillText(t, x, ry + pitch*0.62); }, VERT, 16*S);
-      else { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillText(t, x, ry + pitch*0.62); }
-      ctx.textBaseline = 'alphabetic';
+    const cyl = ry + i*pitch + pitch/2;
+    if(i){ ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1*S; ctx.beginPath(); ctx.moveTo(px + 16*S, ry + i*pitch); ctx.lineTo(px + pw - 16*S, ry + i*pitch); ctx.stroke(); }
+    ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(l.label.toUpperCase(), W/2, cyl);
+    const val = (t, x, align, gagne) => {
+      ctx.font = `800 ${(gagne ? 21 : 17)*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; ctx.textAlign = align;
+      if(gagne) ombre(()=>{ ctx.fillStyle = VERT; ctx.fillText(t, x, cyl + 1*S); }, 12*S, rgbaDe(VERT, .8));
+      else { ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fillText(t, x, cyl + 1*S); }
     };
-    val(l.tA, W*0.27, 'center', l.gagneA, COUL[0]); val(l.tB, W*0.73, 'center', l.gagneB, COUL[1]);
+    val(l.tA, px + 18*S, 'left', l.gagneA); val(l.tB, px + pw - 18*S, 'right', l.gagneB);
   });
-  y += lignes.length*pitch + 4*S;
-  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.textAlign = 'center';
-  const piedY = Math.min(y + 14*S, H - 16*S);
-  ctx.fillText('C O M P A R E   T E S   J O U E U R S   ·   D U E L I O', W/2, piedY);
-  const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - 18*S) / 2));
+  ctx.textBaseline = 'alphabetic';
+  ctx.font = `700 ${7*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.textAlign = 'center';
+  ctx.fillText('D U E L I O   ·   C O M P A R E   T E S   J O U E U R S', W/2, y + ph - 10*S);
+  const decalage = Math.max(0, Math.round((H - (y + ph) - 22*S) / 2));
   ctxFond.drawImage(calque, 0, decalage);
   publierImage(canvas, btn, W, H);
 }
