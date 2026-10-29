@@ -6032,6 +6032,8 @@ function renderAll(){
       }
       if(bouts.length) avis = `<div class="duel-avis">${bouts.join(' ')}</div>`;
     }
+    const reduite = activeTab === 'stats' ? couvertureReduite(filled) : [];
+    if(reduite.length) avis += `<div class="duel-avis">${noteCouverture(reduite)}</div>`;
     return `${avis}<div class="duel-rows">${corps}</div>`;
   }
 
@@ -6685,6 +6687,27 @@ function closeSeasonSheet(changed){
   if(changed && cb) cb();
 }
 document.getElementById('seasonSheetClose').addEventListener('click', ()=>closeSeasonSheet(false));
+
+/* Couverture réduite : dans les divisions inférieures et certaines compétitions, la
+ * source ne détaille ni tirs, ni passes, ni duels, et compte parfois mal les passes
+ * décisives et les minutes (Brrou : 4 passes selon la source, 12 en réalité). Quand
+ * les chiffres affichés viennent d'une telle saison, on le dit, plutôt que de laisser
+ * croire à des zéros. Le signal : des matchs joués, mais aucun tir ni aucune passe
+ * connus. Les légendes ont leur propre avis. */
+function couvertureReduite(filled){
+  return (filled || []).filter(p => {
+    if(p.estLegende || !p.apiId) return false;
+    const info = getStatSource(p);
+    const src = info && info.src;
+    if(!src || !(src.appearances > 0)) return false;
+    return isStatMissing(src, 'shotsTotal') && isStatMissing(src, 'passesTotal');
+  });
+}
+function noteCouverture(joueurs){
+  const noms = joueurs.map(p => escapeHtml(shortName(p)));
+  const qui = noms.length === 1 ? `Pour ${noms[0]}` : `Pour ${noms.slice(0, -1).join(', ')} et ${noms[noms.length - 1]}`;
+  return `${qui}, la source ne détaille pas cette compétition : tirs, passes et duels sont absents, et les passes décisives et les minutes peuvent être incomplètes.`;
+}
 
 /* ---------------- Notifications (application native seulement) ----------------
  * Le site web n'envoie rien. Dans l'application iOS/Android, l'utilisateur peut
@@ -8561,6 +8584,8 @@ function renderBrowse(){
     const trophyRows = `<div id="detailTrophies">${detailTrophyRowsHtml(p)}</div>`;
     const avisLegende = p.estLegende
       ? `<div class="duel-avis" style="margin:0 0 6px;">Pour cette époque, seuls les matchs, les buts et les sélections sont connus.</div>` : '';
+    const avisCouverture = (!p.estLegende && couvertureReduite([p]).length)
+      ? `<div class="duel-avis" style="margin:0 0 6px;">${noteCouverture([p])}</div>` : '';
     const credit = p.estLegende ? (LEGENDES.credits || {})[p.legendeId] : null;
     const creditHtml = credit
       ? `<div class="photo-credit">Photo : ${escapeHtml(credit.auteur || 'auteur non précisé')} · ${escapeHtml(credit.licence || credit.type || '')} · <a href="/legal/credits.html" target="_blank" rel="noopener">crédits</a></div>`
@@ -8617,7 +8642,7 @@ function renderBrowse(){
         ${creditHtml}
         <div class="browse-section-label">Parcours et transferts</div>
         <div class="tlh-rail"><div class="timeline-h">${timeline}</div></div>
-        ${avisLegende}
+        ${avisLegende}${avisCouverture}
         ${statGroupsHtml}
         ${p.estLegende ? '' : `<div class="radar-panel">
           <div class="browse-section-label" style="text-align:center;">Profil d'attributs</div>
