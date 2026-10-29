@@ -366,42 +366,94 @@
     from{ opacity:0; transform: translateY(14px) scale(.96); }
     to{ opacity:1; transform: translateY(0) scale(1); }
   }
-  .welcome-icon{
-    width:104px; height:104px; margin-bottom:2px; filter: drop-shadow(0 4px 18px rgba(34,211,238,.35));
+  .welcome-content{ padding: 24px 22px 56px; justify-content:center; }
+  .welcome-brand{
+    display:flex; align-items:center; gap:9px; margin-top:4px; margin-bottom:22px;
+    font-family:'Unbounded', sans-serif; font-weight:800; font-size:15px; letter-spacing:.08em; color:#fff;
     animation: welcomeIn .45s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.05s;
   }
-  .welcome-icon svg{ width:100%; height:100%; }
-  .welcome-name{
-    font-family:'Unbounded', sans-serif; font-weight:800; font-size:38px; color:#fff;
-    letter-spacing:.04em; margin-bottom:2px;
+  .welcome-brand svg{ width:32px; height:26px; filter: drop-shadow(0 2px 10px rgba(34,211,238,.4)); }
+  /* La question qui est le produit : elle se lit, donc elle garde sa casse normale. */
+  .welcome-title{
+    font-family:'Unbounded', sans-serif; font-weight:800; font-size:27px; line-height:1.15; color:#fff;
+    margin:0 0 6px; letter-spacing:-.01em;
     animation: welcomeIn .4s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.1s;
   }
-  /* La question qui est le produit, pas une étiquette décorative. Elle se lit,
-     donc elle garde sa casse normale : des capitales espacées se déchiffrent,
-     elles ne se lisent pas. */
-  .welcome-subtitle{
-    font-family:'Unbounded', sans-serif;
-    font-size:17px; font-weight:600; color: var(--gold); letter-spacing:-.01em;
-    margin-bottom:40px;
-    animation: welcomeIn .4s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.14s;
-  }
+  .welcome-title em{ font-style:normal; color:var(--gold); }
   .welcome-tagline{
-    font-size:14px; color:var(--chalk-dim); line-height:1.55; max-width:280px; margin-bottom:34px;
-    animation: welcomeIn .4s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.22s;
+    font-size:13.5px; color:var(--chalk-dim); line-height:1.5; max-width:300px; margin:0 0 18px;
+    animation: welcomeIn .4s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.16s;
   }
+  /* Le duel en vitrine : deux vrais joueurs, leurs chiffres de la saison, et un
+     bras de fer qui se tend à l'arrivée des données. Tout le bloc se touche. */
+  .welcome-duel{
+    width:100%; max-width:340px; border-radius:22px; padding:16px 14px 14px; text-align:left;
+    background: linear-gradient(180deg, rgba(255,255,255,.09), rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.14); box-shadow: 0 22px 50px rgba(0,0,0,.45);
+    cursor:pointer; color:inherit; font:inherit; display:block;
+    animation: welcomeIn .5s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.22s;
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .welcome-duel:hover{ border-color: rgba(255,255,255,.3); }
+  .welcome-duel:active{ transform: scale(.985); }
+  .wd-head{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:6px; }
+  .wd-player{ display:flex; flex-direction:column; align-items:center; gap:7px; min-width:0; }
+  .wd-photo{
+    width:84px; height:84px; border-radius:50%; position:relative; overflow:hidden; display:grid; place-items:center;
+    background: linear-gradient(180deg, #16234A, #0B1730); color:#fff;
+    font-family:'Unbounded', sans-serif; font-weight:800; font-size:22px;
+    box-shadow: 0 0 0 3px var(--c), 0 0 30px var(--c-halo);
+  }
+  .wd-photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 15%; }
+  .wd-a .wd-photo{ --c:#38BDF8; --c-halo: rgba(56,189,248,.55); animation: wdSlide .55s cubic-bezier(.22,1.1,.36,1) both .3s; }
+  .wd-b .wd-photo{ --c:#FFB020; --c-halo: rgba(255,176,32,.55); animation: wdSlideB .55s cubic-bezier(.22,1.1,.36,1) both .3s; }
+  @keyframes wdSlide{ from{ opacity:0; transform:translateX(-28px); } to{ opacity:1; transform:none; } }
+  @keyframes wdSlideB{ from{ opacity:0; transform:translateX(28px); } to{ opacity:1; transform:none; } }
+  .wd-name{ font-family:'Unbounded', sans-serif; font-weight:700; font-size:12.5px; color:#fff; max-width:100%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .wd-sub{ font-size:10px; color:var(--chalk-dim); font-weight:600; margin-top:-4px; line-height:1.25; text-align:center; max-width:100%; }
+  .wd-vs{
+    width:40px; height:40px; border-radius:50%; background:#fff; color:#050B18; display:grid; place-items:center;
+    font-family:'Unbounded', sans-serif; font-weight:800; font-size:12px; box-shadow: 0 0 26px rgba(255,255,255,.45);
+    animation: wdPop .5s cubic-bezier(.22,1.4,.36,1) both .55s;
+  }
+  @keyframes wdPop{ from{ opacity:0; transform:scale(.4); } to{ opacity:1; transform:scale(1); } }
+  .wd-stats{ margin-top:12px; display:flex; flex-direction:column; gap:8px; }
+  .wd-stats:empty{ margin-top:0; }
+  .wd-row{ display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:8px; animation: welcomeIn .4s ease both; }
+  .wd-row .v{ font-family:'Unbounded', sans-serif; font-weight:800; font-size:14px; color:#fff; }
+  .wd-row .v.b{ text-align:right; }
+  .wd-row .v.win{ color:#2FE88A; text-shadow: 0 0 12px rgba(47,232,138,.5); }
+  .wd-row .lbl{ font-size:10.5px; font-weight:600; color:var(--chalk-dim); text-align:center; }
+  .wd-bar{ grid-column:1 / -1; height:6px; border-radius:3px; background:rgba(255,255,255,.1); overflow:hidden; display:flex; margin-top:-2px; }
+  .wd-bar i{ display:block; height:100%; width:0; transition: width .9s cubic-bezier(.22,1,.36,1); }
+  .wd-bar i.a{ background: linear-gradient(90deg, rgba(56,189,248,.55), #38BDF8); border-radius:3px 0 0 3px; }
+  .wd-bar i.b{ background: linear-gradient(270deg, rgba(255,176,32,.55), #FFB020); border-radius:0 3px 3px 0; margin-left:2px; }
+  .wd-saison{ margin-top:10px; text-align:center; font-size:10.5px; color:var(--chalk-dim); font-weight:600; }
+  .wd-saison b{ color:#fff; font-weight:700; }
   .welcome-cta{
-    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:14.5px; color:#04231a;
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:15px; color:#04231a;
     background: var(--grad-action);
-    border:none; padding:15px 44px; border-radius:30px; cursor:pointer;
-    box-shadow: 0 8px 26px rgba(34,211,238,.35); letter-spacing:.02em;
+    border:none; padding:15px 44px; border-radius:30px; cursor:pointer; margin-top:20px;
+    box-shadow: 0 8px 26px rgba(34,211,238,.35); letter-spacing:.01em;
     animation: welcomeIn .4s cubic-bezier(.22,1.1,.36,1) both; animation-delay:.3s;
   }
   .welcome-cta:hover{ filter:brightness(1.08); transform:translateY(-1px); }
+  .welcome-duels{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:7px; margin-top:14px; max-width:340px;
+    animation: welcomeIn .4s ease both; animation-delay:.36s;
+  }
+  .welcome-duels .duel-chip{ background: rgba(255,255,255,.06); }
   .welcome-foot{
-    position:absolute; bottom:26px; left:0; right:0; text-align:center;
-    font-size:11px; color:var(--chalk-dim); opacity:.85; letter-spacing:0; font-weight:600;
-    padding:0 24px;
-    animation: welcomeIn .4s ease both; animation-delay:.38s;
+    position:absolute; bottom:22px; left:0; right:0; text-align:center;
+    font-size:11px; color:var(--chalk-dim); opacity:.85; font-weight:600; padding:0 24px;
+    animation: welcomeIn .4s ease both; animation-delay:.42s;
+  }
+  @media (max-height: 700px){
+    .welcome-content{ padding:14px 22px 20px; }
+    .welcome-brand{ margin-bottom:12px; }
+    .welcome-title{ font-size:23px; }
+    .wd-photo{ width:68px; height:68px; }
+    .welcome-foot{ display:none; }
   }
   .app-header{
     padding: 10px 16px 9px;
@@ -1558,40 +1610,8 @@
 
 <div class="phone">
   <div class="welcome-screen" id="welcomeScreen">
-    <div class="welcome-half welcome-top">
-      <div class="welcome-content">
-        <div class="beam beam-tl"></div>
-        <div class="beam beam-tr"></div>
-        <div class="beam beam-bl"></div>
-        <div class="beam beam-br"></div>
-        <div class="text-vignette"></div>
-        <div class="welcome-icon">
-          <svg viewBox="0 0 120 97" aria-hidden="true" focusable="false"><use href="#logo-duelio"/></svg>
-        </div>
-        <div class="welcome-name">DUELIO</div>
-        <div class="welcome-subtitle">Qui est le meilleur&nbsp;?</div>
-        <p class="welcome-tagline">Comparez vos joueurs favoris, statistique par statistique, en quelques secondes.</p>
-        <button class="welcome-cta" type="button">Comparer</button>
-        <div class="welcome-foot">55 000 joueurs et 140 légendes, de Yashin à Mbappé</div>
-      </div>
-    </div>
-    <div class="welcome-half welcome-bottom">
-      <div class="welcome-content">
-        <div class="beam beam-tl"></div>
-        <div class="beam beam-tr"></div>
-        <div class="beam beam-bl"></div>
-        <div class="beam beam-br"></div>
-        <div class="text-vignette"></div>
-        <div class="welcome-icon">
-          <svg viewBox="0 0 120 97" aria-hidden="true" focusable="false"><use href="#logo-duelio"/></svg>
-        </div>
-        <div class="welcome-name">DUELIO</div>
-        <div class="welcome-subtitle">Qui est le meilleur&nbsp;?</div>
-        <p class="welcome-tagline">Comparez vos joueurs favoris, statistique par statistique, en quelques secondes.</p>
-        <button class="welcome-cta" type="button">Comparer</button>
-        <div class="welcome-foot">55 000 joueurs et 140 légendes, de Yashin à Mbappé</div>
-      </div>
-    </div>
+    <div class="welcome-half welcome-top"><div class="welcome-content"></div></div>
+    <div class="welcome-half welcome-bottom"><div class="welcome-content"></div></div>
   </div>
 
   <div class="app-header" role="banner">
@@ -9602,16 +9622,91 @@ document.addEventListener('click', (e)=>{
   if(el) navigator.vibrate(12);
 }, true);
 
-document.querySelectorAll('.welcome-cta').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const screen = document.getElementById('welcomeScreen');
-    if(screen.classList.contains('leaving')) return;
-    try{ localStorage.setItem('duelio_welcomed','1'); }catch(e){}
-    screen.classList.add('leaving');
-    document.body.classList.remove('accueil-visible');
-    setTimeout(()=>{ screen.classList.add('gone'); }, 420);   // suit la durée de l'animation
+/* L'accueil. Les deux moitiés (haut et bas) portent le même contenu : à la sortie,
+ * l'écran se fend en deux. Le duel en vitrine est le premier duel suggéré ; ses
+ * chiffres arrivent dès que l'index et les deux fiches sont là (alimenterAccueil). */
+const DUEL_ACCUEIL = 0;
+function accueilHtml(){
+  const d = SUGGESTED_DUELS[DUEL_ACCUEIL];
+  const joueur = (side, cls) => `
+      <div class="wd-player ${cls}">
+        <div class="wd-photo"><span>${escapeHtml((side.first[0] + side.label[0]).toUpperCase())}</span><img alt="" src="https://media.api-sports.io/football/players/${side.id}.png" onerror="this.remove()"></div>
+        <div class="wd-name">${escapeHtml(side.label)}</div>
+        <div class="wd-sub" data-sub="${side.id}"></div>
+      </div>`;
+  const puces = [0, 2, 3].map(i => { const x = SUGGESTED_DUELS[i]; return x ? `<button class="duel-chip" type="button" data-aduel="${i}">${x.a.label} <span class="vs">VS</span> ${x.b.label}</button>` : ''; }).join('');
+  return `
+    <div class="beam beam-tl"></div><div class="beam beam-tr"></div><div class="beam beam-bl"></div><div class="beam beam-br"></div>
+    <div class="text-vignette"></div>
+    <div class="welcome-brand"><svg viewBox="0 0 120 97" aria-hidden="true" focusable="false"><use href="#logo-duelio"/></svg>DUELIO</div>
+    <h1 class="welcome-title">Qui est le meilleur<em>&nbsp;?</em></h1>
+    <p class="welcome-tagline">Mbappé ou Haaland, Pelé ou Maradona&nbsp;: les vraies statistiques tranchent, saison par saison.</p>
+    <button class="welcome-duel" type="button" data-aduel="${DUEL_ACCUEIL}" aria-label="Ouvrir le duel ${d.a.label} contre ${d.b.label}">
+      <div class="wd-head">${joueur(d.a, 'wd-a')}<div class="wd-vs">VS</div>${joueur(d.b, 'wd-b')}</div>
+      <div class="wd-stats"></div>
+      <div class="wd-saison"></div>
+    </button>
+    <button class="welcome-cta" type="button">Comparer mes joueurs</button>
+    <div class="welcome-duels">${puces}</div>
+    <div class="welcome-foot">55 000 joueurs et 140 légendes, de Yashin à Mbappé</div>`;
+}
+function fermerAccueil(){
+  const screen = document.getElementById('welcomeScreen');
+  if(screen.classList.contains('leaving') || screen.classList.contains('gone')) return;
+  try{ localStorage.setItem('duelio_welcomed','1'); }catch(e){}
+  screen.classList.add('leaving');
+  document.body.classList.remove('accueil-visible');
+  setTimeout(()=>{ screen.classList.add('gone'); }, 420);   // suit la durée de l'animation
+}
+// Un duel lancé depuis l'accueil : l'écran se retire et le comparatif se remplit.
+function lancerDuelDepuisAccueil(i){
+  const d = SUGGESTED_DUELS[i]; if(!d) return;
+  fermerAccueil();
+  prechargerDuel(d);
+  loadSuggestedDuel(d, (msg, isErr)=>{
+    tutoStatus = { msg: msg || '', err: !!isErr };
+    const st = document.getElementById('tutoStatus');
+    if(st){ st.textContent = tutoStatus.msg; st.classList.toggle('error', tutoStatus.err); }
+    if(isErr || !msg) setTimeout(()=>document.querySelectorAll('[data-tduel]').forEach(c=>c.disabled=false), 0);
   });
-});
+}
+(function monterAccueil(){
+  const html = accueilHtml();
+  document.querySelectorAll('#welcomeScreen .welcome-content').forEach(el => { el.innerHTML = html; });
+  document.querySelectorAll('#welcomeScreen .welcome-cta').forEach(btn => btn.addEventListener('click', fermerAccueil));
+  document.querySelectorAll('#welcomeScreen [data-aduel]').forEach(btn => btn.addEventListener('click', ()=> lancerDuelDepuisAccueil(parseInt(btn.dataset.aduel, 10))));
+})();
+// Les chiffres du duel en vitrine : poste et club sous les noms, trois statistiques
+// de la saison en bras de fer. Rien n'est inventé : si les fiches ne viennent pas,
+// la vitrine reste les deux portraits et le VS.
+async function alimenterAccueil(){
+  const screen = document.getElementById('welcomeScreen');
+  if(screen.classList.contains('gone')) return;
+  const d = SUGGESTED_DUELS[DUEL_ACCUEIL];
+  for(let i = 0; i < 60 && !PLAYER_INDEX.loaded; i++) await sleep(100);
+  const legers = [d.a, d.b].map(side => joueurParId(side.id));
+  if(legers.some(p => !p)) return;
+  const pl = legers.map(ensurePlayerInList).map(id => PLAYERS.find(x => x.id === id));
+  pl.forEach(p => document.querySelectorAll(`#welcomeScreen [data-sub="${p.apiId}"]`).forEach(el => { el.textContent = [p.posLabel, p.club].filter(Boolean).join(' · '); }));
+  await Promise.all(pl.map(p => loadPlayerStats(p)));
+  if(screen.classList.contains('gone') || slots.some(Boolean)) return;
+  const cles = [['appearances', 'Matchs joués'], ['buts', 'Buts'], ['passesDec', 'Passes décisives']];
+  const lignes = cles.map(([k, label]) => {
+    const a = Number(getStatValue(pl[0], k)) || 0, b = Number(getStatValue(pl[1], k)) || 0, tot = a + b;
+    return { label, tA: fmtNombre(a), tB: fmtNombre(b), part: tot > 0 ? Math.max(6, Math.min(94, a / tot * 100)) : 50, winA: a > b, winB: b > a };
+  });
+  if(!lignes.some(l => l.tA !== '0' || l.tB !== '0')) return;
+  const info = getStatSource(pl[0]);
+  const saison = info && info.season ? `Saison <b>${seasonLabel(info.season)}</b> · en club` : '';
+  const html = lignes.map((l, i) => `
+      <div class="wd-row" style="animation-delay:${i * 80}ms">
+        <span class="v a ${l.winA ? 'win' : ''}">${l.tA}</span><span class="lbl">${escapeHtml(l.label)}</span><span class="v b ${l.winB ? 'win' : ''}">${l.tB}</span>
+        <span class="wd-bar"><i class="a" data-w="${l.part.toFixed(1)}"></i><i class="b" data-w="${(100 - l.part).toFixed(1)}"></i></span>
+      </div>`).join('');
+  document.querySelectorAll('#welcomeScreen .wd-stats').forEach(el => { el.innerHTML = html; });
+  document.querySelectorAll('#welcomeScreen .wd-saison').forEach(el => { el.innerHTML = saison; });
+  requestAnimationFrame(()=> requestAnimationFrame(()=> document.querySelectorAll('#welcomeScreen .wd-bar i').forEach(i => { i.style.width = i.dataset.w + '%'; })));
+}
 // L'écran d'accueil n'est montré qu'à la première visite : ensuite on arrive directement sur le comparatif
 (function skipWelcomeIfSeen(){
   let seen = false;
@@ -9672,6 +9767,7 @@ try{ console.log('%cDuelio', 'font-weight:bold;color:#2DD4BF',
   renderAll();
   chargerLegendes().then(()=>{ if(LEGENDES.chargees) renderAll(); });
   loadPlayerIndex();
+  alimenterAccueil().catch(e => console.warn('accueil :', e));
 })();
 </script>
 
