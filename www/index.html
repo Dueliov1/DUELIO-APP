@@ -3887,8 +3887,45 @@ function nettoyerCarriere(s){
       if(!m && ((go.total || 0) > 0 || (go.assists || 0) > 0)) return false;
       // Minutes négatives (3 lignes dans la base) : la source s'est trompée, on oublie la valeur.
       if(typeof g.minutes === 'number' && g.minutes < 0) g.minutes = null;
+      // Autres impossibilités relevées par l'audit : cartons négatifs, plus de deux jaunes
+      // par match, plus de titularisations que de matchs. On efface ou on borne, sans inventer.
+      const ca = b.cards || {};
+      if(typeof ca.red === 'number' && ca.red < 0) ca.red = null;
+      if(typeof ca.yellow === 'number' && (ca.yellow < 0 || (m && ca.yellow > m * 2))) ca.yellow = null;
+      if(typeof g.lineups === 'number' && m && g.lineups > m) g.lineups = m;
       return true;
     });
+    /* La source répète parfois la même compétition pour le même club dans la même saison
+     * (845 lignes : une fois avec l'identifiant de la compétition, une fois sans, ou deux
+     * fois à l'identique). Additionnées, elles comptaient deux fois la coupe. On garde
+     * une seule ligne par club et compétition : celle qui a l'identifiant, puis la plus
+     * complète (minutes, puis matchs). */
+    {
+      const parCle = new Map();
+      propre[cle].forEach((b, i) => {
+        const k = `${(b.team || {}).id}|${normalizeSearch((b.league || {}).name || '')}`;
+        if(!parCle.has(k)) parCle.set(k, []);
+        parCle.get(k).push(i);
+      });
+      const aJeter = new Set();
+      for(const idxs of parCle.values()){
+        if(idxs.length < 2) continue;
+        const score = i => { const b = propre[cle][i], g = b.games || {}; return ((b.league || {}).id != null ? 1e9 : 0) + (g.minutes || 0) * 1000 + (g.appearences || 0); };
+        const garde = idxs.slice().sort((x, y) => score(y) - score(x))[0];
+        // Ce que la ligne gardée ignore (minutes, note…), le doublon le sait parfois.
+        const G = propre[cle][garde];
+        for(const i of idxs){
+          if(i === garde) continue;
+          const D = propre[cle][i];
+          for(const grp of ['games', 'goals', 'cards', 'shots', 'passes']){
+            if(!D[grp]) continue; G[grp] = G[grp] || {};
+            for(const ch of Object.keys(D[grp])) if(G[grp][ch] == null && D[grp][ch] != null) G[grp][ch] = D[grp][ch];
+          }
+          aJeter.add(i);
+        }
+      }
+      if(aJeter.size) propre[cle] = propre[cle].filter((b, i) => !aJeter.has(i));
+    }
     /* Passes ou buts d'un autre club recopiés sur une ligne d'un ou deux matchs : Palmer
      * crédité de 11 passes en 1 match à City (ses 11 passes de Chelsea), Grifo de 8 passes
      * en 1 match à Hoffenheim… On efface la valeur quand elle dépasse ce qu'un match permet
