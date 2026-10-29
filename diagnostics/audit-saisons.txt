@@ -1,20 +1,8 @@
-Audités : 5002 ; conformes : 4988 ; avec saisons manquantes : 14 ; avec saisons en trop : 0 ; sans réponse : 0
+Audités : 1500 ; conformes : 1498 ; avec saisons manquantes : 2 ; avec saisons en trop : 0 ; sans réponse : 0
 
 === SAISONS MANQUANTES (la source les connaît, pas notre fiche) ===
 10065 Jean Irmer : manque 2011
 10367 Vinícius Lopes : manque 2018
-1840 Wallace : manque 2012
-195091 Matheus Pereira : manque 2019
-20405 Rúben Lameiras : manque 2013,2014
-2489 L. Díaz : manque 2013,2014
-30435 D. Kulusevski : manque 2026
-325717 André Luiz : manque 2020
-41104 João Palhinha : manque 2012
-41173 Rúben Semedo : manque 2012
-41174 Jonathan Buatu : manque 2013
-41259 Charles : manque 2012
-41293 Helton Leite : manque 2008
-41587 Nuno Santos : manque 2014
 
 === SAISONS EN TROP (notre fiche les a, la source ne les liste pas) ===
 
