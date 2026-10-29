@@ -7650,10 +7650,10 @@ async function dessinerImageDePartage(btn){
 
   const S = (W/440) * (shareFormat==='story' ? 1 : 0.56); // maquette de 440px de large, compressée en carré
 
-  if(n === 2 && shareStyle !== 'affiche'){
+  if(shareStyle !== 'affiche'){
     const ctxC = calque.getContext('2d'); ctxC.imageSmoothingEnabled = true; ctxC.imageSmoothingQuality = 'high';
     const o = { ctx: ctxC, ctxFond, calque, canvas, W, H, S, filled, list, btn };
-    await (shareStyle === 'stade' ? dessinerStade(o) : dessinerPapier(o));
+    await (n !== 2 ? dessinerGrille(o) : shareStyle === 'stade' ? dessinerStade(o) : dessinerPapier(o));
     return;
   }
 
@@ -7690,266 +7690,7 @@ async function dessinerImageDePartage(btn){
     await dessinerAfficheDuel({ ctx, ctxFond, calque, canvas, W, H, S, filled, list, btn });
     return;
   }
-  const padTop = H*(shareFormat==='story' ? 0.025 : 0.014);
-  let y = padTop + 12*S;
-
-  // --- Repère coin haut-droit : la petite barre dégradée, seule. Le triptyque
-  // anglais qui l'accompagnait (COMPARE / ANALYSE / DÉCIDE) n'apprenait rien. ---
-  const cornerRightX = W - 24*S;
-  const barW = 44*S, barH = 3*S;
-  const barGrad = ctx.createLinearGradient(cornerRightX-barW, 0, cornerRightX, 0);
-  barGrad.addColorStop(0,'#2fe08a'); barGrad.addColorStop(1,'#4ad2f0');
-  roundRect(ctx, cornerRightX-barW, y, barW, barH, barH/2);
-  ctx.fillStyle = barGrad; ctx.fill();
-  ctx.textAlign = 'left';
-
-  // --- Logo : les deux ballons qui se chevauchent (vraie identité de marque) ---
-  const logoImg = await new Promise(resolve=>{
-    const img = new Image();
-    img.onload = ()=>resolve(img);
-    img.onerror = ()=>resolve(null);
-    img.src = DUELIO_ICON_DATA_URI;
-  });
-  const logoH = 42*S;
-  const logoW = logoImg ? logoH*(logoImg.width/logoImg.height) : logoH*1.237;
-  if(logoImg) ctx.drawImage(logoImg, W/2-logoW/2, y, logoW, logoH);
-  y += logoH + 6*S;
-
-  // --- Wordmark + tagline (dégradé cyan → vert) ---
-  ctx.font = `800 ${24*S}px 'Plus Jakarta Sans', sans-serif`;
-  ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-  y += 21*S;
-  ctx.fillText('DUELIO', W/2, y);
-  y += 4*S;
-  const tagGrad = ctx.createLinearGradient(W/2-90*S,0,W/2+90*S,0);
-  tagGrad.addColorStop(0,'#4ad2f0'); tagGrad.addColorStop(1,'#2fe08a');
-  ctx.font = `600 ${8*S}px 'Plus Jakarta Sans', sans-serif`;
-  ctx.fillStyle = tagGrad;
-  y += 12*S;
-  ctx.fillText(teamScope==='nation' ? 'S T A T S   S É L E C T I O N' : teamScope==='friendly' ? 'M A T C H S   A M I C A U X' : 'S T A T S   F O O T B A L L', W/2, y);
-  ctx.textAlign = 'left';
-
-  // --- Cartes joueurs (grille) + badge VS ---
-  y += 22*S;
-  const imgs = await Promise.all(filled.map(p=>loadImageForCanvas(p)));
-  const gap = 14*S;
-  const duelW = W - 48*S;
-  const duelX = 24*S;
-  const cardW = (duelW - gap*(n-1)) / n;
-  const shotH = 170*S;
-  const metaH = 76*S;
-  const cardH = shotH + metaH;
-  const cardTop = y;
-
-  filled.forEach((p,i)=>{
-    const cx = duelX + (cardW+gap)*i;
-    const isB = n===2 ? i===1 : (i%2===1);
-    const borderColor = isB ? 'rgba(47,224,138,.55)' : 'rgba(74,210,240,.55)';
-    const bgTop = isB ? 'rgba(18,84,64,.32)' : 'rgba(20,70,120,.35)';
-    const bgBottom = 'rgba(6,26,48,.7)';
-
-    roundRect(ctx, cx, cardTop, cardW, cardH, 20*S);
-    const cardBg = ctx.createLinearGradient(0,cardTop,0,cardTop+cardH);
-    cardBg.addColorStop(0,bgTop); cardBg.addColorStop(1,bgBottom);
-    ctx.fillStyle = cardBg; ctx.fill();
-
-    // Portrait carré (coins arrondis) : la photo telle que fournie, centrée, sans recadrage
-    // (même logique que object-fit:contain utilisé partout ailleurs dans l'appli).
-    const { img } = imgs[i] || {};
-    const boxSize = Math.min(cardW, shotH) * 0.72;
-    const boxCX = cx + cardW/2, boxCY = cardTop + shotH*0.5;
-    const boxX = boxCX - boxSize/2, boxY = boxCY - boxSize/2;
-    ctx.save();
-    roundRect(ctx, boxX, boxY, boxSize, boxSize, 10*S);
-    ctx.clip();
-    ctx.fillStyle = '#0c1a30'; ctx.fillRect(boxX, boxY, boxSize, boxSize);
-    if(img){
-      const s = Math.min(boxSize/img.width, boxSize/img.height);
-      const iw = img.width*s, ih = img.height*s;
-      ctx.drawImage(img, boxCX-iw/2, boxCY-ih/2, iw, ih);
-    }
-    ctx.restore();
-    ctx.lineWidth = 3*S; ctx.strokeStyle = borderColor;
-    roundRect(ctx, boxX, boxY, boxSize, boxSize, 10*S);
-    ctx.stroke();
-
-    ctx.font = `700 ${(n<=2?19:14)*S}px 'Plus Jakarta Sans', sans-serif`;
-    ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.textBaseline='alphabetic';
-    const lastName = shortName(p).toUpperCase();
-    { let nfs = (n<=2?19:14)*S; ctx.font = `700 ${nfs}px 'Plus Jakarta Sans', sans-serif`;
-      while(ctx.measureText(lastName).width > cardW-14*S && nfs > 8*S){ nfs -= 0.5*S; ctx.font = `700 ${nfs}px 'Plus Jakarta Sans', sans-serif`; } }
-    ctx.fillText(lastName, cx+cardW/2, cardTop+shotH+metaH*0.36);
-    ctx.font = `500 ${(n<=2?11:9)*S}px 'Plus Jakarta Sans', sans-serif`;
-    ctx.fillStyle = '#93a9c2';
-    ctx.fillText((p.posLabel||'').toUpperCase(), cx+cardW/2, cardTop+shotH+metaH*0.60);
-    // Contexte des chiffres : saison et club, carrière, ou âge
-    const ctxLabel = (playerContextLabel(p) + (compareBasis==='current' && p.club && getStatSource(p).season ? ' · '+p.club : '')).toUpperCase();
-    if(ctxLabel){
-      let cfs = (n<=2?8.5:7)*S;
-      ctx.font = `700 ${cfs}px 'Plus Jakarta Sans', sans-serif`;
-      while(ctx.measureText(ctxLabel).width > cardW-16*S && cfs > 5*S){ cfs -= 0.5*S; ctx.font = `700 ${cfs}px 'Plus Jakarta Sans', sans-serif`; }
-      ctx.fillStyle = '#4ad2f0';
-      ctx.fillText(ctxLabel, cx+cardW/2, cardTop+shotH+metaH*0.84);
-    }
-
-    roundRect(ctx, cx, cardTop, cardW, cardH, 20*S);
-    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(255,255,255,.10)'; ctx.stroke();
-  });
-  ctx.textAlign = 'left';
-
-  if(n===2){
-    const vsCX = duelX+cardW+gap/2, vsCY = cardTop+cardH*0.44, vsR = 26*S;
-    ctx.beginPath(); ctx.arc(vsCX,vsCY,vsR,0,Math.PI*2);
-    ctx.fillStyle = '#071c33'; ctx.fill();
-    ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(160,200,235,.5)'; ctx.stroke();
-    ctx.font = `700 ${15*S}px 'Plus Jakarta Sans', sans-serif`;
-    ctx.fillStyle = '#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('VS', vsCX, vsCY+1);
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-  }
-
-  // --- Statistiques : pilules blanches (valeur seule) de chaque côté, nom de la stat écrit une seule fois au centre ---
-  const statsTop = cardTop + cardH + 18*S;
-  // En story, le bloc n'occupait que les deux tiers supérieurs : des pilules
-  // plus hautes, et le tout est recentré verticalement à la fin.
-  const story = shareFormat==='story';
-  let pillH = (n===2 ? (story ? 60 : 44) : (story ? 52 : 40))*S, pillGap = (n===2 ? (story ? 18 : 12) : (story ? 10 : 6))*S;
-  const labelBand = n===2 ? 0 : 26*S; // à 3-4 joueurs, le nom de la stat est écrit au-dessus de la rangée
-  /* Le verdict et la marque ont besoin de 70 S sous la dernière ligne. Si les
-   * pilules ne laissent pas cette place — cinq stats en story — elles
-   * rétrécissent jusqu'à la laisser. Avant ce garde, le verdict se superposait
-   * à la cinquième ligne. */
-  const placeDispo = (H - 14*S - 70*S) - (cardTop + cardH + 18*S);
-  const hauteurVoulue = list.length*(pillH + pillGap + labelBand) - pillGap + 4*S;
-  if(hauteurVoulue > placeDispo && list.length){
-    const parLigne = (placeDispo - 4*S + pillGap) / list.length;
-    pillH = Math.max(34*S, parLigne - pillGap - labelBand);
-    if(pillH + pillGap + labelBand > parLigne) pillGap = Math.max(4*S, parLigne - pillH - labelBand);
-  }
-  const rowPitch = pillH + pillGap + labelBand;
-  const statsH = list.length*rowPitch - pillGap + 4*S;
-
-  function drawPill(px, py, pw, text, maxFs, isB, frac){
-    // Case quasi transparente (effet verre), teintée comme la carte du joueur : cyan à gauche, vert à droite,
-    // avec la valeur et, dessous, la barre de progression (proportion par rapport au meilleur joueur)
-    let fs = maxFs;
-    ctx.font = `700 ${fs}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
-    while(ctx.measureText(text).width > pw - 16*S && fs > 8*S){ fs -= 0.5*S; ctx.font = `700 ${fs}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; }
-    ctx.fillStyle = '#ffffff'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(text, px+pw/2, py+pillH*0.36);
-    const barW = pw - 28*S, barH = 5*S, barX = px + 14*S, barY = py + pillH - 14*S;
-    roundRect(ctx, barX, barY, barW, barH, barH/2);
-    ctx.fillStyle = 'rgba(120,170,215,.22)'; ctx.fill();
-    const fw = Math.max(barH, barW*Math.max(0, Math.min(1, frac||0)));
-    const g = ctx.createLinearGradient(barX, 0, barX+barW, 0);
-    if(isB){ g.addColorStop(0,'#1f9e6a'); g.addColorStop(1,'#2fe08a'); } else { g.addColorStop(0,'#2f7fe0'); g.addColorStop(1,'#4ad2f0'); }
-    const fx = isB ? barX+barW-fw : barX; // la barre de droite se remplit depuis la droite
-    roundRect(ctx, fx, barY, fw, barH, barH/2);
-    ctx.fillStyle = g; ctx.fill();
-  }
-  function drawLabelBadge(cx, cy, maxW, text, fs, maxLines){
-    // Nom de la stat mis en évidence : badge plein (dégradé cyan -> vert), texte marine en majuscules
-    ctx.font = `800 ${fs}px 'Plus Jakarta Sans', sans-serif`;
-    const t = text.toUpperCase();
-    let lines = wrapLabel(t, maxW - 22*S);
-    if(lines.length > maxLines) lines = lines.slice(0,maxLines);
-    const lh = fs*1.2;
-    const textW = Math.max(...lines.map(l=>ctx.measureText(l).width));
-    ctx.fillStyle = '#9fe9f5'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    lines.forEach((ln,li)=> ctx.fillText(ln, cx, cy - (lines.length-1)*lh/2 + li*lh + 1));
-  }
-  function wrapLabel(text, maxW){
-    const words = text.split(' '); const lines = []; let cur = '';
-    words.forEach(w=>{
-      const t = cur ? cur+' '+w : w;
-      if(ctx.measureText(t).width > maxW && cur){ lines.push(cur); cur = w; } else cur = t;
-    });
-    if(cur) lines.push(cur);
-    return lines.slice(0,3);
-  }
-
-  // Décompte des lignes gagnées, pour écrire un verdict en bas de l'image. Des chiffres
-  // alignés ne disent pas qui gagne ; une phrase, si — et c'est ce qui fait réagir
-  // quelqu'un qui croise l'image dans un fil.
-  let gagneesA = 0, gagneesB = 0;
-
-  list.forEach((r,ri)=>{
-    const rowY = statsTop + ri*rowPitch;
-    const vals = filled.map(fp=>{
-      if(compareBasis==='nation') return fp[r.key];
-      return statUnknown(fp, r.key) ? null : getStatValue(fp, r.key);
-    });
-    const txt = v => v===null ? '—' : `${fmtNombre(v)}${fmtSuffixe(r.suffix)}`.trim();
-    const maxV = Math.max(...vals.filter(v=>v!==null).map(Number).filter(x=>!isNaN(x)), 0.0001);
-    const fr = v => (Number(v)||0)/maxV;
-
-    if(n===2){
-      // Une seule ligne par stat : part du centre, plus longue du côté du meilleur joueur
-      const blockW = duelW*0.86, blockX = duelX + (duelW-blockW)/2;
-      const barCY = rowY + 36*S, barH = 12*S;
-      drawLabelBadge(W/2, rowY + 13*S, duelW*0.8, r.label, 9*S, 1);
-      ctx.font = `700 ${17*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
-      const valW = Math.max(ctx.measureText(txt(vals[0])).width, ctx.measureText(txt(vals[1])).width, 34*S) + 10*S;
-      ctx.fillStyle = '#ffffff'; ctx.textBaseline='middle';
-      ctx.textAlign='left';  ctx.fillText(txt(vals[0]), blockX, barCY);
-      ctx.textAlign='right'; ctx.fillText(txt(vals[1]), blockX+blockW, barCY);
-      const half = (blockW - valW*2)/2, cx0 = W/2, g0 = 0;
-      // Ligne pleine à 100 % (aucun vide) : chaque joueur occupe sa part proportionnelle de la ligne.
-      // Si une valeur est inconnue (« — »), la ligne reste neutre : pas de part inventée.
-      const unknownRow = vals[0]===null || vals[1]===null;
-      const nA = Math.max(0, Number(vals[0])||0), nB = Math.max(0, Number(vals[1])||0);
-      const tot = nA + nB, shareA = tot > 0 ? nA/tot : 0.5;
-      const x0 = cx0 - half, fullW = half*2, splitX = x0 + fullW*shareA;
-      if(unknownRow){
-        roundRect(ctx, x0, barCY-barH/2, fullW, barH, barH/2); ctx.fillStyle = 'rgba(120,170,215,.18)'; ctx.fill();
-        return;
-      }
-      // Le vert signale le MEILLEUR, comme partout ailleurs dans l'application. Avant,
-      // il marquait seulement le joueur de DROITE : sur une image partagée, le perdant
-      // ressortait en vert une ligne sur deux, et qui connaît l'appli lisait de travers.
-      const gagneA = r.lowerIsBetter ? (nA < nB) : (nA > nB);
-      const gagneB = r.lowerIsBetter ? (nB < nA) : (nB > nA);
-      if(gagneA) gagneesA++; else if(gagneB) gagneesB++;
-      const VERT = ['#2FE88A','#29C481'], NEUTRE = ['#3d9be8','#45bfee'];
-      const cg = gagneA ? VERT : NEUTRE, cd = gagneB ? VERT : NEUTRE;
-      const gl = ctx.createLinearGradient(x0,0,Math.max(splitX,x0+1),0); gl.addColorStop(0,cg[0]); gl.addColorStop(1,cg[1]);
-      const gr = ctx.createLinearGradient(splitX,0,Math.max(x0+fullW,splitX+1),0); gr.addColorStop(0,cd[0]); gr.addColorStop(1,cd[1]);
-      ctx.save();
-      roundRect(ctx, x0, barCY-barH/2, fullW, barH, barH/2); ctx.clip();
-      ctx.fillStyle = gl; ctx.fillRect(x0, barCY-barH/2, splitX-x0, barH);
-      ctx.fillStyle = gr; ctx.fillRect(splitX, barCY-barH/2, x0+fullW-splitX, barH);
-      ctx.restore();
-      // Délimitation nette entre les deux joueurs : trait blanc légèrement plus haut que la ligne
-      if(nA > 0 && nB > 0){
-        const dw = 3.5*S;
-        ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,.45)'; ctx.shadowBlur = 4*S;
-        ctx.fillStyle = '#ffffff';
-        roundRect(ctx, splitX-dw/2, barCY-barH/2-4*S, dw, barH+8*S, dw/2); ctx.fill();
-        ctx.restore();
-      }
-    }else{
-      // 3-4 joueurs : nom de la stat centré au-dessus, une pilule (valeur seule) sous chaque joueur
-      drawLabelBadge(W/2, rowY + labelBand*0.5 - 1*S, duelW*0.8, r.label, 8.5*S, 1);
-      vals.forEach((v,i)=> drawPill(duelX + (cardW+gap)*i, rowY + labelBand, cardW, txt(v), 15*S, i%2===1, fr(v)));
-    }
-  });
-  ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-
-  // --- Pied de page : la marque (le verdict « gagne X stats sur Y » a été retiré à la demande) ---
-  const marqueY = Math.min(statsTop + statsH + 34*S, H - 14*S);
-  // La marque était écrite en gris sombre, presque invisible sur une image faite pour
-  // circuler. Elle est maintenant lisible sans écraser le contenu.
-  ctx.font = `700 ${11.5*S}px 'Plus Jakarta Sans', sans-serif`;
-  ctx.fillStyle = '#A9CFC5'; ctx.textAlign='center';
-  ctx.fillText('D U E L I O', W/2, marqueY);   // la marque seule : duelio.app ne répond pas encore, et l'adresse voyage dans le texte du partage
-  ctx.textAlign = 'left';
-
-  // Composition : en story, le contenu est centré verticalement.
-  const basContenu = marqueY + 10*S;
-  const decalage = shareFormat==='story' ? Math.max(0, Math.round((H - basContenu - padTop) / 2)) : 0;
-  ctxFond.drawImage(calque, 0, decalage);
-  publierImage(canvas, btn, W, H);
+  await dessinerGrille({ ctx, ctxFond, calque, canvas, W, H, S, filled, list, btn });
 }
 
 /* ---------- L'affiche du duel (deux joueurs) ----------
@@ -8163,44 +7904,154 @@ async function dessinerAfficheDuel(o){
   publierImage(canvas, btn, W, H);
 }
 
-/* ---------- Commun aux styles ---------- */
-function lignesDuDuel(filled, list){
+
+/* ---------- La grille (trois ou quatre joueurs) ----------
+ * Même famille que le duel, dans le style choisi : une colonne par joueur, portrait rond
+ * cerclé de sa couleur, puis chaque statistique en ligne — le meilleur en vert, et sous
+ * chaque valeur une barre à l'échelle du meilleur. */
+function lignesDeGrille(filled, list){
   return list.map(r => {
     const vals = filled.map(fp => compareBasis==='nation' ? fp[r.key] : (statUnknown(fp, r.key) ? null : getStatValue(fp, r.key)));
     const txt = v => v===null || v===undefined ? '—' : `${fmtNombre(v)}${fmtSuffixe(r.suffix)}`.trim();
-    const nA = vals[0]==null ? null : Number(vals[0]), nB = vals[1]==null ? null : Number(vals[1]);
-    const connu = nA!==null && nB!==null && !isNaN(nA) && !isNaN(nB);
-    const gagneA = connu && (r.lowerIsBetter ? nA < nB : nA > nB), gagneB = connu && (r.lowerIsBetter ? nB < nA : nB > nA);
-    let part = .5;
-    if(connu && (Math.abs(nA) + Math.abs(nB)) > 0){ let a = Math.abs(nA), b = Math.abs(nB); if(r.lowerIsBetter){ const t = a + b; a = t - a; b = t - b; } part = Math.max(.06, Math.min(.94, a / (a + b))); }
-    return { label: r.label, tA: txt(vals[0]), tB: txt(vals[1]), connu, gagneA, gagneB, part };
+    const nums = vals.map(v => v==null ? null : Number(v)).map(v => v!==null && !isNaN(v) ? v : null);
+    const connus = nums.filter(v => v !== null);
+    const best = connus.length ? (r.lowerIsBetter ? Math.min(...connus) : Math.max(...connus)) : null;
+    const pire = connus.length ? (r.lowerIsBetter ? Math.max(...connus) : Math.min(...connus)) : null;
+    const egaux = connus.length < 2 || best === pire;
+    const part = nums.map(v => {
+      if(v === null || best === null) return 0;
+      if(r.lowerIsBetter) return v > 0 ? Math.min(1, best / v) : 1;
+      return best > 0 ? Math.max(0, Math.min(1, v / best)) : 0;
+    });
+    return { label: r.label, t: vals.map(txt), gagne: nums.map(v => !egaux && v !== null && v === best), part };
   });
 }
-function rgbaDe(c, a){ const m = String(c).match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); return m ? `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})` : c; }
-function ajusterPolice(ctx, texte, maxW, fs, min, gabarit){
-  ctx.font = gabarit(fs);
-  while(ctx.measureText(texte).width > maxW && fs > min){ fs -= 0.5; ctx.font = gabarit(fs); }
-  return fs;
-}
-function logoDuelio(){ return new Promise(res => { const im = new Image(); im.onload = ()=>res(im); im.onerror = ()=>res(null); im.src = DUELIO_ICON_DATA_URI; }); }
-function sousTitreDuel(filled){
-  const ctxA = playerContextLabel(filled[0]) || '', ctxB = playerContextLabel(filled[1]) || '';
-  const memeContexte = ctxA === ctxB;
-  const modeTxt = compareBasis==='career' ? 'CARRIÈRE' : (compareBasis==='ageCumul' || compareBasis==='seasonCumul') ? 'CUMUL' : compareBasis==='age' ? `À ${compareAgeValue} ANS` : 'SAISON';
-  const perim = teamScope==='nation' ? 'SÉLECTION' : teamScope==='all' ? 'CLUB + SÉLECTION' : teamScope==='friendly' ? 'AMICAUX' : 'CLUB';
-  return { memeContexte, texte: (memeContexte && ctxA ? ctxA.toUpperCase() : modeTxt) + '   ·   ' + perim,
-           periode: p => memeContexte ? '' : (playerContextLabel(p) || '').replace(/^Saison /, '').replace(/ · \d+ saisons?$/, '').toUpperCase() };
+async function dessinerGrille(o){
+  const { ctx, ctxFond, calque, canvas, W, H, filled, list, btn } = o;
+  const story = shareFormat === 'story', n = filled.length;
+  const S = o.S * (story ? 1.3 : 1.45);
+  const COUL = filled.map(p => SLOT_COLORS[p._idx] || '#38BDF8');
+  const papier = shareStyle === 'papier', stade = shareStyle === 'stade';
+  const T = papier ? { texte: '#111318', sec: '#6B6F7A', vert: '#1FBF6E', filet: '#D9D2C3', barre: '#E7E1D3', panneau: null, cadre: '#111318' }
+          : stade  ? { texte: '#fff', sec: 'rgba(255,255,255,.65)', vert: '#2FE88A', filet: 'rgba(255,255,255,.1)', barre: 'rgba(255,255,255,.14)', panneau: 'rgba(8,14,30,.88)', cadre: 'rgba(255,255,255,.22)' }
+          :          { texte: '#fff', sec: 'rgba(255,255,255,.65)', vert: '#2FE88A', filet: 'rgba(255,255,255,.08)', barre: 'rgba(255,255,255,.14)', panneau: 'rgba(8,16,34,.55)', cadre: 'rgba(255,255,255,.18)' };
+  const ombre = (fn, flou, c) => { if(papier){ fn(); return; } ctx.save(); ctx.shadowColor = c || 'rgba(0,0,0,.55)'; ctx.shadowBlur = flou; fn(); ctx.restore(); };
+  const TITRE = f => `800 ${f}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`, TEXTE = (f, w) => `${w||700} ${f}px 'Plus Jakarta Sans', sans-serif`;
+
+  // 1. Le fond, selon le style.
+  let m = 22*S;
+  if(papier) m = peindrePapier(ctxFond, W, H, S, T.cadre);
+  else if(stade) peindrePelouse(ctxFond, W, H, S, story);
+  else {
+    // L'affiche : la photo de stade est déjà posée ; la nuit, un halo par joueur, un grain.
+    ctxFond.fillStyle = 'rgba(5,11,24,.5)'; ctxFond.fillRect(0, 0, W, H);
+    const voile = ctxFond.createLinearGradient(0, 0, 0, H); voile.addColorStop(0, 'rgba(5,11,24,0)'); voile.addColorStop(1, 'rgba(5,11,24,.8)');
+    ctxFond.fillStyle = voile; ctxFond.fillRect(0, 0, W, H);
+    const g = document.createElement('canvas'); g.width = 180; g.height = 180; const gc = g.getContext('2d');
+    const d = gc.createImageData(180, 180); for(let k = 0; k < d.data.length; k += 4){ const v = 110 + Math.random()*110|0; d.data[k] = d.data[k+1] = d.data[k+2] = v; d.data[k+3] = 255; }
+    gc.putImageData(d, 0, 0);
+    ctxFond.save(); ctxFond.globalCompositeOperation = 'overlay'; ctxFond.globalAlpha = .14; ctxFond.fillStyle = ctxFond.createPattern(g, 'repeat'); ctxFond.fillRect(0, 0, W, H); ctxFond.restore();
+  }
+
+  // 2. En-tête.
+  let y = m + (papier ? 10 : 6)*S;
+  const logoImg = papier ? null : await logoDuelio();
+  const logoH = 22*S, logoW = logoImg ? logoH*(logoImg.width/logoImg.height) : 0;
+  ctx.font = TITRE(13*S); const motW = ctx.measureText('DUELIO').width;
+  const ex = W/2 - (logoW + (logoImg ? 7*S : 0) + motW)/2;
+  if(logoImg) ctx.drawImage(logoImg, ex, y, logoW, logoH);
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ombre(()=>{ ctx.fillStyle = T.texte; ctx.fillText('DUELIO', ex + logoW + (logoImg ? 7*S : 0), y + logoH/2 + 1*S); }, 8*S);
+  const st = sousTitreDuel(filled);
+  ctx.font = TEXTE(7.5*S); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ombre(()=>{ ctx.fillStyle = T.sec; ctx.fillText(st.texte, W/2, y + logoH + 13*S); }, 6*S);
+  y += logoH + 24*S;
+  if(papier){ ctx.strokeStyle = T.cadre; ctx.lineWidth = 1.5*S; ctx.beginPath(); ctx.moveTo(m + 16*S, y); ctx.lineTo(W - m - 16*S, y); ctx.stroke(); y += 14*S; }
+
+  // 3. Une colonne par joueur.
+  const imgs = await Promise.all(filled.map(p => loadImageForCanvas(p)));
+  const gap = 8*S, cw = (W - 2*m - 24*S - gap*(n - 1)) / n, x0 = m + 12*S;
+  const cxDe = i => x0 + i*(cw + gap) + cw/2;
+  const R = Math.min(cw*0.36, (n === 3 ? 46 : 38)*S), cy = y + R + 6*S;
+  filled.forEach((p, i) => {
+    const cx = cxDe(i), { img } = imgs[i] || {};
+    if(!papier){
+      ombre(()=>{ ctx.beginPath(); ctx.arc(cx, cy, R + 4*S, 0, Math.PI*2); ctx.fillStyle = COUL[i]; ctx.fill(); }, 22*S, stade ? 'rgba(0,0,0,.5)' : rgbaDe(COUL[i], .9));
+      ctx.beginPath(); ctx.arc(cx, cy, R + 1.5*S, 0, Math.PI*2); ctx.fillStyle = stade ? '#fff' : '#050B18'; ctx.fill();
+    }
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.clip();
+    ctx.fillStyle = papier ? '#E7E1D3' : '#0B1730'; ctx.fillRect(cx - R, cy - R, 2*R, 2*R);
+    if(img){ const sc = Math.max((2*R)/img.width, (2*R)/img.height) * 1.02; const iw = img.width*sc, ih = img.height*sc; ctx.drawImage(img, cx - iw/2, cy - R - Math.max(0, (ih - 2*R)*0.15), iw, ih); }
+    ctx.restore();
+    if(papier){
+      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.lineWidth = 2.5*S; ctx.strokeStyle = T.cadre; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx + R*0.72, cy - R*0.72, 6*S, 0, Math.PI*2); ctx.fillStyle = COUL[i]; ctx.fill(); ctx.lineWidth = 2*S; ctx.strokeStyle = T.cadre; ctx.stroke();
+    } else { ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.lineWidth = 1.5*S; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke(); }
+  });
+  y = cy + R + 14*S;
+  // Noms, poste · club, et la période de chacun si elles diffèrent.
+  let hNoms = 0;
+  filled.forEach((p, i) => {
+    const cx = cxDe(i), maxW = cw - 6*S;
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    const nom = shortName(p).toUpperCase();
+    const fs = ajusterPolice(ctx, nom, maxW, (n === 3 ? 12 : 10)*S, 6*S, TITRE);
+    ombre(()=>{ ctx.fillStyle = T.texte; ctx.fillText(nom, cx, y + fs); }, 8*S);
+    let h = fs + 11*S;
+    const sous = [p.posLabel, p.club].filter(Boolean).join(' · ').toUpperCase();
+    if(sous){ ajusterPolice(ctx, sous, maxW, 6.5*S, 4.5*S, f => TEXTE(f)); ombre(()=>{ ctx.fillStyle = papier ? T.sec : COUL[i]; ctx.fillText(sous, cx, y + h); }, 6*S); h += 9*S; }
+    const per = st.periode(p);
+    if(per){ ajusterPolice(ctx, per, maxW, 6.5*S, 4.5*S, f => TEXTE(f)); ombre(()=>{ ctx.fillStyle = T.sec; ctx.fillText(per, cx, y + h); }, 6*S); h += 9*S; }
+    hNoms = Math.max(hNoms, h);
+  });
+  y += hNoms + 10*S;
+
+  // 4. Les statistiques, ligne par ligne.
+  const lignes = lignesDeGrille(filled, list), nb = lignes.length;
+  const basMax = H - m - 30*S, padP = 10*S;
+  let pitch = (story ? 44 : 38)*S;
+  if(nb && y + nb*pitch + 2*padP > basMax) pitch = Math.max(26*S, (basMax - y - 2*padP) / nb);
+  const px = m + 4*S, pw = W - 2*px, ph = nb*pitch + 2*padP;
+  if(nb && T.panneau){
+    ombre(()=>{ roundRect(ctx, px, y, pw, ph, 14*S); ctx.fillStyle = T.panneau; ctx.fill(); }, 24*S);
+    roundRect(ctx, px, y, pw, ph, 14*S); ctx.lineWidth = 1.5*S; ctx.strokeStyle = T.cadre; ctx.stroke();
+    // Le bandeau de couleurs : la part de chaque joueur.
+    ctx.save(); roundRect(ctx, px, y, pw, ph, 14*S); ctx.clip();
+    filled.forEach((p, i) => { ctx.fillStyle = COUL[i]; ctx.fillRect(px + i*(pw/n), y, pw/n + 1, 4*S); });
+    ctx.restore();
+  }
+  lignes.forEach((l, ri) => {
+    const ry = y + padP + ri*pitch;
+    if(ri){ ctx.strokeStyle = T.filet; ctx.lineWidth = 1*S; ctx.beginPath(); ctx.moveTo(px + 12*S, ry); ctx.lineTo(px + pw - 12*S, ry); ctx.stroke(); }
+    ctx.font = TEXTE(7*S); ctx.fillStyle = T.sec; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(l.label.toUpperCase(), W/2, ry + 10*S);
+    const vy = ry + pitch*0.56, by = ry + pitch - 7*S;
+    filled.forEach((p, i) => {
+      const cx = cxDe(i), gagne = l.gagne[i];
+      ajusterPolice(ctx, l.t[i], cw - 8*S, (gagne ? 17 : 14)*S, 7*S, TITRE);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      if(gagne) ombre(()=>{ ctx.fillStyle = T.vert; ctx.fillText(l.t[i], cx, vy); }, 12*S, rgbaDe(T.vert, .8));
+      else { ctx.fillStyle = papier ? T.texte : 'rgba(255,255,255,.9)'; ctx.fillText(l.t[i], cx, vy); }
+      // La barre, à l'échelle du meilleur.
+      const bw = cw - 16*S, bh = 4*S, bx = cx - bw/2;
+      roundRect(ctx, bx, by - bh/2, bw, bh, bh/2); ctx.fillStyle = T.barre; ctx.fill();
+      const fw = bw*l.part[i];
+      if(fw > 0){ roundRect(ctx, bx, by - bh/2, Math.max(bh, fw), bh, bh/2); ctx.fillStyle = gagne ? T.vert : COUL[i]; ctx.fill(); }
+    });
+  });
+  ctx.textBaseline = 'alphabetic';
+  y += ph + 4*S;
+
+  // 5. Pied.
+  ctx.font = TEXTE(7*S); ctx.fillStyle = papier ? T.sec : 'rgba(255,255,255,.5)'; ctx.textAlign = 'center';
+  const piedY = Math.min(y + 14*S, H - m - 8*S);
+  ctx.fillText('D U E L I O   ·   C O M P A R E   T E S   J O U E U R S', W/2, piedY);
+  const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - m - 6*S) / 2));
+  ctxFond.drawImage(calque, 0, decalage);
+  publierImage(canvas, btn, W, H);
 }
 
-/* ---------- Style « Stade » : la pelouse et le tableau d'affichage ----------
- * Une pelouse vue du ciel, tondue en bandes, avec ses lignes blanches ; les deux joueurs
- * cerclés de blanc de part et d'autre ; et, posé sur le terrain, un tableau d'affichage
- * sombre où chaque statistique s'affiche comme un score, le vainqueur en vert. */
-async function dessinerStade(o){
-  const { ctx, ctxFond, calque, canvas, W, H, S, filled, list, btn } = o;
-  const story = shareFormat === 'story';
-  const COUL = [SLOT_COLORS[filled[0]._idx] || '#38BDF8', SLOT_COLORS[filled[1]._idx] || '#FFB020'];
-  const VERT = '#2FE88A';
+function peindrePelouse(ctxFond, W, H, S, story){
   // Pelouse : bandes de tonte
   const bandes = story ? 12 : 8, hb = H / bandes;
   for(let i = 0; i < bandes; i++){ ctxFond.fillStyle = i % 2 ? '#1c6f36' : '#1f7a3b'; ctxFond.fillRect(0, i*hb, W, hb + 1); }
@@ -8223,6 +8074,74 @@ async function dessinerStade(o){
   // Vignette douce
   const vig = ctxFond.createRadialGradient(W/2, H/2, H*0.3, W/2, H/2, H*0.85); vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.35)');
   ctxFond.fillStyle = vig; ctxFond.fillRect(0, 0, W, H);
+
+}
+function peindrePapier(ctxFond, W, H, S, NOIR){
+  ctxFond.fillStyle = '#F5F1E8'; ctxFond.fillRect(0, 0, W, H);
+  // Un grain très léger
+  ctxFond.save(); ctxFond.globalAlpha = .05; ctxFond.fillStyle = '#000';
+  let g = 12345; for(let i = 0; i < W*H/900; i++){ g = (g*48271) % 2147483647; const x = g % W; g = (g*48271) % 2147483647; const yy = g % H; ctxFond.fillRect(x, yy, 2, 2); }
+  ctxFond.restore();
+  // Cadre
+  const m = 22*S;
+  ctxFond.strokeStyle = NOIR; ctxFond.lineWidth = 2*S; ctxFond.strokeRect(m, m, W - 2*m, H - 2*m);
+
+  return m;
+}
+/* ---------- Commun aux styles ---------- */
+function lignesDuDuel(filled, list){
+  return list.map(r => {
+    const vals = filled.map(fp => compareBasis==='nation' ? fp[r.key] : (statUnknown(fp, r.key) ? null : getStatValue(fp, r.key)));
+    const txt = v => v===null || v===undefined ? '—' : `${fmtNombre(v)}${fmtSuffixe(r.suffix)}`.trim();
+    const nA = vals[0]==null ? null : Number(vals[0]), nB = vals[1]==null ? null : Number(vals[1]);
+    const connu = nA!==null && nB!==null && !isNaN(nA) && !isNaN(nB);
+    const gagneA = connu && (r.lowerIsBetter ? nA < nB : nA > nB), gagneB = connu && (r.lowerIsBetter ? nB < nA : nB > nA);
+    let part = .5;
+    if(connu && (Math.abs(nA) + Math.abs(nB)) > 0){ let a = Math.abs(nA), b = Math.abs(nB); if(r.lowerIsBetter){ const t = a + b; a = t - a; b = t - b; } part = Math.max(.06, Math.min(.94, a / (a + b))); }
+    return { label: r.label, tA: txt(vals[0]), tB: txt(vals[1]), connu, gagneA, gagneB, part };
+  });
+}
+function rgbaDe(c, a){ const m = String(c).match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); return m ? `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})` : c; }
+function ajusterPolice(ctx, texte, maxW, fs, min, gabarit){
+  ctx.font = gabarit(fs);
+  while(ctx.measureText(texte).width > maxW && fs > min){ fs -= 0.5; ctx.font = gabarit(fs); }
+  return fs;
+}
+function logoDuelio(){ return new Promise(res => { const im = new Image(); im.onload = ()=>res(im); im.onerror = ()=>res(null); im.src = DUELIO_ICON_DATA_URI; }); }
+/* Sur quoi repose la comparaison : la période (saison, carrière, cumul, âge) et le
+ * périmètre (club, sélection, les deux, amicaux). Quand les joueurs ne sont pas sur la
+ * même période, chacun porte la sienne sous son nom (periode(p)). */
+function sousTitreDuel(filled){
+  const labels = filled.map(p => playerContextLabel(p) || '');
+  const memeContexte = labels.every(l => l === labels[0]);
+  let mode;
+  switch(compareBasis){
+    case 'career': mode = 'CARRIÈRE'; break;
+    case 'age': mode = `À L'ÂGE DE ${compareAgeValue} ANS`; break;
+    case 'ageCumul': mode = `CUMUL JUSQU'À ${compareAgeValue} ANS`; break;
+    case 'seasonCumul': mode = (compareMode === 'career' || filled.every(p => /^Carrière/.test(playerContextLabel(p) || ''))) ? 'CARRIÈRE' : `CUMUL JUSQU'À ${seasonLabel(compareSeasonValue)}`; break;
+    case 'season': mode = `SAISON ${seasonLabel(compareSeasonValue)}`; break;
+    case 'nation': mode = 'EN SÉLECTION'; break;
+    default: {
+      const saisons = [...new Set(filled.map(p => { const i = getStatSource(p); return i.season ? seasonLabel(i.season) : (i.career ? 'carrière' : ''); }).filter(Boolean))];
+      mode = saisons.length === 1 ? (saisons[0] === 'carrière' ? 'CARRIÈRE' : `SAISON ${saisons[0]}`) : 'SAISON';
+    }
+  }
+  const perim = compareBasis === 'nation' ? '' : teamScope === 'nation' ? 'EN SÉLECTION' : teamScope === 'all' ? 'CLUB + SÉLECTION' : teamScope === 'friendly' ? 'MATCHS AMICAUX' : 'EN CLUB';
+  const periodeDe = p => (playerContextLabel(p) || '').replace(/^À \d+ ans · saison /i, 'Saison ').replace(/^À \d+ ans/i, '').replace(/^Cumul jusqu'à \d+ ans · /i, '').replace(/ · \d+ saisons?$/, '').trim().toUpperCase();
+  return { memeContexte, texte: perim ? `${mode}   ·   ${perim}` : mode, periode: p => memeContexte ? '' : periodeDe(p) };
+}
+
+/* ---------- Style « Stade » : la pelouse et le tableau d'affichage ----------
+ * Une pelouse vue du ciel, tondue en bandes, avec ses lignes blanches ; les deux joueurs
+ * cerclés de blanc de part et d'autre ; et, posé sur le terrain, un tableau d'affichage
+ * sombre où chaque statistique s'affiche comme un score, le vainqueur en vert. */
+async function dessinerStade(o){
+  const { ctx, ctxFond, calque, canvas, W, H, S, filled, list, btn } = o;
+  const story = shareFormat === 'story';
+  const COUL = [SLOT_COLORS[filled[0]._idx] || '#38BDF8', SLOT_COLORS[filled[1]._idx] || '#FFB020'];
+  const VERT = '#2FE88A';
+  peindrePelouse(ctxFond, W, H, S, story);
 
   const ombre = (fn, flou, c) => { ctx.save(); ctx.shadowColor = c || 'rgba(0,0,0,.55)'; ctx.shadowBlur = flou; fn(); ctx.restore(); };
   let y = 22*S;
@@ -8310,15 +8229,7 @@ async function dessinerPapier(o){
   const story = shareFormat === 'story';
   const COUL = [SLOT_COLORS[filled[0]._idx] || '#38BDF8', SLOT_COLORS[filled[1]._idx] || '#FFB020'];
   const NOIR = '#111318', GRIS = '#6B6F7A', FILET = '#D9D2C3', VERT = '#1FBF6E';
-  ctxFond.fillStyle = '#F5F1E8'; ctxFond.fillRect(0, 0, W, H);
-  // Un grain très léger
-  ctxFond.save(); ctxFond.globalAlpha = .05; ctxFond.fillStyle = '#000';
-  let g = 12345; for(let i = 0; i < W*H/900; i++){ g = (g*48271) % 2147483647; const x = g % W; g = (g*48271) % 2147483647; const yy = g % H; ctxFond.fillRect(x, yy, 2, 2); }
-  ctxFond.restore();
-  // Cadre
-  const m = 22*S;
-  ctxFond.strokeStyle = NOIR; ctxFond.lineWidth = 2*S; ctxFond.strokeRect(m, m, W - 2*m, H - 2*m);
-
+  const m = peindrePapier(ctxFond, W, H, S, NOIR);
   let y = m + 16*S;
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   ctx.font = `800 ${13*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = NOIR;
