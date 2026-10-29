@@ -7781,9 +7781,7 @@ async function dessinerAfficheDuel(o){
   ctx.fillText('DUELIO', ex + logoW + 7*S, y + logoH/2 + 1*S);
   y += logoH + 8*S;
   const st = sousTitreDuel(filled);
-  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.textAlign = 'center';
-  ctx.fillText(st.texte, W/2, y + 4*S);
-  y += 20*S;
+  y += dessinerContexte(ctx, W, y, S, st, false) + 10*S;
 
   // 3. Le VS géant en filigrane, incliné, derrière les portraits.
   const R = (story ? 84 : 76)*S, cxA = W*0.26, cxB = W*0.74, cy = y + R + 10*S;
@@ -7963,9 +7961,8 @@ async function dessinerGrille(o){
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   ombre(()=>{ ctx.fillStyle = T.texte; ctx.fillText('DUELIO', ex + logoW + (logoImg ? 7*S : 0), y + logoH/2 + 1*S); }, 8*S);
   const st = sousTitreDuel(filled);
-  ctx.font = TEXTE(7.5*S); ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  ombre(()=>{ ctx.fillStyle = T.sec; ctx.fillText(st.texte, W/2, y + logoH + 13*S); }, 6*S);
-  y += logoH + 24*S;
+  y += logoH + 8*S;
+  y += dessinerContexte(ctx, W, y, S, st, papier) + 10*S;
   if(papier){ ctx.strokeStyle = T.cadre; ctx.lineWidth = 1.5*S; ctx.beginPath(); ctx.moveTo(m + 16*S, y); ctx.lineTo(W - m - 16*S, y); ctx.stroke(); y += 14*S; }
 
   // 3. Une colonne par joueur.
@@ -8117,8 +8114,7 @@ function sousTitreDuel(filled){
   let mode;
   switch(compareBasis){
     case 'career': mode = 'CARRIÈRE'; break;
-    case 'age': mode = `À L'ÂGE DE ${compareAgeValue} ANS`; break;
-    case 'ageCumul': mode = `CUMUL JUSQU'À ${compareAgeValue} ANS`; break;
+    case 'age': case 'ageCumul': mode = `À L'ÂGE DE ${compareAgeValue} ANS`; break;
     case 'seasonCumul': mode = (compareMode === 'career' || filled.every(p => /^Carrière/.test(playerContextLabel(p) || ''))) ? 'CARRIÈRE' : `CUMUL JUSQU'À ${seasonLabel(compareSeasonValue)}`; break;
     case 'season': mode = `SAISON ${seasonLabel(compareSeasonValue)}`; break;
     case 'nation': mode = 'EN SÉLECTION'; break;
@@ -8127,9 +8123,35 @@ function sousTitreDuel(filled){
       mode = saisons.length === 1 ? (saisons[0] === 'carrière' ? 'CARRIÈRE' : `SAISON ${saisons[0]}`) : 'SAISON';
     }
   }
-  const perim = compareBasis === 'nation' ? '' : teamScope === 'nation' ? 'EN SÉLECTION' : teamScope === 'all' ? 'CLUB + SÉLECTION' : teamScope === 'friendly' ? 'MATCHS AMICAUX' : 'EN CLUB';
+  let perim = compareBasis === 'nation' ? '' : teamScope === 'nation' ? 'EN SÉLECTION' : teamScope === 'all' ? 'CLUB + SÉLECTION' : teamScope === 'friendly' ? 'MATCHS AMICAUX' : 'EN CLUB';
+  if(compareBasis === 'ageCumul') perim = 'CUMUL DES SAISONS' + (perim ? '   ·   ' + perim : '');
   const periodeDe = p => (playerContextLabel(p) || '').replace(/^À \d+ ans · saison /i, 'Saison ').replace(/^À \d+ ans/i, '').replace(/^Cumul jusqu'à \d+ ans · /i, '').replace(/ · \d+ saisons?$/, '').trim().toUpperCase();
-  return { memeContexte, texte: perim ? `${mode}   ·   ${perim}` : mode, periode: p => memeContexte ? '' : periodeDe(p) };
+  return { memeContexte, mode, perim, age: compareBasis === 'age' || compareBasis === 'ageCumul', texte: perim ? `${mode}   ·   ${perim}` : mode, periode: p => memeContexte ? '' : periodeDe(p) };
+}
+/* La base de la comparaison, en tête de l'image : la période dans une pastille — verte et
+ * plus grande quand on compare « à l'âge de… », pour que ça se voie — et le périmètre
+ * dessous, en petit. Rend la hauteur occupée. */
+function dessinerContexte(ctx, W, y, S, st, clair){
+  const age = st.age, fs = (age ? 12.5 : 9)*S;
+  ctx.font = `800 ${fs}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
+  const tw = ctx.measureText(st.mode).width, padX = (age ? 18 : 12)*S, ph = fs + (age ? 14 : 10)*S, pw = tw + 2*padX, px = W/2 - pw/2;
+  if(age){
+    ctx.save(); if(!clair){ ctx.shadowColor = 'rgba(47,232,138,.85)'; ctx.shadowBlur = 22*S; }
+    roundRect(ctx, px, y, pw, ph, ph/2); ctx.fillStyle = clair ? '#1FBF6E' : '#2FE88A'; ctx.fill(); ctx.restore();
+    ctx.fillStyle = clair ? '#fff' : '#06301A';
+  } else {
+    roundRect(ctx, px, y, pw, ph, ph/2); ctx.fillStyle = clair ? 'rgba(0,0,0,0)' : 'rgba(255,255,255,.12)'; ctx.fill();
+    ctx.lineWidth = 1.2*S; ctx.strokeStyle = clair ? '#111318' : 'rgba(255,255,255,.55)'; ctx.stroke();
+    ctx.fillStyle = clair ? '#111318' : '#fff';
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(st.mode, W/2, y + ph/2 + 1*S);
+  ctx.textBaseline = 'alphabetic';
+  let h = ph;
+  if(st.perim){
+    ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = clair ? '#6B6F7A' : 'rgba(255,255,255,.78)';
+    ctx.fillText(st.perim, W/2, y + ph + 12*S); h += 15*S;
+  }
+  return h;
 }
 
 /* ---------- Style « Stade » : la pelouse et le tableau d'affichage ----------
@@ -8154,9 +8176,8 @@ async function dessinerStade(o){
   ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   ombre(()=>{ ctx.fillStyle = '#fff'; ctx.fillText('DUELIO', ex + logoW + 8*S, y + logoH/2 + 1*S); }, 8*S);
   const st = sousTitreDuel(filled);
-  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  ombre(()=>{ ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.fillText(st.texte, W/2, y + logoH + 14*S); }, 6*S);
-  y += logoH + 30*S;
+  y += logoH + 8*S;
+  y += dessinerContexte(ctx, W, y, S, st, false) + 12*S;
   // Portraits
   const imgs = await Promise.all(filled.map(p => loadImageForCanvas(p)));
   const R = (story ? 78 : 70)*S, cxA = W*0.27, cxB = W*0.73, cy = y + R + 8*S;
@@ -8235,9 +8256,8 @@ async function dessinerPapier(o){
   ctx.font = `800 ${13*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = NOIR;
   ctx.fillText('DUELIO', W/2, y + 12*S);
   const st = sousTitreDuel(filled);
-  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = GRIS;
-  ctx.fillText(st.texte, W/2, y + 27*S);
-  y += 40*S;
+  y += 20*S;
+  y += dessinerContexte(ctx, W, y, S, st, true) + 10*S;
   ctx.strokeStyle = NOIR; ctx.lineWidth = 1.5*S; ctx.beginPath(); ctx.moveTo(m + 16*S, y); ctx.lineTo(W - m - 16*S, y); ctx.stroke();
   y += 18*S;
   // Portraits carrés
