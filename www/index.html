@@ -1088,6 +1088,11 @@
     color:var(--chalk); font-weight:700; font-size:12.5px; cursor:pointer; font-family:'Plus Jakarta Sans',sans-serif;
   }
   .share-format-btn.active{ border-color:var(--gold); color:var(--gold); background:var(--surface-2); }
+  .share-style-btn{ flex-direction:column; gap:6px; padding:10px 6px; }
+  .share-style-btn .apercu{ display:block; width:100%; height:34px; border-radius:8px; border:1px solid rgba(255,255,255,.12); }
+  .share-style-btn.affiche .apercu{ background: linear-gradient(115deg, rgba(56,189,248,.55) 0 48%, rgba(255,255,255,.8) 48% 50%, rgba(255,176,32,.55) 50%), #0d2a44; }
+  .share-style-btn.neon .apercu{ background: radial-gradient(circle at 30% 40%, rgba(34,211,238,.6), transparent 45%), radial-gradient(circle at 70% 60%, rgba(255,176,32,.5), transparent 45%), #05060f; box-shadow: inset 0 0 0 1px rgba(34,211,238,.4); }
+  .share-style-btn.papier .apercu{ background: repeating-linear-gradient(0deg, #F5F1E8 0 7px, #E3DCCB 7px 8px); border-color:#C9C1AE; }
   .share-stat-check-unused{
     display:flex; align-items:center; gap:10px; padding:11px 12px; background:var(--surface); border:1px solid var(--line);
     border-radius:10px; margin-bottom:6px; cursor:pointer; transition: opacity .15s;
@@ -7213,6 +7218,9 @@ document.getElementById('pickerClose').addEventListener('click', closePicker);
 const SHARE_STAT_LIMIT = 5;
 let shareSelectedStats = [];
 let shareFormat = 'square'; // 'square' | 'story'
+// Trois styles d'image, au choix : « affiche » (stade, diagonale), « neon » (nuit, lumière), « papier » (clair, journal).
+let shareStyle = 'affiche';
+try{ const v = localStorage.getItem('duelio_share_style'); if(['affiche','neon','papier'].includes(v)) shareStyle = v; }catch(e){}
 let shareGeneratedBlobUrl = null;
 
 function renderGenerate(){
@@ -7257,6 +7265,12 @@ function renderGenerateBody(){
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2.5" width="10" height="19" rx="2.5"/></svg>Story
         </button>
       </div>
+      <div class="share-section-label">Style</div>
+      <div class="share-format-row share-style-row">
+        <button class="share-format-btn share-style-btn affiche ${shareStyle==='affiche'?'active':''}" data-style="affiche" type="button"><span class="apercu"></span>Affiche</button>
+        <button class="share-format-btn share-style-btn neon ${shareStyle==='neon'?'active':''}" data-style="neon" type="button"><span class="apercu"></span>Néon</button>
+        <button class="share-format-btn share-style-btn papier ${shareStyle==='papier'?'active':''}" data-style="papier" type="button"><span class="apercu"></span>Papier</button>
+      </div>
       <div class="share-section-label">Statistiques</div>
       <div class="share-chips" id="shareStatList">
         ${list.map(r=>{
@@ -7273,6 +7287,9 @@ function renderGenerateBody(){
   `;
   screen.querySelectorAll('.share-format-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{ shareFormat = btn.dataset.fmt; renderGenerateBody(); });
+  });
+  screen.querySelectorAll('.share-style-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ shareStyle = btn.dataset.style; try{ localStorage.setItem('duelio_share_style', shareStyle); }catch(e){} renderGenerateBody(); });
   });
   screen.querySelectorAll('.share-chip').forEach(chip=>{
     chip.addEventListener('click', ()=>{
@@ -7631,6 +7648,13 @@ async function dessinerImageDePartage(btn){
   let ctx = ctxFond;
 
   const S = (W/440) * (shareFormat==='story' ? 1 : 0.56); // maquette de 440px de large, compressée en carré
+
+  if(n === 2 && shareStyle !== 'affiche'){
+    const ctxC = calque.getContext('2d'); ctxC.imageSmoothingEnabled = true; ctxC.imageSmoothingQuality = 'high';
+    const o = { ctx: ctxC, ctxFond, calque, canvas, W, H, S, filled, list, btn };
+    await (shareStyle === 'neon' ? dessinerNeon(o) : dessinerPapier(o));
+    return;
+  }
 
   // Icônes vectorielles (tracés repris tels quels de la maquette, viewBox 24x24)
 
@@ -8099,6 +8123,220 @@ async function dessinerAfficheDuel(o){
 
   // Composition : le contenu est centré verticalement dans les deux formats.
   const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - 16*S) / 2));
+  ctxFond.drawImage(calque, 0, decalage);
+  publierImage(canvas, btn, W, H);
+}
+
+/* ---------- Commun aux styles ---------- */
+function lignesDuDuel(filled, list){
+  return list.map(r => {
+    const vals = filled.map(fp => compareBasis==='nation' ? fp[r.key] : (statUnknown(fp, r.key) ? null : getStatValue(fp, r.key)));
+    const txt = v => v===null || v===undefined ? '—' : `${fmtNombre(v)}${fmtSuffixe(r.suffix)}`.trim();
+    const nA = vals[0]==null ? null : Number(vals[0]), nB = vals[1]==null ? null : Number(vals[1]);
+    const connu = nA!==null && nB!==null && !isNaN(nA) && !isNaN(nB);
+    const gagneA = connu && (r.lowerIsBetter ? nA < nB : nA > nB), gagneB = connu && (r.lowerIsBetter ? nB < nA : nB > nA);
+    let part = .5;
+    if(connu && (Math.abs(nA) + Math.abs(nB)) > 0){ let a = Math.abs(nA), b = Math.abs(nB); if(r.lowerIsBetter){ const t = a + b; a = t - a; b = t - b; } part = Math.max(.06, Math.min(.94, a / (a + b))); }
+    return { label: r.label, tA: txt(vals[0]), tB: txt(vals[1]), connu, gagneA, gagneB, part };
+  });
+}
+function rgbaDe(c, a){ const m = String(c).match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); return m ? `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})` : c; }
+function ajusterPolice(ctx, texte, maxW, fs, min, gabarit){
+  ctx.font = gabarit(fs);
+  while(ctx.measureText(texte).width > maxW && fs > min){ fs -= 0.5; ctx.font = gabarit(fs); }
+  return fs;
+}
+function logoDuelio(){ return new Promise(res => { const im = new Image(); im.onload = ()=>res(im); im.onerror = ()=>res(null); im.src = DUELIO_ICON_DATA_URI; }); }
+function sousTitreDuel(filled){
+  const ctxA = playerContextLabel(filled[0]) || '', ctxB = playerContextLabel(filled[1]) || '';
+  const memeContexte = ctxA === ctxB;
+  const modeTxt = compareBasis==='career' ? 'CARRIÈRE' : (compareBasis==='ageCumul' || compareBasis==='seasonCumul') ? 'CUMUL' : compareBasis==='age' ? `À ${compareAgeValue} ANS` : 'SAISON';
+  const perim = teamScope==='nation' ? 'SÉLECTION' : teamScope==='all' ? 'CLUB + SÉLECTION' : teamScope==='friendly' ? 'AMICAUX' : 'CLUB';
+  return { memeContexte, texte: (memeContexte && ctxA ? ctxA.toUpperCase() : modeTxt) + '   ·   ' + perim,
+           periode: p => memeContexte ? '' : (playerContextLabel(p) || '').replace(/^Saison /, '').replace(/ · \d+ saisons?$/, '').toUpperCase() };
+}
+
+/* ---------- Style « Néon » : la nuit, la lumière ----------
+ * Fond noir bleuté quadrillé, deux halos aux couleurs des joueurs, portraits cerclés de
+ * néon, noms qui rayonnent, et les chiffres en colonnes sous chaque joueur : le vainqueur
+ * de chaque ligne s'allume en vert. Pas de barres : la lumière suffit. */
+async function dessinerNeon(o){
+  const { ctx, ctxFond, calque, canvas, W, H, S, filled, list, btn } = o;
+  const story = shareFormat === 'story';
+  const COUL = [SLOT_COLORS[filled[0]._idx] || '#38BDF8', SLOT_COLORS[filled[1]._idx] || '#FFB020'];
+  const VERT = '#2FE88A';
+  // Fond
+  const fond = ctxFond.createLinearGradient(0, 0, 0, H); fond.addColorStop(0, '#07091a'); fond.addColorStop(1, '#03040c');
+  ctxFond.fillStyle = fond; ctxFond.fillRect(0, 0, W, H);
+  ctxFond.strokeStyle = 'rgba(120,160,255,.07)'; ctxFond.lineWidth = 1;
+  const pas = 54*S;
+  for(let x = (W/2) % pas; x < W; x += pas){ ctxFond.beginPath(); ctxFond.moveTo(x, 0); ctxFond.lineTo(x, H); ctxFond.stroke(); }
+  for(let yy = 0; yy < H; yy += pas){ ctxFond.beginPath(); ctxFond.moveTo(0, yy); ctxFond.lineTo(W, yy); ctxFond.stroke(); }
+  const halo = (x, y, r, c) => { const g = ctxFond.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, rgbaDe(c, .38)); g.addColorStop(1, 'rgba(0,0,0,0)'); ctxFond.fillStyle = g; ctxFond.fillRect(0, 0, W, H); };
+  halo(W*0.2, H*0.3, W*0.55, COUL[0]); halo(W*0.8, H*0.35, W*0.55, COUL[1]);
+  // Vignette
+  const vig = ctxFond.createRadialGradient(W/2, H/2, H*0.25, W/2, H/2, H*0.8); vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,.55)');
+  ctxFond.fillStyle = vig; ctxFond.fillRect(0, 0, W, H);
+
+  const neon = (fn, couleur, flou) => { ctx.save(); ctx.shadowColor = couleur; ctx.shadowBlur = flou; fn(); fn(); ctx.restore(); };
+  let y = 18*S;
+  // Marque
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.font = `800 ${14*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
+  neon(()=>{ ctx.fillStyle = '#9ff3ff'; ctx.fillText('D U E L I O', W/2, y + 14*S); }, '#22D3EE', 18*S);
+  const st = sousTitreDuel(filled);
+  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.6)';
+  ctx.fillText(st.texte, W/2, y + 30*S);
+  y += 50*S;
+  // Portraits
+  const imgs = await Promise.all(filled.map(p => loadImageForCanvas(p)));
+  const R = (story ? 82 : 74)*S, cxA = W*0.27, cxB = W*0.73, cy = y + R + 10*S;
+  const portrait = (i, cx) => {
+    const { img } = imgs[i] || {};
+    neon(()=>{ ctx.beginPath(); ctx.arc(cx, cy, R + 6*S, 0, Math.PI*2); ctx.lineWidth = 3*S; ctx.strokeStyle = COUL[i]; ctx.stroke(); }, COUL[i], 26*S);
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.clip();
+    ctx.fillStyle = '#0a0f24'; ctx.fillRect(cx - R, cy - R, 2*R, 2*R);
+    if(img){ const sc = Math.max((2*R)/img.width, (2*R)/img.height) * 1.02; const iw = img.width*sc, ih = img.height*sc; ctx.drawImage(img, cx - iw/2, cy - R - Math.max(0, (ih - 2*R)*0.15), iw, ih); }
+    ctx.restore();
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.lineWidth = 1.5*S; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke();
+  };
+  portrait(0, cxA); portrait(1, cxB);
+  ctx.font = `800 ${26*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; ctx.textBaseline = 'middle';
+  neon(()=>{ ctx.fillStyle = '#ffffff'; ctx.fillText('VS', W/2, cy); }, '#ffffff', 22*S);
+  ctx.textBaseline = 'alphabetic';
+  y = cy + R + 20*S;
+  // Noms
+  const nom = (i, cx) => {
+    const p = filled[i], t = shortName(p).toUpperCase(), maxW = W*0.44;
+    const fs = ajusterPolice(ctx, t, maxW, 19*S, 9*S, f => `800 ${f}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`);
+    neon(()=>{ ctx.fillStyle = '#fff'; ctx.fillText(t, cx, y + fs); }, COUL[i], 16*S);
+    const sous = [p.posLabel, p.club].filter(Boolean).join('  ·  ').toUpperCase();
+    ajusterPolice(ctx, sous, maxW, 8.5*S, 5.5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`);
+    ctx.fillStyle = rgbaDe(COUL[i], 1); ctx.fillText(sous, cx, y + fs + 13*S);
+    const per = st.periode(p); let h = fs;
+    if(per){ ajusterPolice(ctx, per, maxW, 7.5*S, 5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`); ctx.fillStyle = 'rgba(255,255,255,.65)'; ctx.fillText(per, cx, y + fs + 25*S); h += 12*S; }
+    return h;
+  };
+  y += Math.max(nom(0, cxA), nom(1, cxB)) + 30*S;
+  // Chiffres en colonnes
+  const lignes = lignesDuDuel(filled, list);
+  const basMax = H - 40*S; let pitch = (story ? 46 : 40)*S;
+  if(lignes.length && y + lignes.length*pitch > basMax) pitch = Math.max(28*S, (basMax - y)/lignes.length);
+  // Ligne verticale centrale, fine, en lumière
+  neon(()=>{ ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.lineWidth = 1*S; ctx.beginPath(); ctx.moveTo(W/2, y - 6*S); ctx.lineTo(W/2, y + lignes.length*pitch - 10*S); ctx.stroke(); }, '#ffffff', 10*S);
+  lignes.forEach((l, i) => {
+    const ry = y + i*pitch;
+    // Libellé au centre, sur un fond sombre qui coupe la ligne
+    ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`;
+    const lw = ctx.measureText(l.label.toUpperCase()).width + 16*S;
+    ctx.fillStyle = '#05071a'; ctx.fillRect(W/2 - lw/2, ry + 4*S, lw, 14*S);
+    ctx.fillStyle = 'rgba(255,255,255,.62)'; ctx.textAlign = 'center'; ctx.fillText(l.label.toUpperCase(), W/2, ry + 14*S);
+    const val = (t, x, align, gagne, c) => {
+      ctx.font = `800 ${(gagne ? 24 : 19)*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
+      ctx.textAlign = align; ctx.textBaseline = 'middle';
+      if(gagne) neon(()=>{ ctx.fillStyle = VERT; ctx.fillText(t, x, ry + pitch*0.62); }, VERT, 16*S);
+      else { ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.fillText(t, x, ry + pitch*0.62); }
+      ctx.textBaseline = 'alphabetic';
+    };
+    val(l.tA, W*0.27, 'center', l.gagneA, COUL[0]); val(l.tB, W*0.73, 'center', l.gagneB, COUL[1]);
+  });
+  y += lignes.length*pitch + 4*S;
+  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.textAlign = 'center';
+  const piedY = Math.min(y + 14*S, H - 16*S);
+  ctx.fillText('C O M P A R E   T E S   J O U E U R S   ·   D U E L I O', W/2, piedY);
+  const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - 18*S) / 2));
+  ctxFond.drawImage(calque, 0, decalage);
+  publierImage(canvas, btn, W, H);
+}
+
+/* ---------- Style « Papier » : clair, net, façon page de statistiques ----------
+ * Fond crème, cadre noir fin, typographie noire massive, portraits carrés aux coins
+ * arrondis, tableau à filets. Le seul accent de couleur : le vert du vainqueur. Fait
+ * pour ressortir dans un fil sombre et s'imprimer. */
+async function dessinerPapier(o){
+  const { ctx, ctxFond, calque, canvas, W, H, S, filled, list, btn } = o;
+  const story = shareFormat === 'story';
+  const COUL = [SLOT_COLORS[filled[0]._idx] || '#38BDF8', SLOT_COLORS[filled[1]._idx] || '#FFB020'];
+  const NOIR = '#111318', GRIS = '#6B6F7A', FILET = '#D9D2C3', VERT = '#1FBF6E';
+  ctxFond.fillStyle = '#F5F1E8'; ctxFond.fillRect(0, 0, W, H);
+  // Un grain très léger
+  ctxFond.save(); ctxFond.globalAlpha = .05; ctxFond.fillStyle = '#000';
+  let g = 12345; for(let i = 0; i < W*H/900; i++){ g = (g*48271) % 2147483647; const x = g % W; g = (g*48271) % 2147483647; const yy = g % H; ctxFond.fillRect(x, yy, 2, 2); }
+  ctxFond.restore();
+  // Cadre
+  const m = 22*S;
+  ctxFond.strokeStyle = NOIR; ctxFond.lineWidth = 2*S; ctxFond.strokeRect(m, m, W - 2*m, H - 2*m);
+
+  let y = m + 16*S;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  ctx.font = `800 ${13*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = NOIR;
+  ctx.fillText('DUELIO', W/2, y + 12*S);
+  const st = sousTitreDuel(filled);
+  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = GRIS;
+  ctx.fillText(st.texte, W/2, y + 27*S);
+  y += 40*S;
+  ctx.strokeStyle = NOIR; ctx.lineWidth = 1.5*S; ctx.beginPath(); ctx.moveTo(m + 16*S, y); ctx.lineTo(W - m - 16*S, y); ctx.stroke();
+  y += 18*S;
+  // Portraits carrés
+  const imgs = await Promise.all(filled.map(p => loadImageForCanvas(p)));
+  const L = (story ? 150 : 136)*S, cxA = W*0.27, cxB = W*0.73, top = y;
+  const portrait = (i, cx) => {
+    const { img } = imgs[i] || {};
+    const x = cx - L/2;
+    ctx.save(); roundRect(ctx, x, top, L, L, 14*S); ctx.clip();
+    ctx.fillStyle = '#E7E1D3'; ctx.fillRect(x, top, L, L);
+    if(img){ const sc = Math.max(L/img.width, L/img.height) * 1.02; const iw = img.width*sc, ih = img.height*sc; ctx.drawImage(img, cx - iw/2, top - Math.max(0, (ih - L)*0.15), iw, ih); }
+    ctx.restore();
+    roundRect(ctx, x, top, L, L, 14*S); ctx.lineWidth = 2.5*S; ctx.strokeStyle = NOIR; ctx.stroke();
+    // Une pastille de couleur du joueur, en coin
+    ctx.beginPath(); ctx.arc(x + L - 10*S, top + 10*S, 7*S, 0, Math.PI*2); ctx.fillStyle = COUL[i]; ctx.fill(); ctx.lineWidth = 2*S; ctx.strokeStyle = NOIR; ctx.stroke();
+  };
+  portrait(0, cxA); portrait(1, cxB);
+  ctx.beginPath(); ctx.arc(W/2, top + L/2, 22*S, 0, Math.PI*2); ctx.fillStyle = NOIR; ctx.fill();
+  ctx.font = `800 ${14*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = '#F5F1E8'; ctx.textBaseline = 'middle'; ctx.fillText('VS', W/2, top + L/2 + 1*S); ctx.textBaseline = 'alphabetic';
+  y = top + L + 16*S;
+  const nom = (i, cx) => {
+    const p = filled[i], t = shortName(p).toUpperCase(), maxW = W*0.44;
+    const fs = ajusterPolice(ctx, t, maxW, 18*S, 9*S, f => `800 ${f}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`);
+    ctx.fillStyle = NOIR; ctx.fillText(t, cx, y + fs);
+    const sous = [p.posLabel, p.club].filter(Boolean).join('  ·  ').toUpperCase();
+    ajusterPolice(ctx, sous, maxW, 8*S, 5.5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`);
+    ctx.fillStyle = GRIS; ctx.fillText(sous, cx, y + fs + 12*S);
+    const per = st.periode(p); let h = fs;
+    if(per){ ajusterPolice(ctx, per, maxW, 7.5*S, 5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`); ctx.fillStyle = GRIS; ctx.fillText(per, cx, y + fs + 23*S); h += 11*S; }
+    return h;
+  };
+  y += Math.max(nom(0, cxA), nom(1, cxB)) + 26*S;
+  // Tableau
+  const lignes = lignesDuDuel(filled, list);
+  const basMax = H - m - 34*S; let pitch = (story ? 40 : 34)*S;
+  if(lignes.length && y + lignes.length*pitch > basMax) pitch = Math.max(24*S, (basMax - y)/lignes.length);
+  const gx = m + 18*S, dx = W - m - 18*S;
+  ctx.strokeStyle = FILET; ctx.lineWidth = 1*S;
+  lignes.forEach((l, i) => {
+    const ry = y + i*pitch, cy = ry + pitch/2;
+    ctx.beginPath(); ctx.moveTo(gx, ry); ctx.lineTo(dx, ry); ctx.stroke();
+    ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = GRIS; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(l.label.toUpperCase(), W/2, cy);
+    const val = (t, x, align, gagne) => {
+      ctx.font = `800 ${18*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
+      const tw = ctx.measureText(t).width;
+      if(gagne){
+        const px = align === 'left' ? x - 8*S : x - tw - 8*S;
+        roundRect(ctx, px, cy - 13*S, tw + 16*S, 26*S, 8*S); ctx.fillStyle = VERT; ctx.fill();
+        ctx.fillStyle = '#FFFFFF';
+      } else ctx.fillStyle = NOIR;
+      ctx.textAlign = align; ctx.fillText(t, x, cy + 1*S);
+    };
+    val(l.tA, gx, 'left', l.gagneA); val(l.tB, dx, 'right', l.gagneB);
+    ctx.textBaseline = 'alphabetic';
+  });
+  y += lignes.length*pitch;
+  ctx.beginPath(); ctx.moveTo(gx, y); ctx.lineTo(dx, y); ctx.strokeStyle = NOIR; ctx.lineWidth = 1.5*S; ctx.stroke();
+  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = GRIS; ctx.textAlign = 'center';
+  const piedY = Math.min(y + 16*S, H - m - 10*S);
+  ctx.fillText('duelio  ·  compare tes joueurs', W/2, piedY);
+  const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - (m + 16*S)) / 2));
   ctxFond.drawImage(calque, 0, decalage);
   publierImage(canvas, btn, W, H);
 }
