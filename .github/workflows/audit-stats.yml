@@ -40,6 +40,13 @@ jobs:
           }
           const cibles = JSON.parse(readFileSync("diagnostics/audit-stats-cibles.json", "utf8"));
           const ids = [...new Set([...cibles.cibles, ...cibles.echantillon])];
+          const legers = cibles.legers || [];
+          const NB_PAQUETS = JSON.parse(readFileSync("www/data/players/index.json", "utf8")).paquets || 1000;
+          function ficheLegere(id) {
+            const f = `www/data/players/${id % NB_PAQUETS}.json`;
+            if (!existsSync(f)) return null;
+            return JSON.parse(readFileSync(f, "utf8")).find(x => x.i === id) || null;
+          }
           const CHAMPS = [["matchs", l => l.games?.appearences], ["minutes", l => l.games?.minutes],
                           ["buts", l => l.goals?.total], ["passes", l => l.goals?.assists],
                           ["jaunes", l => l.cards?.yellow], ["rouges", l => l.cards?.red],
@@ -47,13 +54,16 @@ jobs:
           const cle = l => `${l.team?.id}|${l.league?.id ?? l.league?.name}`;
           const ecarts = [], absentes = [], enTrop = [], refus = [];
           let lignesComparees = 0, lignesIdentiques = 0, joueurs = 0, joueursSansEcart = 0;
-          for (const id of ids) {
+          for (const id of [...ids, ...legers]) {
             const chemin = `www/data/full/${id}.json`;
-            if (!existsSync(chemin)) continue;
-            const d = JSON.parse(readFileSync(chemin, "utf8"));
+            const leger = !existsSync(chemin);
+            const d = leger ? ficheLegere(id) : JSON.parse(readFileSync(chemin, "utf8"));
+            if (!d) continue;
             joueurs++;
             let ecartJoueur = false;
-            for (const saison of [2024, 2025, 2026]) {
+            // Fiche légère : seules les lignes des compétitions suivies (paquets) sont attendues,
+            // on ne compte donc pas les lignes « manquantes » hors de ces compétitions.
+            for (const saison of (leger ? [2026] : [2024, 2025, 2026])) {
               const eux = await lignes(id, saison);
               await attendre(150);
               if (!eux) { refus.push(`${id} ${d.n} ${saison}`); continue; }
@@ -75,6 +85,7 @@ jobs:
                 if (diffs.length) { ecarts.push(`${nom} : ${diffs.join(", ")}`); ecartJoueur = true; } else lignesIdentiques++;
               }
               for (const [k, le] of mapEux) {
+                if (leger) continue;
                 if (!mapNous.has(k) && le.games?.appearences) { absentes.push(`${id} ${d.n} ${saison} ${le.team?.name}/${le.league?.name} (${le.games.appearences} m)`); ecartJoueur = true; }
               }
             }
@@ -82,7 +93,7 @@ jobs:
             if (joueurs % 50 === 0) console.log(`${joueurs}/${ids.length}`);
           }
           const sortie = [
-            `Joueurs audités : ${joueurs} (saisons 2024-2026) ; sans aucun écart : ${joueursSansEcart}`,
+            `Joueurs audités : ${joueurs} (fiches complètes 2024-2026 + fiches légères 2026) ; sans aucun écart : ${joueursSansEcart}`,
             `Lignes comparées : ${lignesComparees} ; identiques : ${lignesIdentiques} ; avec écart : ${ecarts.length}`,
             `Lignes que la source a et que nous n'avons pas : ${absentes.length} ; lignes chez nous absentes de la source : ${enTrop.length} ; sans réponse : ${refus.length}`,
             "", "=== ÉCARTS (notre valeur → valeur de la source) ===", ...ecarts,
