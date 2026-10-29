@@ -554,6 +554,8 @@
     background:var(--surface); border:1px solid var(--line); color:var(--gold); text-decoration:none; font-weight:700;
   }
   .about-version{ font-size:11px; color:var(--chalk-dim); }
+  .photo-credit{ font-size:10.5px; color:var(--chalk-dim); text-align:center; margin:-4px 0 10px; padding:0 12px; }
+  .photo-credit a{ color:var(--chalk-dim); text-decoration:underline; }
   .account-body{ padding:4px 18px 22px; font-size:13px; line-height:1.5; }
   .account-body p{ margin:8px 0; }
   .account-body .muted{ color:var(--chalk-dim); font-size:12px; }
@@ -1619,6 +1621,7 @@
         <div class="about-links">
           <a href="/legal/confidentialite.html" target="_blank" rel="noopener">Politique de confidentialité</a>
           <a href="/legal/conditions.html" target="_blank" rel="noopener">Conditions d'utilisation</a>
+          <a href="/legal/credits.html" target="_blank" rel="noopener">Crédits des photos</a>
           <a href="mailto:bensouna.ahmed@hotmail.com">Nous écrire</a>
         </div>
         <p class="about-version">Édité par Ahmed Bensouna · Belgique</p>
@@ -4332,7 +4335,7 @@ const PLAYER_INDEX = { players: [], updatedAt: null, loaded: false };
  * d'afficher dix lignes vides, il se réduit à ce que les deux joueurs ont
  * réellement en commun. */
 const LEGENDE_ID_BASE = 9000000;       // hors d'atteinte des identifiants API
-const LEGENDES = { chargees: false, liste: [] };
+const LEGENDES = { chargees: false, liste: [], credits: {} };
 const POSTE_VERS_CODE = { 'Gardien':'GK', 'Défenseur':'DEF', 'Milieu':'MID', 'Attaquant':'FWD' };
 
 /* Les seules statistiques qu'une légende possède. Tout le reste est déclaré
@@ -4477,6 +4480,10 @@ async function chargerLegendes(){
     const doc = await r.json();
     LEGENDES.liste = (doc.legendes || []).map(construireLegende);
     LEGENDES.chargees = true;
+    // Crédits des portraits (auteur, licence) : affichés sur la fiche, exigés par les licences libres.
+    fetchBorne(REAL_DATA_CONFIG.legendesCredits || 'data/legendes-credits.json', 12000)
+      .then(r => r.ok ? r.json() : null).then(c => { if(c && c.photos) LEGENDES.credits = c.photos; })
+      .catch(()=>{});
     for(const l of LEGENDES.liste){
       const c = cleNomCourt(l.name);
       if(c) CLES_LEGENDES.set(c, l);
@@ -8554,6 +8561,10 @@ function renderBrowse(){
     const trophyRows = `<div id="detailTrophies">${detailTrophyRowsHtml(p)}</div>`;
     const avisLegende = p.estLegende
       ? `<div class="duel-avis" style="margin:0 0 6px;">Pour cette époque, seuls les matchs, les buts et les sélections sont connus.</div>` : '';
+    const credit = p.estLegende ? (LEGENDES.credits || {})[p.legendeId] : null;
+    const creditHtml = credit
+      ? `<div class="photo-credit">Photo : ${escapeHtml(credit.auteur || 'auteur non précisé')} · ${escapeHtml(credit.licence || credit.type || '')} · <a href="/legal/credits.html" target="_blank" rel="noopener">crédits</a></div>`
+      : '';
 
     const isReal = p.career.length===0 && p.apiId;
     let timeline;
@@ -8603,6 +8614,7 @@ function renderBrowse(){
           ${(p.apiId || p.estLegende) && p.seasonsAvailable ? `<div class="detail-season">${seasonPickHtml(p, { detail:true })}</div>` : ''}
           <div class="career-progress">${careerProgressHtml()}</div>
         </div>
+        ${creditHtml}
         <div class="browse-section-label">Parcours et transferts</div>
         <div class="tlh-rail"><div class="timeline-h">${timeline}</div></div>
         ${avisLegende}

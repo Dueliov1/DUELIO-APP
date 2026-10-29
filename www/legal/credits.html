@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crédits photos — Duelio</title>
+<meta name="description" content="Auteurs et licences des portraits des légendes, tous sous licence libre (Creative Commons ou domaine public).">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="legal.css">
+<style>
+  .credits{ list-style:none; padding:0; margin:0; display:grid; grid-template-columns:1fr; gap:10px; }
+  .credit{ display:grid; grid-template-columns:56px 1fr; gap:12px; align-items:center; padding:10px 12px; border-radius:14px; background:var(--surface); border:1px solid var(--line); }
+  .credit img{ width:56px; height:56px; border-radius:12px; object-fit:cover; background:#1E2F5C; }
+  .credit b{ display:block; font-size:14px; }
+  .credit small{ display:block; color:var(--chalk-dim); font-size:12px; line-height:1.4; }
+  .credit a{ word-break:break-word; }
+  .recherche{ width:100%; min-height:44px; padding:0 14px; border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--chalk); font:inherit; font-size:15px; margin:0 0 16px; box-sizing:border-box; }
+  .recherche:focus{ outline:none; border-color:var(--gold); }
+  .compte{ color:var(--chalk-dim); font-size:13px; margin:0 0 10px; }
+  @media (min-width:640px){ .credits{ grid-template-columns:1fr 1fr; } }
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <a class="marque" href="/">DUEL<span>IO</span></a>
+  <div class="langues" role="group" aria-label="Langue / Language">
+    <button type="button" data-lang="fr" aria-pressed="true">Français</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+<main>
+<section id="fr">
+  <h1>Crédits photos</h1>
+  <p class="maj">Portraits des légendes</p>
+  <p>Les portraits des légendes viennent de <a href="https://commons.wikimedia.org" rel="noopener">Wikimedia Commons</a>. Chacun est sous une licence libre qui autorise la réutilisation, y compris commerciale, à condition de citer l'auteur et la licence : c'est l'objet de cette page. Les images ont été recadrées au format carré. Une licence « CC BY-SA » impose que toute œuvre dérivée reste sous la même licence ; les portraits recadrés le sont donc.</p>
+  <p>Les photos des joueurs en activité et les logos des clubs sont fournis par API-Sports et restent la propriété de leurs ayants droit.</p>
+</section>
+<section id="en" hidden>
+  <h1>Photo credits</h1>
+  <p class="maj">Portraits of the legends</p>
+  <p>The legends' portraits come from <a href="https://commons.wikimedia.org" rel="noopener">Wikimedia Commons</a>. Each is under a free licence allowing reuse, including commercial reuse, provided the author and the licence are credited: that is what this page is for. The images were cropped to a square. A "CC BY-SA" licence requires derivative works to stay under the same licence; the cropped portraits therefore are.</p>
+  <p>Photos of active players and club logos are supplied by API-Sports and remain the property of their rights holders.</p>
+</section>
+<input class="recherche" id="filtre" type="search" placeholder="Chercher une légende / Search a legend" aria-label="Chercher">
+<p class="compte" id="compte"></p>
+<ul class="credits" id="liste"></ul>
+</main>
+<nav class="pied" aria-label="Pages légales">
+  <a href="/">Duelio</a>
+  <a href="confidentialite.html">Confidentialité / Privacy</a>
+  <a href="conditions.html">Conditions / Terms</a>
+</nav>
+</div>
+<script src="legal.js"></script>
+<script>
+(function(){
+  var LIC = { 'Public domain': 'Domaine public', 'CC0': 'CC0 (domaine public)' };
+  var liste = document.getElementById('liste'), compte = document.getElementById('compte'), filtre = document.getElementById('filtre');
+  var tous = [];
+  function esc(s){ return String(s||'').replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function rendre(){
+    var q = (filtre.value||'').trim().toLowerCase();
+    var vis = tous.filter(function(c){ return !q || c.nom.toLowerCase().indexOf(q) >= 0; });
+    compte.textContent = vis.length + (document.documentElement.lang === 'en' ? ' portraits' : ' portraits');
+    liste.innerHTML = vis.map(function(c){
+      var lic = LIC[c.licence] || c.licence;
+      return '<li class="credit"><img src="/legendes/photos/' + esc(c.id) + '.jpg" alt="" loading="lazy">' +
+        '<div><b>' + esc(c.nom) + '</b><small>' + (c.auteur ? esc(c.auteur) + ' · ' : '') + esc(lic) + '</small>' +
+        '<small><a href="' + esc(c.page) + '" rel="noopener">' + esc(c.fichier.replace(/^File:/, '')) + '</a></small></div></li>';
+    }).join('');
+  }
+  fetch('/data/legendes-credits.json').then(function(r){ return r.json(); }).then(function(d){
+    tous = Object.keys(d.photos || {}).map(function(id){ var c = d.photos[id]; c.id = id; return c; })
+      .sort(function(a, b){ return a.nom.localeCompare(b.nom, 'fr'); });
+    rendre();
+  }).catch(function(){ compte.textContent = 'Crédits indisponibles pour le moment.'; });
+  filtre.addEventListener('input', rendre);
+})();
+</script>
+</body>
+</html>
