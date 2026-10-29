@@ -7953,177 +7953,212 @@ async function dessinerImageDePartage(btn){
 }
 
 /* ---------- L'affiche du duel (deux joueurs) ----------
- * Une affiche de match plutôt qu'une fiche : le cadre coupé en diagonale aux couleurs
- * des deux joueurs, deux grands portraits ronds qui se font face, un VS au centre, puis
- * les statistiques comme un bras de fer, valeur contre valeur, le vainqueur en vert.
- * Tout est à l'échelle S (maquette de 440 px) : en story le contenu est centré. */
+ * Une affiche de match, pas une fiche : chaque joueur occupe sa moitié avec son portrait
+ * monté en bichromie à sa couleur, géant et fondu dans la nuit ; au centre, un VS immense
+ * en filigrane et un badge net ; les noms de famille en capitales énormes ; puis les
+ * statistiques en bras de fer sur un panneau de verre, le vainqueur en vert. Un grain fin
+ * sur l'ensemble, comme une impression. Tout est à l'échelle S (maquette de 440 px). */
 async function dessinerAfficheDuel(o){
-  const { ctx, ctxFond, calque, canvas, W, H, S, filled, list, btn } = o;
+  const { ctx, ctxFond, calque, canvas, W, H, filled, list, btn } = o;
   const story = shareFormat === 'story';
+  // L'affiche prend plus de place que les autres styles : les chiffres se lisent de loin.
+  const S = o.S * (story ? 1.1 : 1.28);
   const COUL = [SLOT_COLORS[filled[0]._idx] || '#38BDF8', SLOT_COLORS[filled[1]._idx] || '#FFB020'];
-  const VERT = '#2FE88A';
-  const hex = (c, a) => { const m = c.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); return m ? `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})` : c; };
-
-  // 1. Le cadre coupé en diagonale, sur le fond (photo de stade déjà posée).
+  const VERT = '#2FE88A', NUIT = '#050B18';
+  const hex = rgbaDe;
   const pente = W * 0.16;
+  const moitie = (c, g) => { c.beginPath(); if(g){ c.moveTo(0,0); c.lineTo(W/2 + pente, 0); c.lineTo(W/2 - pente, H); c.lineTo(0, H); } else { c.moveTo(W/2 + pente, 0); c.lineTo(W, 0); c.lineTo(W, H); c.lineTo(W/2 - pente, H); } c.closePath(); };
+
+  // 1. Le fond : la nuit par-dessus la photo de stade, puis chaque moitié teintée.
+  ctxFond.fillStyle = 'rgba(5,11,24,.55)'; ctxFond.fillRect(0, 0, W, H);
+  const imgs = await Promise.all(filled.map(p => loadImageForCanvas(p)));
+  for(const i of [0, 1]){
+    const gauche = i === 0;
+    ctxFond.save(); moitie(ctxFond, gauche); ctxFond.clip();
+    const g = gauche ? ctxFond.createLinearGradient(0, 0, W*0.6, H*0.9) : ctxFond.createLinearGradient(W, 0, W*0.4, H*0.9);
+    g.addColorStop(0, hex(COUL[i], .55)); g.addColorStop(.55, hex(COUL[i], .18)); g.addColorStop(1, hex(COUL[i], .02));
+    ctxFond.fillStyle = g; ctxFond.fillRect(0, 0, W, H);
+    // Le portrait géant en bichromie : gris, puis multiplié par la couleur du joueur, fondu vers le centre et le bas.
+    const { img, isAvatar } = imgs[i] || {};
+    if(img && !isAvatar){
+      const hImg = H * (story ? .5 : .62), sc = hImg / img.height, wImg = img.width * sc;
+      const x = gauche ? -wImg*0.12 : W - wImg*0.88, y = -hImg*0.04;
+      const t = document.createElement('canvas'); t.width = W; t.height = H; const tc = t.getContext('2d');
+      try{ tc.filter = `grayscale(1) contrast(1.35) brightness(1.05) blur(${Math.max(1, 1.2*S)}px)`; }catch(e){}
+      tc.drawImage(img, x, y, wImg, hImg);
+      try{ tc.filter = 'none'; }catch(e){}
+      tc.globalCompositeOperation = 'multiply';
+      const teinte = tc.createLinearGradient(0, 0, 0, hImg); teinte.addColorStop(0, COUL[i]); teinte.addColorStop(1, hex(COUL[i], 1));
+      tc.fillStyle = teinte; tc.fillRect(x, y, wImg, hImg);
+      tc.globalCompositeOperation = 'destination-in';
+      const fondu = tc.createLinearGradient(0, y, 0, y + hImg); fondu.addColorStop(0, 'rgba(0,0,0,.95)'); fondu.addColorStop(.55, 'rgba(0,0,0,.75)'); fondu.addColorStop(1, 'rgba(0,0,0,0)');
+      tc.fillStyle = fondu; tc.fillRect(0, 0, W, H);
+      const fonduX = gauche ? tc.createLinearGradient(x, 0, x + wImg, 0) : tc.createLinearGradient(x + wImg, 0, x, 0);
+      fonduX.addColorStop(0, 'rgba(0,0,0,1)'); fonduX.addColorStop(.6, 'rgba(0,0,0,.9)'); fonduX.addColorStop(1, 'rgba(0,0,0,0)');
+      tc.fillStyle = fonduX; tc.fillRect(0, 0, W, H);
+      ctxFond.globalAlpha = .85; ctxFond.drawImage(t, 0, 0); ctxFond.globalAlpha = 1;
+    }
+    ctxFond.restore();
+  }
+  // Voile sombre croissant vers le bas, pour les chiffres.
+  const voile = ctxFond.createLinearGradient(0, 0, 0, H);
+  voile.addColorStop(0, 'rgba(5,11,24,0)'); voile.addColorStop(.4, 'rgba(5,11,24,.22)'); voile.addColorStop(1, 'rgba(5,11,24,.85)');
+  ctxFond.fillStyle = voile; ctxFond.fillRect(0, 0, W, H);
+  // La ligne de partage : un éclair de lumière, large et doux, puis un trait net.
   ctxFond.save();
-  ctxFond.beginPath(); ctxFond.moveTo(0,0); ctxFond.lineTo(W/2 + pente, 0); ctxFond.lineTo(W/2 - pente, H); ctxFond.lineTo(0, H); ctxFond.closePath();
-  const gA = ctxFond.createLinearGradient(0, 0, W/2, H); gA.addColorStop(0, hex(COUL[0], .34)); gA.addColorStop(1, hex(COUL[0], .06));
-  ctxFond.fillStyle = gA; ctxFond.fill();
-  ctxFond.beginPath(); ctxFond.moveTo(W/2 + pente, 0); ctxFond.lineTo(W, 0); ctxFond.lineTo(W, H); ctxFond.lineTo(W/2 - pente, H); ctxFond.closePath();
-  const gB = ctxFond.createLinearGradient(W, 0, W/2, H); gB.addColorStop(0, hex(COUL[1], .34)); gB.addColorStop(1, hex(COUL[1], .06));
-  ctxFond.fillStyle = gB; ctxFond.fill();
-  // La ligne de partage, lumineuse.
-  ctxFond.shadowColor = 'rgba(255,255,255,.55)'; ctxFond.shadowBlur = 18*S;
-  ctxFond.strokeStyle = 'rgba(255,255,255,.75)'; ctxFond.lineWidth = 2.5*S;
+  ctxFond.shadowColor = 'rgba(255,255,255,.9)'; ctxFond.shadowBlur = 40*S;
+  ctxFond.strokeStyle = 'rgba(255,255,255,.55)'; ctxFond.lineWidth = 2*S;
   ctxFond.beginPath(); ctxFond.moveTo(W/2 + pente, 0); ctxFond.lineTo(W/2 - pente, H); ctxFond.stroke();
   ctxFond.restore();
-  // Voile sombre pour la lisibilité du texte, plus marqué en bas.
-  const voile = ctxFond.createLinearGradient(0, 0, 0, H);
-  voile.addColorStop(0, 'rgba(3,9,20,.10)'); voile.addColorStop(0.35, 'rgba(3,9,20,.30)'); voile.addColorStop(1, 'rgba(3,9,20,.72)');
-  ctxFond.fillStyle = voile; ctxFond.fillRect(0, 0, W, H);
+  ctxFond.strokeStyle = 'rgba(255,255,255,.9)'; ctxFond.lineWidth = 1.2*S;
+  ctxFond.beginPath(); ctxFond.moveTo(W/2 + pente, 0); ctxFond.lineTo(W/2 - pente, H); ctxFond.stroke();
+  // Deux biseaux de couleur dans les coins opposés, comme un billet de match.
+  const biseau = (c, gauche) => {
+    ctxFond.save(); ctxFond.globalAlpha = .9;
+    ctxFond.fillStyle = c; ctxFond.beginPath();
+    if(gauche){ ctxFond.moveTo(0, H - 46*S); ctxFond.lineTo(0, H); ctxFond.lineTo(60*S, H); } else { ctxFond.moveTo(W, 46*S); ctxFond.lineTo(W, 0); ctxFond.lineTo(W - 60*S, 0); }
+    ctxFond.closePath(); ctxFond.fill(); ctxFond.restore();
+  };
+  biseau(COUL[0], true); biseau(COUL[1], false);
+  // Un grain fin sur toute l'image.
+  {
+    const g = document.createElement('canvas'); g.width = 180; g.height = 180; const gc = g.getContext('2d');
+    const d = gc.createImageData(180, 180); for(let k = 0; k < d.data.length; k += 4){ const v = 110 + Math.random()*110|0; d.data[k] = d.data[k+1] = d.data[k+2] = v; d.data[k+3] = 255; }
+    gc.putImageData(d, 0, 0);
+    ctxFond.save(); ctxFond.globalCompositeOperation = 'overlay'; ctxFond.globalAlpha = .16;
+    ctxFond.fillStyle = ctxFond.createPattern(g, 'repeat'); ctxFond.fillRect(0, 0, W, H); ctxFond.restore();
+  }
 
-  // 2. En-tête : logo + DUELIO, discret.
-  const logoImg = await new Promise(res => { const im = new Image(); im.onload = ()=>res(im); im.onerror = ()=>res(null); im.src = DUELIO_ICON_DATA_URI; });
-  let y = 16*S;
-  const logoH = 26*S, logoW = logoImg ? logoH*(logoImg.width/logoImg.height) : logoH*1.24;
-  ctx.font = `800 ${15*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
-  const motW = ctx.measureText('DUELIO').width;
-  const enteteW = logoW + 8*S + motW, ex = W/2 - enteteW/2;
+  // 2. En-tête : logo + DUELIO, et le contexte.
+  const logoImg = await logoDuelio();
+  let y = 14*S;
+  const logoH = 22*S, logoW = logoImg ? logoH*(logoImg.width/logoImg.height) : logoH*1.24;
+  ctx.font = `800 ${13*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
+  const motW = ctx.measureText('DUELIO').width, ex = W/2 - (logoW + 7*S + motW)/2;
   if(logoImg) ctx.drawImage(logoImg, ex, y, logoW, logoH);
   ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-  ctx.fillText('DUELIO', ex + logoW + 8*S, y + logoH/2 + 1*S);
-  y += logoH + 10*S;
-  // Le périmètre et la période, en lettres espacées.
-  const ctxA = playerContextLabel(filled[0]) || '', ctxB = playerContextLabel(filled[1]) || '';
-  const memeContexte = ctxA === ctxB;
-  const modeTxt = compareBasis==='career' ? 'CARRIÈRE' : (compareBasis==='ageCumul' || compareBasis==='seasonCumul') ? 'CUMUL' : compareBasis==='age' ? `À ${compareAgeValue} ANS` : 'SAISON';
-  const perim = teamScope==='nation' ? 'SÉLECTION' : teamScope==='all' ? 'CLUB + SÉLECTION' : teamScope==='friendly' ? 'AMICAUX' : 'CLUB';
-  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`;
-  ctx.fillStyle = 'rgba(255,255,255,.72)'; ctx.textAlign = 'center';
-  ctx.fillText((memeContexte && ctxA ? ctxA.toUpperCase() : modeTxt) + '   ·   ' + perim, W/2, y + 4*S);
-  y += 22*S;
+  ctx.fillText('DUELIO', ex + logoW + 7*S, y + logoH/2 + 1*S);
+  y += logoH + 8*S;
+  const st = sousTitreDuel(filled);
+  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.textAlign = 'center';
+  ctx.fillText(st.texte, W/2, y + 4*S);
+  y += 20*S;
 
-  // 3. Les deux portraits, grands et ronds, qui se font face.
-  const imgs = await Promise.all(filled.map(p => loadImageForCanvas(p)));
-  const R = (story ? 88 : 80)*S;
-  const cxA = W*0.27, cxB = W*0.73, cy = y + R + 8*S;
+  // 3. Le VS géant en filigrane, incliné, derrière les portraits.
+  const R = (story ? 84 : 76)*S, cxA = W*0.26, cxB = W*0.74, cy = y + R + 10*S;
+  ctx.save(); ctx.translate(W/2, cy + 6*S); ctx.rotate(-0.2);
+  ctx.font = `800 ${150*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineWidth = 1.5*S; ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.strokeText('VS', 0, 0);
+  ctx.fillStyle = 'rgba(255,255,255,.04)'; ctx.fillText('VS', 0, 0);
+  ctx.restore();
+  // Les portraits nets, cerclés de leur couleur puis d'un fin liseré blanc, sous un halo.
   const portrait = (i, cx) => {
     const { img } = imgs[i] || {};
-    ctx.save();
-    ctx.shadowColor = hex(COUL[i], .9); ctx.shadowBlur = 40*S;
-    ctx.beginPath(); ctx.arc(cx, cy, R + 4*S, 0, Math.PI*2); ctx.fillStyle = hex(COUL[i], .95); ctx.fill();
-    ctx.restore();
-    ctx.save();
-    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.clip();
+    ctx.save(); ctx.shadowColor = hex(COUL[i], .95); ctx.shadowBlur = 46*S;
+    ctx.beginPath(); ctx.arc(cx, cy, R + 5*S, 0, Math.PI*2); ctx.fillStyle = COUL[i]; ctx.fill(); ctx.restore();
+    ctx.beginPath(); ctx.arc(cx, cy, R + 1.5*S, 0, Math.PI*2); ctx.fillStyle = NUIT; ctx.fill();
+    ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.clip();
     const fond = ctx.createLinearGradient(cx, cy - R, cx, cy + R); fond.addColorStop(0, '#16234A'); fond.addColorStop(1, '#0B1730');
     ctx.fillStyle = fond; ctx.fillRect(cx - R, cy - R, 2*R, 2*R);
-    if(img){
-      // La photo remplit le rond (cadrage sur le haut : c'est là qu'est le visage).
-      const sc = Math.max((2*R)/img.width, (2*R)/img.height) * 1.02;
-      const iw = img.width*sc, ih = img.height*sc;
-      ctx.drawImage(img, cx - iw/2, cy - R - Math.max(0, (ih - 2*R) * 0.15), iw, ih);
-    }
+    if(img){ const sc = Math.max((2*R)/img.width, (2*R)/img.height) * 1.02; const iw = img.width*sc, ih = img.height*sc; ctx.drawImage(img, cx - iw/2, cy - R - Math.max(0, (ih - 2*R) * 0.15), iw, ih); }
     ctx.restore();
-    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.lineWidth = 2*S; ctx.strokeStyle = 'rgba(255,255,255,.35)'; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.lineWidth = 1.5*S; ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.stroke();
   };
   portrait(0, cxA); portrait(1, cxB);
-  // VS, entre les deux.
+  // Le badge VS, net, au centre.
   {
-    const r = 26*S, vx = W/2, vy = cy;
-    ctx.save(); ctx.shadowColor = 'rgba(255,255,255,.5)'; ctx.shadowBlur = 24*S;
-    ctx.beginPath(); ctx.arc(vx, vy, r, 0, Math.PI*2); ctx.fillStyle = '#071226'; ctx.fill(); ctx.restore();
-    ctx.beginPath(); ctx.arc(vx, vy, r, 0, Math.PI*2); ctx.lineWidth = 2*S; ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.stroke();
-    ctx.font = `800 ${17*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
-    ctx.fillStyle = '#fff'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('VS', vx, vy + 1*S);
+    const r = 23*S;
+    ctx.save(); ctx.shadowColor = 'rgba(255,255,255,.6)'; ctx.shadowBlur = 26*S;
+    ctx.beginPath(); ctx.arc(W/2, cy, r, 0, Math.PI*2); ctx.fillStyle = '#fff'; ctx.fill(); ctx.restore();
+    ctx.font = `800 ${15*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
+    ctx.fillStyle = NUIT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('VS', W/2, cy + 1*S);
   }
-  y = cy + R + 16*S;
-  // Noms, poste, club.
+  y = cy + R + 20*S;
+
+  // 4. Les noms : le prénom petit dans la couleur, le nom de famille énorme en blanc.
   const nomDe = (i, cx) => {
-    const p = filled[i];
-    let fs = 19*S; const nom = shortName(p).toUpperCase(), maxW = W*0.44;
-    ctx.font = `800 ${fs}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
-    while(ctx.measureText(nom).width > maxW && fs > 9*S){ fs -= 0.5*S; ctx.font = `800 ${fs}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`; }
+    const p = filled[i], maxW = W*0.46;
+    const parts = shortName(p).trim().split(/\s+/);
+    const fam = (p.lastname && parts.length > 1 && shortName(p).toLowerCase().endsWith(p.lastname.toLowerCase())) ? p.lastname : parts[parts.length - 1];
+    const prenom = shortName(p).slice(0, shortName(p).length - fam.length).trim();
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 8*S; ctx.fillStyle = '#fff'; ctx.fillText(nom, cx, y + fs); ctx.restore();
-    ctx.font = `700 ${8.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = hex(COUL[i], 1);
-    const sous = [p.posLabel, p.club].filter(Boolean).join('  ·  ').toUpperCase();
-    let sfs = 8.5*S; while(ctx.measureText(sous).width > maxW && sfs > 5.5*S){ sfs -= 0.5*S; ctx.font = `700 ${sfs}px 'Plus Jakarta Sans', sans-serif`; }
-    ctx.fillText(sous, cx, y + fs + 13*S);
-    // Si les deux joueurs ne sont pas sur la même période (saisons différentes), chacun porte la sienne, sur une troisième ligne.
-    let h = fs;
-    if(!memeContexte){
-      const periode = (playerContextLabel(p) || '').replace(/^Saison /, '').replace(/ · \d+ saisons?$/, '').toUpperCase();
-      let pfs = 7.5*S; ctx.font = `700 ${pfs}px 'Plus Jakarta Sans', sans-serif`;
-      while(ctx.measureText(periode).width > maxW && pfs > 5*S){ pfs -= 0.5*S; ctx.font = `700 ${pfs}px 'Plus Jakarta Sans', sans-serif`; }
-      ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText(periode, cx, y + fs + 25*S);
-      h += 12*S;
+    // La ligne du prénom est réservée même quand il n'y en a pas (Pelé), pour que les deux noms soient alignés.
+    let h = 13*S;
+    if(prenom){
+      ajusterPolice(ctx, prenom.toUpperCase(), maxW, 9*S, 6*S, f => `800 ${f}px 'Plus Jakarta Sans', sans-serif`);
+      ctx.fillStyle = COUL[i]; ctx.fillText(prenom.toUpperCase(), cx, y + 9*S);
     }
+    const fs = ajusterPolice(ctx, fam.toUpperCase(), maxW, 27*S, 11*S, f => `800 ${f}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`);
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.7)'; ctx.shadowBlur = 12*S; ctx.fillStyle = '#fff'; ctx.fillText(fam.toUpperCase(), cx, y + h + fs); ctx.restore();
+    h += fs + 12*S;
+    const sous = [p.posLabel, p.club].filter(Boolean).join('  ·  ').toUpperCase();
+    ajusterPolice(ctx, sous, maxW, 8*S, 5.5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`);
+    ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.fillText(sous, cx, y + h); h += 11*S;
+    const per = st.periode(p);
+    if(per){ ajusterPolice(ctx, per, maxW, 7.5*S, 5*S, f => `700 ${f}px 'Plus Jakarta Sans', sans-serif`); ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.fillText(per, cx, y + h); h += 11*S; }
     return h;
   };
-  const fsA = nomDe(0, cxA), fsB = nomDe(1, cxB);
-  y += Math.max(fsA, fsB) + 32*S;
+  y += Math.max(nomDe(0, cxA), nomDe(1, cxB)) + 16*S;
 
-  // 4. Les statistiques : valeur · barre de bras de fer · valeur.
-  const nb = list.length;
-  const basMax = H - 44*S;
-  let pitch = (story ? 50 : 42)*S;
-  if(nb && y + nb*pitch > basMax) pitch = Math.max(30*S, (basMax - y) / nb);
-  const marge = 30*S, blockW = W - 2*marge;
-  list.forEach((r, ri) => {
-    const ry = y + ri*pitch;
-    const vals = filled.map(fp => compareBasis==='nation' ? fp[r.key] : (statUnknown(fp, r.key) ? null : getStatValue(fp, r.key)));
-    const txt = v => v===null || v===undefined ? '—' : `${fmtNombre(v)}${fmtSuffixe(r.suffix)}`.trim();
-    const nA = vals[0]==null ? null : Number(vals[0]), nB = vals[1]==null ? null : Number(vals[1]);
-    const connu = nA!==null && nB!==null && !isNaN(nA) && !isNaN(nB);
-    const gagneA = connu && (r.lowerIsBetter ? nA < nB : nA > nB), gagneB = connu && (r.lowerIsBetter ? nB < nA : nB > nA);
-    // Libellé centré, petit, espacé.
+  // 5. Les statistiques sur un panneau de verre : valeur · bras de fer · valeur.
+  const lignes = lignesDuDuel(filled, list), nb = lignes.length;
+  const basMax = H - 40*S;
+  let pitch = (story ? 46 : 40)*S;
+  const padP = 12*S;
+  if(nb && y + nb*pitch + 2*padP > basMax) pitch = Math.max(28*S, (basMax - y - 2*padP) / nb);
+  const px = 18*S, pw = W - 2*px, ph = nb*pitch + 2*padP;
+  if(nb){
+    ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 24*S;
+    roundRect(ctx, px, y, pw, ph, 14*S); ctx.fillStyle = 'rgba(8,16,34,.55)'; ctx.fill(); ctx.restore();
+    roundRect(ctx, px, y, pw, ph, 14*S); ctx.lineWidth = 1*S; ctx.strokeStyle = 'rgba(255,255,255,.18)'; ctx.stroke();
+    // Les bords gauche et droit du panneau portent la couleur de chaque joueur.
+    ctx.save(); roundRect(ctx, px, y, pw, ph, 14*S); ctx.clip();
+    const bg = ctx.createLinearGradient(px, 0, px + 60*S, 0); bg.addColorStop(0, hex(COUL[0], .35)); bg.addColorStop(1, hex(COUL[0], 0)); ctx.fillStyle = bg; ctx.fillRect(px, y, 60*S, ph);
+    const bd = ctx.createLinearGradient(px + pw, 0, px + pw - 60*S, 0); bd.addColorStop(0, hex(COUL[1], .35)); bd.addColorStop(1, hex(COUL[1], 0)); ctx.fillStyle = bd; ctx.fillRect(px + pw - 60*S, y, 60*S, ph);
+    ctx.restore();
+  }
+  const marge = px + 14*S, blockW = W - 2*marge;
+  lignes.forEach((l, ri) => {
+    const ry = y + padP + ri*pitch;
+    if(ri){ ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 1*S; ctx.beginPath(); ctx.moveTo(marge, ry); ctx.lineTo(W - marge, ry); ctx.stroke(); }
     ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`;
-    ctx.fillStyle = 'rgba(255,255,255,.62)'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    ctx.fillText(r.label.toUpperCase(), W/2, ry + 8*S);
-    // Valeurs aux deux bouts : le vainqueur en vert, et plus grand.
-    const vy = ry + pitch*0.62;
+    ctx.fillStyle = 'rgba(255,255,255,.6)'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    ctx.fillText(l.label.toUpperCase(), W/2, ry + 10*S);
+    const vy = ry + pitch*0.64;
     const val = (t, x, align, gagne) => {
-      ctx.font = `800 ${(gagne ? 19 : 16)*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
+      ctx.font = `800 ${(gagne ? 20 : 16)*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
       ctx.textAlign = align; ctx.textBaseline = 'middle';
-      ctx.save(); if(gagne){ ctx.shadowColor = hex(VERT, .7); ctx.shadowBlur = 10*S; }
+      ctx.save(); if(gagne){ ctx.shadowColor = hex(VERT, .85); ctx.shadowBlur = 14*S; }
       ctx.fillStyle = gagne ? VERT : 'rgba(255,255,255,.92)'; ctx.fillText(t, x, vy); ctx.restore();
     };
-    val(txt(vals[0]), marge, 'left', gagneA); val(txt(vals[1]), W - marge, 'right', gagneB);
-    // La barre, entre les deux valeurs.
-    ctx.font = `800 ${19*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
-    const wA = ctx.measureText(txt(vals[0])).width, wB = ctx.measureText(txt(vals[1])).width;
-    const bx = marge + wA + 14*S, bw = blockW - wA - wB - 28*S, bh = 9*S;
+    val(l.tA, marge, 'left', l.gagneA); val(l.tB, W - marge, 'right', l.gagneB);
+    ctx.font = `800 ${20*S}px 'Unbounded', 'Plus Jakarta Sans', sans-serif`;
+    const wA = ctx.measureText(l.tA).width, wB = ctx.measureText(l.tB).width;
+    const bx = marge + wA + 12*S, bw = blockW - wA - wB - 24*S, bh = 8*S;
     if(bw > 40*S){
-      roundRect(ctx, bx, vy - bh/2, bw, bh, bh/2); ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.fill();
-      if(connu && (Math.abs(nA) + Math.abs(nB)) > 0){
-        let a = Math.abs(nA), b = Math.abs(nB);
-        if(r.lowerIsBetter){ const t = a + b; a = t - a; b = t - b; }
-        const part = Math.max(.06, Math.min(.94, a / (a + b)));
-        const split = bx + bw*part;
+      roundRect(ctx, bx, vy - bh/2, bw, bh, bh/2); ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fill();
+      if(l.connu){
+        const split = bx + bw*l.part;
         ctx.save(); roundRect(ctx, bx, vy - bh/2, bw, bh, bh/2); ctx.clip();
-        // Chacun sa couleur ; le vainqueur se lit à sa valeur en vert, et à sa part plus longue.
-        const ga = ctx.createLinearGradient(bx, 0, split, 0); ga.addColorStop(0, hex(COUL[0], .45)); ga.addColorStop(1, COUL[0]);
-        const gb = ctx.createLinearGradient(bx + bw, 0, split, 0); gb.addColorStop(0, hex(COUL[1], .45)); gb.addColorStop(1, COUL[1]);
+        const ga = ctx.createLinearGradient(bx, 0, split, 0); ga.addColorStop(0, hex(COUL[0], .5)); ga.addColorStop(1, COUL[0]);
+        const gb = ctx.createLinearGradient(bx + bw, 0, split, 0); gb.addColorStop(0, hex(COUL[1], .5)); gb.addColorStop(1, COUL[1]);
         ctx.fillStyle = ga; ctx.fillRect(bx, vy - bh/2, split - bx, bh);
         ctx.fillStyle = gb; ctx.fillRect(split, vy - bh/2, bx + bw - split, bh);
         ctx.restore();
-        ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.5)'; ctx.shadowBlur = 4*S; ctx.fillStyle = '#fff';
-        roundRect(ctx, split - 1.5*S, vy - bh/2 - 3*S, 3*S, bh + 6*S, 1.5*S); ctx.fill(); ctx.restore();
+        ctx.save(); ctx.shadowColor = 'rgba(255,255,255,.8)'; ctx.shadowBlur = 8*S; ctx.fillStyle = '#fff';
+        roundRect(ctx, split - 1.5*S, vy - bh/2 - 4*S, 3*S, bh + 8*S, 1.5*S); ctx.fill(); ctx.restore();
       }
     }
   });
-  y += nb*pitch + 6*S;
+  y += ph + 4*S;
 
-  // 5. Pied : la marque et une invitation.
-  ctx.font = `700 ${8*S}px 'Plus Jakarta Sans', sans-serif`;
-  ctx.fillStyle = 'rgba(255,255,255,.55)'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-  const piedY = Math.min(y + 14*S, H - 16*S);
+  // 6. Pied : la marque et une invitation.
+  ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  const piedY = Math.min(y + 14*S, H - 14*S);
   ctx.fillText('D U E L I O   ·   C O M P A R E   T E S   J O U E U R S', W/2, piedY);
 
-  // Composition : le contenu est centré verticalement dans les deux formats.
-  const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - 16*S) / 2));
+  const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - 14*S) / 2));
   ctxFond.drawImage(calque, 0, decalage);
   publierImage(canvas, btn, W, H);
 }
