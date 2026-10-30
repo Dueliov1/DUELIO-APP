@@ -278,8 +278,11 @@
     opacity:.05;
   }
   .phone > *{ position:relative; z-index:1; }
-  /* Sur téléphone, l'appli occupe tout l'écran (pas de maquette de téléphone dans le téléphone) */
-  @media (max-width: 480px){
+  /* Sur téléphone, l'appli occupe tout l'écran (pas de maquette de téléphone dans le
+   * téléphone). Un téléphone peut déclarer plus de 480 px de large — grand modèle,
+   * réglage « taille d'affichage » réduit, pliable — d'où le second critère : un écran
+   * tactile sans souris, jusqu'à 640 px, c'est un téléphone. */
+  @media (max-width: 480px), ((hover: none) and (pointer: coarse) and (max-width: 640px)){
     body{ padding:0; display:block; }
     .phone{
       width:100%; max-width:none; height:100vh; height:100dvh; max-height:none;
