@@ -1,1 +1,1 @@
-Dates de naissance — 2026-10-30 : 30000 appels, 29381 dates relevées, 619 joueurs sans date chez l'API, 0 échecs ; 0 fiches complètes et 747 paquets légers réécrits, 26 fichiers d'index complétés ; reste 0 fiches complètes et 10276 joueurs légers à relever
+Dates de naissance — 2026-10-30 : 8728 appels, 8555 dates relevées, 173 joueurs sans date chez l'API, 0 échecs ; 0 fiches complètes et 254 paquets légers réécrits, 26 fichiers d'index complétés ; reste 0 fiches complètes et 0 joueurs légers à relever
