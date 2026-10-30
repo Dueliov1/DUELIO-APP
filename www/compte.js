@@ -127,7 +127,7 @@
         try{ await fs.deleteDoc(fs.doc(db, 'users', u.uid)); }catch(e){}
         try{ await auth.deleteUser(u); }
         catch(e){
-          if(e && /requires-recent-login/.test(e.code || '')) throw new Error('Par sécurité, reconnectez-vous puis réessayez la suppression.');
+          if(e && /requires-recent-login/.test(e.code || '')) throw new Error('Par sécurité, reconnecte-toi puis réessaie la suppression.');
           throw e;
         }
         const pn = pluginNatif(); if(pn){ try{ await pn.signOut(); }catch(e){} }
@@ -145,15 +145,15 @@
       'auth/user-not-found': 'Aucun compte avec cette adresse.',
       'auth/wrong-password': 'Mot de passe incorrect.',
       'auth/invalid-credential': 'Adresse ou mot de passe incorrect.',
-      'auth/too-many-requests': 'Trop de tentatives. Réessayez dans quelques minutes.',
-      'auth/network-request-failed': 'Pas de connexion. Vérifiez votre réseau.',
+      'auth/too-many-requests': 'Trop de tentatives. Réessaie dans quelques minutes.',
+      'auth/network-request-failed': 'Pas de connexion. Vérifie ton réseau.',
       'auth/popup-closed-by-user': 'Connexion annulée.',
       'auth/cancelled-popup-request': 'Connexion annulée.',
-      'auth/popup-blocked': 'Votre navigateur a bloqué la fenêtre de connexion.',
+      'auth/popup-blocked': 'Ton navigateur a bloqué la fenêtre de connexion.',
       'auth/operation-not-allowed': 'Cette méthode de connexion n\'est pas activée.',
-      'auth/requires-recent-login': 'Par sécurité, reconnectez-vous puis réessayez.',
+      'auth/requires-recent-login': 'Par sécurité, reconnecte-toi puis réessaie.',
     };
-    return t[code] || (e && e.message && !/firebase/i.test(e.message) ? e.message : 'Une erreur est survenue. Réessayez.');
+    return t[code] || (e && e.message && !/firebase/i.test(e.message) ? e.message : 'Une erreur est survenue. Réessaie.');
   }
 
   window.Compte = {

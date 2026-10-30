@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Duelio — Comparateur de joueurs</title>
-<meta name="description" content="Comparez deux footballeurs sur leurs vraies statistiques, saison par saison ou carrière entière. 55 000 joueurs, et une image prête à partager.">
+<meta name="description" content="Compare deux footballeurs sur leurs vraies statistiques, saison par saison ou carrière entière. 55 000 joueurs, et une image prête à partager.">
 <meta name="theme-color" content="#0B1730">
 
 <!-- Aperçu affiché quand quelqu'un partage le lien sur WhatsApp, X, Discord, Instagram
@@ -18,7 +18,7 @@
 <meta property="og:locale" content="fr_FR">
 <meta property="og:url" content="https://duelio-app.bensouna-ahmed.workers.dev/">
 <meta property="og:title" content="Duelio — Qui est le meilleur ?">
-<meta property="og:description" content="Deux joueurs face à face : les chiffres tranchent le débat. 55 000 joueurs, carrières complètes, et une image prête pour vos stories.">
+<meta property="og:description" content="Deux joueurs face à face : les chiffres tranchent le débat. 55 000 joueurs, carrières complètes, et une image prête pour tes stories.">
 <meta property="og:image" content="https://duelio-app.bensouna-ahmed.workers.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
@@ -984,7 +984,7 @@
   .season-pick select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; color-scheme: dark; }
   .season-pick select:disabled{ cursor:progress; }
   .season-pick.busy{ opacity:.65; }
-  .season-pick.static{ cursor:default; background:none; border-style:dashed; color: var(--chalk-dim); font-weight:700; font-size:11px; text-align:center; }
+  .season-pick.static{ flex-wrap:wrap; row-gap:0; line-height:1.25; cursor:default; background:none; border-style:dashed; color: var(--chalk-dim); font-weight:700; font-size:11px; text-align:center; }
   .season-pick-err{ margin-top:4px; font-size:10px; color: var(--danger); text-align:center; line-height:1.3; }
   /* Mention de couverture : discrète, informative, jamais alarmante. */
   .season-note{ margin-top:3px; font-size:9.5px; color: var(--chalk-dim); text-align:center;
@@ -1006,6 +1006,7 @@
   .compare-cols.count-3 .season-note, .compare-cols.count-4 .season-note{ font-size:8.5px; }
   .compare-cols.count-3 .season-pick, .compare-cols.count-4 .season-pick{ font-size:10.5px; padding:0 6px; min-height:34px; }
   .compare-cols.count-4 .season-pick.static{ font-size:8.5px; }
+  .nowrap{ white-space:nowrap; }
   .detail-season{ width:100%; max-width:260px; margin-top:8px; }
   .api-wait-notice{
     position:absolute; left:50%; bottom:78px; transform:translateX(-50%); z-index:40; max-width:calc(100% - 32px);
@@ -1733,7 +1734,7 @@
       <div class="sheet-list about-body">
         <p>Duelio compare les footballeurs sur leurs vraies statistiques : 55 000 joueurs et les légendes du jeu, saison par saison ou carrière entière.</p>
         <p><b>Source des données.</b> Statistiques des joueurs en activité : API-Football (API-Sports), remises à jour chaque matin pour la saison en cours. Carrières des légendes : saisies à la main à partir de sources publiques, indiquées sur chaque fiche. Les photos des légendes viennent de Wikimedia Commons sous licences libres, créditées sur leur fiche.</p>
-        <p>Duelio n'est affilié à aucune ligue, fédération, club ou joueur. Les chiffres sont fournis à titre informatif et peuvent comporter des erreurs : signalez-les, on corrige.</p>
+        <p>Duelio n'est affilié à aucune ligue, fédération, club ou joueur. Les chiffres sont fournis à titre informatif et peuvent comporter des erreurs : signale-les, on corrige.</p>
         <div class="about-notifs" id="aboutNotifs" hidden>
           <div class="about-notifs-txt"><b>Notifications</b><span id="aboutNotifsEtat">Désactivées</span></div>
           <button type="button" class="about-notifs-btn" id="aboutNotifsBtn">Activer</button>
@@ -2162,7 +2163,7 @@ function playerMetaHtml(p){
   // Une fiche relue du stockage peut arriver sans nationalité : une liste
   // entière ne doit pas disparaître pour une clé manquante.
   const nat = p.nation || { iso:'UN', name:'', code:'INT' };
-  bits.push(`${flagSVG(nat.iso)} ${escapeHtml(nat.name || '')}`.trim());
+  bits.push(`<span class="nowrap">${flagSVG(nat.iso)} ${escapeHtml(nat.name || '')}</span>`);
   // Un joueur retiré depuis longtemps n'a ni la même profondeur de données ni
   // le même statut qu'un joueur en activité : l'annoncer évite la surprise
   // devant une fiche qui n'affiche que des matchs et des buts.
@@ -2683,9 +2684,9 @@ function fetchBorne(url, ms, options){
 // Transforme une erreur brute de l'API en phrase compréhensible
 function apiErrorMessage(errors){
   const txt = typeof errors === 'string' ? errors : Object.values(errors||{}).join(' ');
-  if(/too many requests|rate ?limit/i.test(txt)) return "Trop de recherches d'un coup. Réessayez dans une minute.";
+  if(/too many requests|rate ?limit/i.test(txt)) return "Trop de recherches d'un coup. Réessaie dans une minute.";
   if(/token|api.?key|subscription/i.test(txt)) return "Accès à la base API-Football refusé (clé ou abonnement).";
-  if(/failed to fetch|networkerror|load failed|network request failed|abort/i.test(txt)) return "Connexion impossible. Vérifiez votre réseau et réessayez.";
+  if(/failed to fetch|networkerror|load failed|network request failed|abort/i.test(txt)) return "Connexion impossible. Vérifie ton réseau et réessaie.";
   return txt || 'Erreur API';
 }
 /* ---------------- File d'attente des appels API ----------------
@@ -3476,7 +3477,7 @@ function extractSeasonStats(entry, noSplit){
   // c'est qu'elle était déjà un pourcentage : on la garde telle quelle.
   const _acc = passes.accuracy ? parseFloat(passes.accuracy) : 0;
   const _passesPerGame = appearances>0 ? (passes.total||0)/appearances : 0;
-  const passesReussies = !_acc ? 0 : (_passesPerGame >= _acc ? Math.round(_acc/_passesPerGame*100) : Math.min(100, _acc));
+  const passesReussies = !_acc ? 0 : Math.round(_passesPerGame >= _acc ? _acc/_passesPerGame*100 : Math.min(100, _acc)); // un pourcentage s'affiche sans décimale
   const tacles = appearances>0 ? Math.round((tackles.total||0)/appearances*10)/10 : 0;
   const interceptions = appearances>0 ? Math.round((tackles.interceptions||0)/appearances*10)/10 : 0;
   const duelsTotal = duels.total || 0;
@@ -3719,7 +3720,7 @@ async function fetchSeasonEntry(apiId, season, priority){
   const cached = readSeasonCache(apiId, season);
   if(cached !== null) return cached;
   const r = await apiFetchJson(`${REAL_DATA_CONFIG.proxyUrl}/players?id=${apiId}&season=${season}`, priority);
-  if(!r.res || !r.res.ok || !r.json) throw new Error('Réponse invalide du serveur, réessayez.'); // jamais mis en cache comme « vide »
+  if(!r.res || !r.res.ok || !r.json) throw new Error('Réponse invalide du serveur, réessaie.'); // jamais mis en cache comme « vide »
   if(r.json.errors && Object.keys(r.json.errors).length) throw new Error(apiErrorMessage(r.json.errors));
   const entry = r.json && r.json.response && r.json.response[0];
   const out = (entry && entry.statistics && entry.statistics.length) ? { player: entry.player, statistics: entry.statistics } : { player: null, statistics: [] };
@@ -3800,7 +3801,7 @@ function texteDePartage(){
   const noms = (slots || []).map(id => id && PLAYERS.find(p => p.id === id))
                             .filter(Boolean).map(shortName).filter(Boolean);
   const duel = noms.length >= 2 ? `${noms[0]} vs ${noms[1]}` : 'Mon duel';
-  return `${duel} — qui est le meilleur ? Comparez-les sur Duelio : ${SITE_URL}`;
+  return `${duel} — qui est le meilleur ? Compare-les sur Duelio : ${SITE_URL}`;
 }
 
 // Charge les vraies statistiques d'un joueur trouvé par la recherche, et complète sa fiche
@@ -4294,7 +4295,7 @@ async function fetchPack(p, opts){
   }
   if(!res || !res.ok || !json){
     if(secours) return secours;
-    throw new Error(json && json.errors ? apiErrorMessage(json.errors) : 'Réponse du serveur invalide, réessayez.');
+    throw new Error(json && json.errors ? apiErrorMessage(json.errors) : 'Réponse du serveur invalide, réessaie.');
   }
   if(json.erreur){
     if(secours) return secours;
@@ -6062,7 +6063,7 @@ function renderAll(){
         <div class="portrait">${portraitHtml(p)}</div>
         <div class="col-name">${escapeHtml(p.name)}</div>
         <div class="pos-lbl">${p.posLabel}</div>
-        <div class="col-club">${p.club ? clubHtml(p)+' · ' : ''}${flagSVG((p.nation||{}).iso)} ${escapeHtml(slots.length > 2 ? ((p.nation||{}).code || '') : ((p.nation||{}).name || ''))}</div>
+        <div class="col-club">${p.club ? clubHtml(p)+' · ' : ''}<span class="nowrap">${flagSVG((p.nation||{}).iso)} ${escapeHtml(slots.length > 2 ? ((p.nation||{}).code || '') : ((p.nation||{}).name || ''))}</span></div>
       </div>`;
   }
 
@@ -6515,14 +6516,14 @@ function compareTutorialHtml(filled, isDemo){
   const anim = tutoAnimated ? '' : 'anim';
   tutoAnimated = true;
   const steps = [
-    { title: 'Choisissez deux joueurs', text: 'Actuels ou légendes : tapez simplement un nom.',
+    { title: 'Choisis deux joueurs', text: 'Actuels ou légendes : tape simplement un nom.',
       art: `<div class="tart-duo"><span style="background:${SLOT_COLORS[0]}"></span><b>VS</b><span style="background:${SLOT_COLORS[1]}"></span></div>`,
       badge: `${n}/2` },
-    { title: 'Comparez stat par stat', text: 'Sur chaque ligne, le meilleur s\'allume en vert.',
+    { title: 'Compare stat par stat', text: 'Sur chaque ligne, le meilleur s\'allume en vert.',
       art: `<div class="tart-rows"><i></i><i class="win"></i><i class="win"></i><i></i></div>` },
-    { title: 'Changez d\'époque', text: 'Même saison, au même âge ou toute la carrière : un bouton suffit.',
+    { title: 'Change d\'époque', text: 'Même saison, au même âge ou toute la carrière : un bouton suffit.',
       art: `<div class="tart-chips"><span>À 23 ans</span><span class="on">Carrière</span></div>` },
-    { title: 'Partagez le verdict', text: 'Onglet Partager : une image prête pour vos stories.',
+    { title: 'Partage le verdict', text: 'Onglet Partager : une image prête pour tes stories.',
       art: `<div class="tart-story"><i></i><i class="w"></i><i></i><em>↗</em></div>` }
   ];
   /* L'état vide ne répète plus trois fois la même invitation. Le titre
@@ -6608,23 +6609,23 @@ function generateTutorialHtml(filled){
       </div>`).join('')}
     </div>`;
   const steps = [
-    { title: 'Choisissez deux joueurs', text: n===0 ? 'Dans l\'onglet Comparer, ou avec un duel tout prêt.' : 'Plus qu\'un à choisir dans l\'onglet Comparer.', current: true, badge: `${n}/2`,
+    { title: 'Choisis deux joueurs', text: n===0 ? 'Dans l\'onglet Comparer, ou avec un duel tout prêt.' : 'Plus qu\'un à choisir dans l\'onglet Comparer.', current: true, badge: `${n}/2`,
       art: `<div class="tart-duo"><span style="background:${SLOT_COLORS[0]}"></span><b>VS</b><span style="background:${SLOT_COLORS[1]}"></span></div>` },
-    { title: 'Gardez les stats qui comptent', text: 'Jusqu\'à 5 lignes sur l\'image, à vous de choisir.',
+    { title: 'Garde les stats qui comptent', text: 'Jusqu\'à 5 lignes sur l\'image, à toi de choisir.',
       art: `<div class="tart-picks"><span class="on">✓ Buts</span><span class="on">✓ Passes</span><span>Tacles</span></div>` },
     { title: 'Feed ou story', text: 'Carré pour le fil, vertical pour les stories.',
       art: `<div class="tart-formats"><span class="sq"></span><span class="st on"></span></div>` },
-    { title: 'Générez et partagez', text: 'Instagram, TikTok, WhatsApp… en un toucher.',
+    { title: 'Génère et partage', text: 'Instagram, TikTok, WhatsApp… en un toucher.',
       art: `<div class="tart-share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></div>` }
   ];
   return `
     <section class="tuto gen-tuto ${anim}" aria-label="Créer une image à partager">
-      <h3 class="tuto-title">Votre duel, prêt à poster</h3>
-      <p class="tuto-sub">Transformez une comparaison en image et laissez vos abonnés trancher.</p>
+      <h3 class="tuto-title">Ton duel, prêt à poster</h3>
+      <p class="tuto-sub">Transforme une comparaison en image et laisse tes abonnés trancher.</p>
       ${mock}
       <button class="tuto-cta" id="genTutoCta" type="button" data-slot="${nextIdx}">${n===0 ? 'Choisir deux joueurs' : `Choisir le joueur ${nextIdx+1}`}</button>
       ${!isDemo && n===0 ? `
-      <div class="tuto-or">ou créez tout de suite l'image d'un duel</div>
+      <div class="tuto-or">ou crée tout de suite l'image d'un duel</div>
       <div class="duel-chips tuto-duels">
         ${SUGGESTED_DUELS.slice(0,4).map((d,i)=>`<button class="duel-chip" type="button" data-gduel="${i}" ${duelLoading ? 'disabled' : ''}>${d.a.label} <span class="vs">VS</span> ${d.b.label}</button>`).join('')}
       </div>
@@ -6748,7 +6749,7 @@ function seasonPickHtml(p, opts){
     if(!annees.length || (!opts.detail && compareMode !== 'shown')){
       const s = p.span;
       return `<div class="season-pick static" title="Carrière entière, toutes compétitions">${
-        s ? `${seasonLabel(s[0])} → ${seasonLabel(s[1])}` : 'Carrière'}</div>`;   // même format que les joueurs de l'API, côte à côte
+        s ? `<span class="nowrap">${seasonLabel(s[0])} →</span> <span class="nowrap">${seasonLabel(s[1])}</span>` : 'Carrière'}</div>`;   // même format que les joueurs de l'API, côte à côte
     }
     const court = slots.length > 2 && !opts.detail;
     const clubSaison = (p.statsBySeason && p.statsBySeason[p.seasonShown] && p.statsBySeason[p.seasonShown].teamName) || p.club;
@@ -6766,8 +6767,8 @@ function seasonPickHtml(p, opts){
     // saisons connues la donnent : sans ce cas, la colonne affichait
     // « Rien dans la base » alors que les chiffres étaient bien là.
     const dispo = p.seasonsAvailable && p.seasonsAvailable.length ? p.seasonsAvailable : null;
-    const txt = info.cumul ? `${seasonLabel(info.cumul.span[0])} → ${seasonLabel(info.cumul.span[1])}`
-      : (info.career && dispo) ? `${seasonLabel(Math.min(...dispo))} → ${seasonLabel(Math.max(...dispo))}`
+    const txt = info.cumul ? `<span class="nowrap">${seasonLabel(info.cumul.span[0])} →</span> <span class="nowrap">${seasonLabel(info.cumul.span[1])}</span>`
+      : (info.career && dispo) ? `<span class="nowrap">${seasonLabel(Math.min(...dispo))} →</span> <span class="nowrap">${seasonLabel(Math.max(...dispo))}</span>`
       : info.pending ? 'Chargement…' : 'Rien dans la base';
     return `<div class="season-pick static" title="Saisons additionnées">${txt}</div>${noteCouvertureHtml(p)}`;
   }
@@ -7049,7 +7050,7 @@ function memeDuel(a, b){ return a && b && a.length === b.length && a.slice().sor
 function wireSaveDuel(root, filled){
   const btn = root.querySelector('#saveDuelBtn'); if(!btn) return;
   btn.addEventListener('click', async ()=>{
-    if(!compteUser()){ accountVue = 'inscription'; openAccountSheet('Créez un compte pour retrouver vos duels sur tous vos appareils.'); return; }
+    if(!compteUser()){ accountVue = 'inscription'; openAccountSheet('Crée un compte pour retrouver tes duels sur tous tes appareils.'); return; }
     const ids = filled.map(p => p.apiId || ('L:' + p.legendeId));
     const nom = filled.map(p => shortName(p)).join(' vs ');
     btn.disabled = true; btn.textContent = 'Sauvegarde…';
@@ -7085,20 +7086,20 @@ function renderAccountSheet(message){
     const duels = Compte.etat.duels || [];
     body.innerHTML = `
       <div class="account-user"><div class="av">${escapeHtml((u.email||'?')[0].toUpperCase())}</div>
-        <div class="who"><b>${escapeHtml(u.email)}</b><span class="muted">${u.verifie || u.fournisseur !== 'password' ? 'Connecté' : 'Adresse non confirmée : vérifiez votre boîte mail.'}</span></div></div>
+        <div class="who"><b>${escapeHtml(u.email)}</b><span class="muted">${u.verifie || u.fournisseur !== 'password' ? 'Connecté' : 'Adresse non confirmée : vérifie ta boîte mail.'}</span></div></div>
       ${!u.verifie && u.fournisseur === 'password' ? `<p class="account-switch"><button type="button" data-act="renvoyer">Renvoyer l'e-mail de confirmation</button></p>` : ''}
       <div class="browse-section-label">Mes duels</div>
       ${duels.length ? `<div class="duels-list">${duels.map(d => `<div class="duel-saved"><button type="button" class="nom" data-ouvrir="${escapeHtml(d.id)}">${escapeHtml(d.name)}</button><button type="button" class="sup" data-sup="${escapeHtml(d.id)}" aria-label="Supprimer">×</button></div>`).join('')}</div>`
-                     : `<p class="muted">Aucun duel sauvegardé. Sous une comparaison, touchez « Sauvegarder ce duel ».</p>`}
+                     : `<p class="muted">Aucun duel sauvegardé. Sous une comparaison, touche « Sauvegarder ce duel ».</p>`}
       ${msg(message)}
       <button class="account-btn" type="button" data-act="deconnexion">Se déconnecter</button>
       <p class="account-switch"><button type="button" data-act="versSuppression">Supprimer mon compte</button></p>`;
   } else if(u && accountVue === 'suppression'){
     titre.textContent = 'Supprimer mon compte';
     body.innerHTML = `
-      <p>Votre compte et vos duels sauvegardés seront effacés définitivement. Cette action ne peut pas être annulée.</p>
+      <p>Ton compte et tes duels sauvegardés seront effacés définitivement. Cette action ne peut pas être annulée.</p>
       <div class="account-form">
-        ${u.fournisseur === 'password' ? `<input type="password" id="accSupMdp" placeholder="Votre mot de passe, pour confirmer" autocomplete="current-password">` : `<p class="muted">Par sécurité, si la suppression est refusée, déconnectez-vous, reconnectez-vous, puis réessayez.</p>`}
+        ${u.fournisseur === 'password' ? `<input type="password" id="accSupMdp" placeholder="Ton mot de passe, pour confirmer" autocomplete="current-password">` : `<p class="muted">Par sécurité, si la suppression est refusée, déconnecte-toi, reconnecte-toi, puis réessaie.</p>`}
         ${msg(message)}
         <button class="account-btn danger" type="button" data-act="supprimer">Supprimer définitivement</button>
         <button class="account-btn" type="button" data-act="versProfil">Annuler</button>
@@ -7111,20 +7112,20 @@ function renderAccountSheet(message){
     if(accountVue === 'inscription'){
       titre.textContent = 'Créer un compte';
       body.innerHTML = `
-        <div class="account-intro"><b>Vos duels, partout</b><span class="muted">Un compte sert à retrouver vos duels sauvegardés sur tous vos appareils. Rien d'autre.</span></div>
+        <div class="account-intro"><b>Tes duels, partout</b><span class="muted">Un compte sert à retrouver tes duels sauvegardés sur tous tes appareils. Rien d'autre.</span></div>
         <div class="account-form">${social}${sep}
           <input type="email" id="accEmail" placeholder="Adresse e-mail" autocomplete="email" inputmode="email">
           <input type="password" id="accMdp" placeholder="Mot de passe (6 caractères min.)" autocomplete="new-password">
           ${msg(message)}
           <button class="account-btn primaire" type="button" data-act="inscrire">Créer mon compte</button>
-          <p class="muted" style="text-align:center;">En créant un compte, vous acceptez les <a href="/legal/conditions.html" target="_blank" rel="noopener">conditions</a> et la <a href="/legal/confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</p>
+          <p class="muted" style="text-align:center;">En créant un compte, tu acceptes les <a href="/legal/conditions.html" target="_blank" rel="noopener">conditions</a> et la <a href="/legal/confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</p>
         </div>
         <div class="account-switch">Déjà un compte ? <button type="button" data-act="versConnexion">Se connecter</button></div>`;
     } else if(accountVue === 'oubli'){
       titre.textContent = 'Mot de passe oublié';
       body.innerHTML = `
         <div class="account-form">
-          <p class="muted">Entrez votre adresse : vous recevrez un lien pour choisir un nouveau mot de passe.</p>
+          <p class="muted">Entre ton adresse : tu recevras un lien pour choisir un nouveau mot de passe.</p>
           <input type="email" id="accEmail" placeholder="Adresse e-mail" autocomplete="email" inputmode="email">
           ${msg(message)}
           <button class="account-btn primaire" type="button" data-act="oubli">Envoyer le lien</button>
@@ -7171,7 +7172,7 @@ async function actionCompte(act, btn){
         if(mdp.length < 6) return montrer('Mot de passe trop court : 6 caractères au minimum.', 'err');
         occupe(true); montrer('Création du compte…');
         await Compte.inscrire(email, mdp);
-        accountVue = 'profil'; renderAccountSheet('Compte créé. Un e-mail de confirmation vous a été envoyé.'); renderAll(); return;
+        accountVue = 'profil'; renderAccountSheet('Compte créé. Un e-mail de confirmation t\'a été envoyé.'); renderAll(); return;
       }
       case 'connecter': {
         occupe(true); montrer('Connexion…');
@@ -7319,7 +7320,7 @@ function renderGenerateBody(){
   screen.innerHTML = `
     <div class="share-body">
       <div class="share-head">
-        <div class="share-hint"><b>${escapeHtml(names)}</b><br>Choisissez les stats à montrer sur l'image.</div>
+        <div class="share-hint"><b>${escapeHtml(names)}</b><br>Choisis les stats à montrer sur l'image.</div>
         <span class="share-counter">${shareSelectedStats.length}/${SHARE_STAT_LIMIT}</span>
       </div>
       <div class="share-section-label">Format</div>
@@ -7347,7 +7348,7 @@ function renderGenerateBody(){
       </div>
       <div id="sharePreviewArea"></div>
       <div class="share-sticky" id="shareSticky">
-        <button class="share-generate-btn" id="shareGenerateBtn" type="button" ${shareSelectedStats.length<1?'disabled':''}>${shareSelectedStats.length<1 ? 'Choisissez au moins une stat' : "Générer l'image"}</button>
+        <button class="share-generate-btn" id="shareGenerateBtn" type="button" ${shareSelectedStats.length<1?'disabled':''}>${shareSelectedStats.length<1 ? 'Choisis au moins une stat' : "Générer l'image"}</button>
       </div>
     </div>
   `;
@@ -7690,7 +7691,7 @@ async function generateShareImage(){
     console.warn('image de partage :', e && e.message);
     btn.disabled = false; btn.textContent = "Générer l'image";
     const area = document.getElementById('sharePreviewArea');
-    if(area) area.innerHTML = `<div class="palmares-vide">L'image n'a pas pu être créée. Réessayez — si ça persiste, choisissez moins de statistiques.</div>`;
+    if(area) area.innerHTML = `<div class="palmares-vide">L'image n'a pas pu être créée. Réessaie — si ça persiste, choisis moins de statistiques.</div>`;
   }
 }
 async function dessinerImageDePartage(btn){
@@ -8415,7 +8416,7 @@ function publierImage(canvas, btn, W, H){
     if(!blob){
       btn.disabled = false; btn.textContent = "Générer l'image";
       const area = document.getElementById('sharePreviewArea');
-      if(area) area.innerHTML = `<div class="palmares-vide">L'image n'a pas pu être créée. Réessayez.</div>`;
+      if(area) area.innerHTML = `<div class="palmares-vide">L'image n'a pas pu être créée. Réessaie.</div>`;
       return;
     }
     if(shareGeneratedBlobUrl) URL.revokeObjectURL(shareGeneratedBlobUrl);
@@ -8426,7 +8427,7 @@ function publierImage(canvas, btn, W, H){
     haptique('medium');
     area.innerHTML = `
       <div class="share-preview-wrap">
-        <div class="share-ready">Votre image est prête.</div>
+        <div class="share-ready">Ton image est prête.</div>
         <canvas id="sharePreviewCanvas" width="${W}" height="${H}"></canvas>
         <div class="share-download-row">
           ${canNativeShare ? `<button class="share-download-btn share" id="shareNativeBtn" type="button">Partager</button>` : ''}
@@ -8461,7 +8462,7 @@ function publierImage(canvas, btn, W, H){
     console.warn('image de partage (rappel) :', e && e.message);
     btn.disabled = false; btn.textContent = "Générer l'image";
     const area = document.getElementById('sharePreviewArea');
-    if(area) area.innerHTML = `<div class="palmares-vide">L'image n'a pas pu être créée. Réessayez.</div>`;
+    if(area) area.innerHTML = `<div class="palmares-vide">L'image n'a pas pu être créée. Réessaie.</div>`;
   } }, 'image/png');
 }
 
@@ -8583,7 +8584,7 @@ function renderPickerList(){
     list.innerHTML = `
       <div class="search-hint">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
-        <div>Tapez le nom d'un joueur<small>Actuel ou légende : Mbappé, Zidane, Ronaldinho…</small></div>
+        <div>Tape le nom d'un joueur<small>Actuel ou légende : Mbappé, Zidane, Ronaldinho…</small></div>
       </div>
       ${recents.length ? `<div class="list-section-title">Consultés récemment</div>${recents.map(p=>pickerItemHtml(p, usedApi.includes(p.apiId))).join('')}` : ''}
       <div class="list-section-title">Quelques noms pour commencer</div>
@@ -8624,7 +8625,7 @@ function renderPickerList(){
 
   if(filtered.length===0 && !skeletons){
     list.innerHTML = '<div class="picker-empty">'+(searchOnly
-      ? (pickerSearch.length < REAL_DATA_CONFIG.searchMinChars ? 'Continuez à taper le nom…' : 'Aucun joueur trouvé.<small>Vérifiez l\'orthographe ou essayez seulement le nom de famille.</small>')
+      ? (pickerSearch.length < REAL_DATA_CONFIG.searchMinChars ? 'Continue à taper le nom…' : 'Aucun joueur trouvé.<small>Vérifie l\'orthographe ou essaie seulement le nom de famille.</small>')
       : 'Aucun joueur ne correspond à cette recherche.')+'</div>';
     return;
   }
@@ -8753,7 +8754,7 @@ const BROWSE_STAT_GROUPS = [
     ]
   },
   {
-    label: 'Penalties',
+    label: 'Penaltys',
     rows: [
       {key:'penaltiesWon', label:'Penaltys obtenus'},
       {key:'penaltiesCommitted', label:'Penaltys concédés'},
@@ -8919,10 +8920,10 @@ document.addEventListener('click', e=>{
 // Ordre des catégories de statistiques adapté à chaque poste : la catégorie la plus
 // représentative du poste apparaît en premier dans la fiche détaillée du joueur.
 const GROUP_ORDER_BY_POS = {
-  GK:  ['Matchs','Gardien','Duels & défense','Passes','Discipline','Penalties','Sélection nationale','Buts & tirs','Dribbles'],
-  DEF: ['Matchs','Duels & défense','Passes','Discipline','Dribbles','Penalties','Sélection nationale','Buts & tirs'],
-  MID: ['Matchs','Passes','Dribbles','Duels & défense','Buts & tirs','Discipline','Penalties','Sélection nationale'],
-  FWD: ['Matchs','Buts & tirs','Dribbles','Passes','Duels & défense','Discipline','Penalties','Sélection nationale']
+  GK:  ['Matchs','Gardien','Duels & défense','Passes','Discipline','Penaltys','Sélection nationale','Buts & tirs','Dribbles'],
+  DEF: ['Matchs','Duels & défense','Passes','Discipline','Dribbles','Penaltys','Sélection nationale','Buts & tirs'],
+  MID: ['Matchs','Passes','Dribbles','Duels & défense','Buts & tirs','Discipline','Penaltys','Sélection nationale'],
+  FWD: ['Matchs','Buts & tirs','Dribbles','Passes','Duels & défense','Discipline','Penaltys','Sélection nationale']
 };
 
 function fitTimeline(){
@@ -9284,7 +9285,7 @@ function renderBrowse(){
           <div class="portrait">${portraitHtml(p)}</div>
           <div class="p-name">${escapeHtml(p.name)}</div>
           <div class="p-pos">${p.posLabel}</div>
-          <div class="p-club">${p.club ? clubHtml(p)+' · ' : ''}${flagSVG((p.nation||{}).iso)} ${escapeHtml((p.nation||{}).name || '')}</div>
+          <div class="p-club">${p.club ? clubHtml(p)+' · ' : ''}<span class="nowrap">${flagSVG((p.nation||{}).iso)} ${escapeHtml((p.nation||{}).name || '')}</span></div>
           ${(p.height || p.preferredFoot) ? `<div class="p-physique">
             ${p.height ? `<span class="p-physique-item">📏 ${p.height} cm</span>` : ''}
             ${p.preferredFoot ? `<span class="p-physique-item">🦵 ${p.preferredFoot}</span>` : ''}
@@ -9348,7 +9349,7 @@ function renderBrowse(){
       listEl.innerHTML = `
         <div class="search-hint">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>
-          <div>Tapez le nom d'un joueur<small>Actuel ou légende : Mbappé, Zidane, Ronaldinho…</small></div>
+          <div>Tape le nom d'un joueur<small>Actuel ou légende : Mbappé, Zidane, Ronaldinho…</small></div>
         </div>
         ${recents.length ? `
         <div class="list-section-title">Consultés récemment <button type="button" id="clearRecentsBtn">Effacer</button></div>
@@ -9383,7 +9384,7 @@ function renderBrowse(){
 
     listEl.innerHTML = (filtered.length===0 && !skeletons ? `
       <div class="browse-empty" id="browseEmptyState">${searchOnly
-        ? (browseSearch.length < REAL_DATA_CONFIG.searchMinChars ? 'Continuez à taper le nom…' : 'Aucun joueur trouvé.<small>Vérifiez l\'orthographe ou essayez seulement le nom de famille.</small>')
+        ? (browseSearch.length < REAL_DATA_CONFIG.searchMinChars ? 'Continue à taper le nom…' : 'Aucun joueur trouvé.<small>Vérifie l\'orthographe ou essaie seulement le nom de famille.</small>')
         : 'Aucun joueur ne correspond à cette recherche.'}</div>` :
       filtered.slice(0, browseListePlafond || LISTE_VISIBLE).map(p=>playerRowHtml(p)).join('')
       + boutonVoirPlus(filtered.length - (browseListePlafond || LISTE_VISIBLE), 'browse')) + skeletons;
@@ -9810,7 +9811,7 @@ try{ console.log('%cDuelio', 'font-weight:bold;color:#2DD4BF',
   if(FALLBACK_REASON){
     const banner = document.getElementById('globalFallbackBanner');
     console.warn('mode démonstration :', FALLBACK_REASON);
-    banner.innerHTML = `<b>Mode démonstration</b> — les vraies données sont momentanément inaccessibles, les joueurs affichés sont fictifs. Réessayez dans quelques minutes.`;
+    banner.innerHTML = `<b>Mode démonstration</b> — les vraies données sont momentanément inaccessibles, les joueurs affichés sont fictifs. Réessaie dans quelques minutes.`;
     banner.style.display = 'block';
   }
   /* Le comparatif vide ne dépend de rien : on l'affiche tout de suite. Les
