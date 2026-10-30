@@ -17,6 +17,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Sonder
+        env:
+          INDEX_BUILD_KEY: ${{ secrets.INDEX_BUILD_KEY }}   # le proxy n'accepte les outils qu'avec cette clé
         run: |
           node - <<'EOS'
           const fs = require("node:fs");
@@ -30,7 +32,7 @@ jobs:
               for (const id of ids) {
                 try {
                   const t0 = Date.now();
-                  const r = await fetch(`${B}/pack?id=${id}&season=2026`);
+                  const r = await fetch(`${B}/pack?id=${id}&season=2026`, { headers: { "X-Duelio-Key": process.env.INDEX_BUILD_KEY || "" } });
                   const txt = await r.text();
                   let j = null; try { j = JSON.parse(txt); } catch (e) {}
                   const ms = Date.now() - t0;

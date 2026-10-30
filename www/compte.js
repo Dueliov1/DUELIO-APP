@@ -116,12 +116,35 @@
         return ref.id;
       },
       supprimerDuel: (uid, id)=> fs.deleteDoc(fs.doc(db, 'users', uid, 'duels', id)),
+      /* Firebase exige une connexion récente pour supprimer un compte. On se
+       * ré-authentifie AVANT d'effacer quoi que ce soit : avant, les duels étaient
+       * effacés d'abord, puis la suppression du compte pouvait être refusée — données
+       * perdues, compte toujours là. Mot de passe pour un compte e-mail ; nouveau
+       * passage par Google ou Apple pour les autres, sauf connexion de moins de
+       * quatre minutes. */
+      async reauthentifier(u, mdp){
+        const prov = ((u.providerData && u.providerData[0]) || {}).providerId || 'password';
+        if(prov === 'password'){
+          if(!mdp) throw new Error('Mot de passe requis.');
+          try{ await auth.reauthenticateWithCredential(u, auth.EmailAuthProvider.credential(u.email, mdp)); }
+          catch(e){ throw new Error('Mot de passe incorrect.'); }
+          return;
+        }
+        const derniere = u.metadata && u.metadata.lastSignInTime ? Date.parse(u.metadata.lastSignInTime) : 0;
+        if(derniere && Date.now() - derniere < 4*60*1000) return;
+        const pn = pluginNatif();
+        if(prov === 'google.com'){
+          if(pn){ const r = await pn.signInWithGoogle({ skipNativeAuth: true }); await auth.reauthenticateWithCredential(u, auth.GoogleAuthProvider.credential(r.credential && r.credential.idToken, r.credential && r.credential.accessToken)); }
+          else await auth.reauthenticateWithPopup(u, new auth.GoogleAuthProvider());
+        } else if(prov === 'apple.com'){
+          const p = new auth.OAuthProvider('apple.com');
+          if(pn){ const r = await pn.signInWithApple({ skipNativeAuth: true }); await auth.reauthenticateWithCredential(u, p.credential({ idToken: r.credential && r.credential.idToken, rawNonce: r.credential && r.credential.nonce })); }
+          else await auth.reauthenticateWithPopup(u, p);
+        }
+      },
       async supprimerCompte(mdp){
         const u = authI.currentUser; if(!u) return;
-        // Firebase exige une connexion récente : on redemande le mot de passe, ou le fournisseur.
-        try{
-          if(mdp && u.email) await auth.reauthenticateWithCredential(u, auth.EmailAuthProvider.credential(u.email, mdp));
-        }catch(e){ throw new Error('Mot de passe incorrect.'); }
+        await this.reauthentifier(u, mdp);
         const snap = await fs.getDocs(col(u.uid));
         await Promise.all(snap.docs.map(d => fs.deleteDoc(d.ref)));
         try{ await fs.deleteDoc(fs.doc(db, 'users', u.uid)); }catch(e){}

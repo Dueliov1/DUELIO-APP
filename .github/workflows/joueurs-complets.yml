@@ -27,7 +27,7 @@ permissions:
 
 # Un seul passage à la fois, sinon deux exécutions se marchent dessus au moment du push.
 concurrency:
-  group: carrieres-completes
+  group: saison-courante   # un seul workflow à la fois sur www/data
   cancel-in-progress: false
 
 jobs:
@@ -222,7 +222,7 @@ jobs:
             let touche = false;
             for (const p of idx.players) {
               const m = complets.get(p.i);
-              if (m && !p.m) { p.m = m; p.ti = Math.max(p.ti || 0, Math.round(m / 2)); touche = true; corriges++; }
+              if (m && !p.m) { p.m = m; touche = true; corriges++; }   // ti est l'identifiant du club (logo) : on n'y touche pas
             }
             if (touche) writeFileSync(chemin, JSON.stringify(idx));
           }

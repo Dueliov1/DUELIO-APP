@@ -21,8 +21,9 @@
   Access-Control-Allow-Origin: *
 
 # Paquets par joueur : reconstruits par « Réorganiser par joueur ».
+# Paquets légers : eux aussi reçoivent la saison en cours chaque matin → même durée que les fiches complètes.
 /data/players/*
-  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+  Cache-Control: public, max-age=14400, stale-while-revalidate=86400
   Access-Control-Allow-Origin: *
 
 # Statistiques brutes par championnat et par saison.

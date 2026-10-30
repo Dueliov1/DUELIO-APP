@@ -3,6 +3,9 @@ name: Compiler l'app Android
 on:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest

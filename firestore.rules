@@ -1,0 +1,11 @@
+// Règles Firestore de Duelio — à coller telles quelles dans Firebase → Firestore → Règles.
+// Un utilisateur ne lit et n'écrit que sous son propre dossier users/<uid> ; rien d'autre
+// n'est accessible. Les duels sauvegardés sont dans users/<uid>/duels.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

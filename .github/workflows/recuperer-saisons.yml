@@ -30,7 +30,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: recuperer-saisons
+  group: saison-courante   # un seul workflow à la fois sur www/data
   cancel-in-progress: false
 
 jobs:

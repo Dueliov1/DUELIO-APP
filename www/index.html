@@ -4802,15 +4802,19 @@ async function loadPlayerIndex(){
   let stored = null;
   try{ stored = JSON.parse(localStorage.getItem(INDEX_LS_KEY) || 'null'); }catch(e){}
   if(stored && stored.data) applyPlayerIndex(stored.data);
+  // La copie locale de l'index court sert tout de suite, mais elle se périme : clubs,
+  // prénoms et dates de naissance changent. Au-delà de quelques heures, on le redemande
+  // (le serveur répond « non modifié » s'il n'a pas changé) et il remplace la copie.
+  const copiePerimee = !!(stored && stored.t && (Date.now() - stored.t) > (REAL_DATA_CONFIG.indexRefreshHours || 6) * 3600 * 1000);
 
   // Premier étage : l'index court, pour que la recherche des joueurs connus
   // réponde en moins d'une seconde au lieu d'attendre les 5,3 Mo du grand index.
-  if(!PLAYER_INDEX.loaded && REAL_DATA_CONFIG.searchIndexTopUrl){
+  if((!PLAYER_INDEX.loaded || copiePerimee) && REAL_DATA_CONFIG.searchIndexTopUrl){
     try{
       const r = await fetch(REAL_DATA_CONFIG.searchIndexTopUrl);
       if(r.ok){
         const court = await r.json();
-        if(applyPlayerIndex(court)){
+        if(PLAYER_INDEX.loaded ? remplacerDansIndex(court) : applyPlayerIndex(court)){
           // Celui-là tient dans le stockage du navigateur, contrairement au grand.
           // Les champs dérivés (_nw, _w, _s) sont recalculés à la lecture : les
           // sérialiser gonflait l'écriture de 68 % — 912 Ko pour 544 utiles —
@@ -4862,6 +4866,16 @@ function trancheChargee(q){
   return cs.length > 0 && cs.every(c => tranchesChargees.has(c));
 }
 // Ajoute des joueurs à l'index sans écraser ceux déjà présents (l'index court reste).
+// Remplace, dans l'index en mémoire, les entrées présentes dans data (version plus fraîche).
+function remplacerDansIndex(data){
+  if(!data || !Array.isArray(data.players) || !data.players.length) return false;
+  const pos = new Map(PLAYER_INDEX.players.map((e, i) => [e.i, i]));
+  for(const e of data.players){
+    const i = pos.get(e.i);
+    if(i == null) PLAYER_INDEX.players.push(prepareIndexEntry(e)); else PLAYER_INDEX.players[i] = prepareIndexEntry(e);
+  }
+  return true;
+}
 function fusionnerIndex(data){
   if(!data || !Array.isArray(data.players) || !data.players.length) return false;
   const vus = new Set(PLAYER_INDEX.players.map(e => e.i));
@@ -5120,7 +5134,10 @@ function ecrireQCachePlusTard(){
   _qcacheEcriture = window.requestIdleCallback ? requestIdleCallback(ecrire, { timeout: 2000 }) : setTimeout(ecrire, 500);
 }
 function getCachedSearch(q){
-  const c = readQCache()[q];
+  // Objet issu de JSON.parse : une recherche « __proto__ » ou « constructor » tombait
+  // sur l'héritage de l'objet et faisait planter le gestionnaire.
+  const cache = readQCache();
+  const c = Object.prototype.hasOwnProperty.call(cache, q) ? cache[q] : null;
   if(!c || (Date.now()-c.t) > QCACHE_TTL) return null;
   const out = c.list.map(fromStoredLight); out._cut = !!c.cut;
   return out;

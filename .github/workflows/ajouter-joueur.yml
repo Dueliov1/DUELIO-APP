@@ -15,6 +15,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: saison-courante   # un seul workflow à la fois sur www/data
+  cancel-in-progress: false
+
 jobs:
   ajouter:
     runs-on: ubuntu-latest
@@ -60,11 +64,11 @@ jobs:
           const deja = idx.players.find(p => p.i === id);
           if (deja) {
             // Une fiche complète n'est lue par l'appli que si l'index annonce des matchs (m non nul).
-            deja.m = matchs; deja.ti = Math.max(deja.ti || 0, Math.round(matchs / 2));
+            deja.m = matchs; if (!deja.ti && club.team && club.team.id) deja.ti = club.team.id;
             writeFileSync(chemin, JSON.stringify(idx));
             console.log("index : matchs mis à jour pour", id);
           } else {
-            idx.players.push({ i: id, n: profil.name, f: "", l: "", a: profil.age, c: profil.nationality, p: pos, t: (club.team && club.team.name) || "", ti: Math.round(matchs / 2), m: matchs });
+            idx.players.push({ i: id, n: profil.name, f: "", l: "", a: profil.age, c: profil.nationality, p: pos, t: (club.team && club.team.name) || "", ti: (club.team && club.team.id) || 0, m: matchs });
             idx.count = idx.players.length;
             writeFileSync(chemin, JSON.stringify(idx));
             console.log("index mis à jour :", chemin);
@@ -73,8 +77,10 @@ jobs:
           node ajout.mjs
           rm ajout.mjs
       - name: Publier
+        env:
+          ID: ${{ github.event.inputs.id }}   # passé par l'environnement, jamais interpolé dans le shell
         run: |
           git config user.name "ajout"; git config user.email "ajout@users.noreply.github.com"
           git add www/data
-          git commit -m "Ajout du joueur ${{ github.event.inputs.id }}" || echo rien
+          git commit -m "Ajout du joueur $ID" || echo rien
           for i in 1 2 3; do git pull --rebase -q && git push && break; sleep 3; done

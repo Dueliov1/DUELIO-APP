@@ -180,8 +180,8 @@ jobs:
           const page = readFileSync("www/og-template.html", "utf8")
             .replace("__TETE_A__", await photo(ids[0]))
             .replace("__TETE_B__", await photo(ids[1]))
-            .replace("__NOM_A__", j[0].nom)
-            .replace("__NOM_B__", j[1].nom)
+            .replace("__NOM_A__", echap(j[0].nom))
+            .replace("__NOM_B__", echap(j[1].nom))
             .replace("__CA__", gagneesA >= gagneesB ? "a" : "")
             .replace("__CB__", gagneesB > gagneesA ? "a" : "")
             .replace("__LIGNES__", html);
@@ -212,7 +212,7 @@ jobs:
             echo "image inchangee, rien a publier"
             exit 0
           fi
-          git commit -m "Image d'apercu : ${{ inputs.joueur_gauche || '874' }} contre ${{ inputs.joueur_droite || '154' }}"
+          git commit -m "Image d'apercu : ${GAUCHE:-874} contre ${DROITE:-154}"
           for i in 1 2 3 4 5; do
             git pull --rebase origin main && git push origin HEAD:main && exit 0
             echo "nouvelle tentative $i"

@@ -1,17 +1,22 @@
 /**
- * Worker Duelio — proxy API-Football + comptes utilisateurs + comparaisons favorites.
+ * Worker Duelio — proxy API-Football, index des joueurs et « pack » d'un joueur.
  *
  * Nécessite :
- *   - Secret  API_FOOTBALL_KEY   (déjà en place)
- *   - Secret  RESEND_API_KEY     (nouveau — clé API de resend.com, plan gratuit)
- *   - Variable EMAIL_FROM        (nouveau — ex: "Duelio <onboarding@resend.dev>" pour tester
- *                                  sans domaine vérifié, ou "Duelio <hello@votredomaine.com>")
- *   - Base D1 liée sous le nom  DB   (Settings → Bindings → D1 Database)
+ *   - Secret  API_FOOTBALL_KEY   la clé API-Football
+ *   - Secret  INDEX_BUILD_KEY    OBLIGATOIRE : protège /diag, /diag/usage, /index/status et
+ *                                /index/build, et sert de laissez-passer aux sondes (en-tête
+ *                                X-Duelio-Key) qui appellent le proxy sans navigateur
  *   - Espace KV lié sous le nom INDEX_KV  (Settings → Bindings → KV Namespace) : index des joueurs
  *   - Déclencheur Cron  "*\/5 * * * *"  (Settings → Triggers → Cron Triggers) : construit et
  *     rafraîchit l'index tout seul, une ligue à la fois, sans jamais dépasser le quota
+ *   - Facultatif : RELAY_URL + RELAY_SECRET (relais à IP dédiée), API_PLAN / API_RPM / API_RPS
  *
- * Exécutez schema.sql une seule fois sur cette base avant utilisation.
+ * Les comptes utilisateurs ne passent plus par ici (Firebase) : les routes /auth et
+ * /favorites ont été retirées avec leur base D1 et l'envoi d'e-mails.
+ *
+ * Qui peut appeler ce proxy : les navigateurs dont l'origine est dans ORIGINES_AUTORISEES
+ * (le site et l'application), et les outils qui présentent la clé INDEX_BUILD_KEY. Tout le
+ * reste est refusé : un proxy ouvert à tous laissait n'importe qui vider le quota API.
  *
  * Index des joueurs (recherche instantanée dans l'appli) :
  *   GET /index.json      la liste compacte des joueurs des championnats indexés (cache 1 h)
@@ -44,14 +49,33 @@ const INDEX_EDGE_TTL = 3600;              // /index.json servi depuis le cache C
 const INDEX_CACHE_URL = 'https://duelio-index.internal/index.json'; // clé fixe du cache, indépendante du domaine
 const CACHE_TTL_SECONDS = 60 * 30;
 const CACHE_VERSION = 'v3';   // changer ce numéro vide tout le cache edge
-const SESSION_DAYS = 30;
-const VERIFY_HOURS = 24;
+/* Les origines qui ont le droit d'appeler le proxy : le site, le futur domaine, et
+ * l'application Capacitor (https://localhost sur Android, capacitor://localhost sur iOS).
+ * En développement local, http://localhost sur n'importe quel port. */
+const ORIGINES_AUTORISEES = [
+  'https://duelio-app.bensouna-ahmed.workers.dev',
+  'https://duelio.app', 'https://www.duelio.app',
+  'https://localhost', 'capacitor://localhost', 'ionic://localhost',
+];
+function origineAutorisee(origin){
+  if (!origin) return false;
+  if (ORIGINES_AUTORISEES.includes(origin)) return true;
+  return /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
+}
+// Un outil (sonde GitHub, script) se présente avec la clé dans l'en-tête X-Duelio-Key ou ?key=.
+function cleValide(request, env, url){
+  if (!env.INDEX_BUILD_KEY) return false;
+  const k = request.headers.get('X-Duelio-Key') || (url && url.searchParams.get('key')) || '';
+  return k === env.INDEX_BUILD_KEY;
+}
+let origineCourante = null;   // posée au début de chaque requête, reprise par corsHeaders()
 
 function corsHeaders(){
   return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Origin': origineCourante || 'null',
+    'Vary': 'Origin',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, X-Duelio-Key',
     // L'appli lit ces en-têtes pour respecter la limite par minute de l'abonnement et savoir si la réponse venait du cache
     'Access-Control-Expose-Headers': 'X-Duelio-Cache, X-Duelio-Pack, X-Duelio-Attempts, X-Duelio-Rpm, X-Duelio-Rps, X-Duelio-Plan, X-RateLimit-Limit, X-RateLimit-Remaining, X-Requests-Limit, X-Requests-Remaining',
   };
@@ -70,66 +94,6 @@ function json(data, status=200){
 function html(str, status=200){
   return new Response(str, { status, headers: { 'Content-Type':'text/html;charset=UTF-8', ...corsHeaders() } });
 }
-function uid(){
-  return crypto.randomUUID();
-}
-function randomToken(bytes=32){
-  const arr = new Uint8Array(bytes);
-  crypto.getRandomValues(arr);
-  return Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-async function hashPassword(password, saltHex){
-  const enc = new TextEncoder();
-  const salt = new Uint8Array(saltHex.match(/.{2}/g).map(h=>parseInt(h,16)));
-  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-  const bits = await crypto.subtle.deriveBits(
-    { name:'PBKDF2', salt, iterations:100000, hash:'SHA-256' }, keyMaterial, 256
-  );
-  return Array.from(new Uint8Array(bits)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-function isValidEmail(email){
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-async function sendVerificationEmail(env, toEmail, token, origin){
-  const verifyUrl = `${origin}/auth/verify?token=${token}`;
-  const body = {
-    from: env.EMAIL_FROM || 'Duelio <onboarding@resend.dev>',
-    to: [toEmail],
-    subject: 'Confirmez votre compte Duelio',
-    html: `
-      <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px;">
-        <h2 style="color:#123832;">Bienvenue sur Duelio ⚽</h2>
-        <p>Confirmez votre adresse email pour activer votre compte et sauvegarder vos comparaisons favorites.</p>
-        <p style="text-align:center;margin:28px 0;">
-          <a href="${verifyUrl}" style="background:#22D3EE;color:#04231a;font-weight:bold;padding:12px 28px;border-radius:24px;text-decoration:none;display:inline-block;">Confirmer mon email</a>
-        </p>
-        <p style="color:#888;font-size:12px;">Ce lien expire dans 24h. Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>
-      </div>`
-  };
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  if(!res.ok){
-    const errText = await res.text();
-    throw new Error('Échec envoi email: ' + errText);
-  }
-}
-
-async function getSessionUser(request, env){
-  const auth = request.headers.get('Authorization') || '';
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-  if(!token) return null;
-  const now = Date.now();
-  const row = await env.DB.prepare(
-    'SELECT sessions.user_id as user_id, sessions.expires_at as expires_at, users.email as email, users.id as id FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token = ?'
-  ).bind(token).first();
-  if(!row || row.expires_at < now) return null;
-  return { id: row.id, email: row.email };
-}
-
 // Saison API-Football en cours : 2026 pour la saison 2026-27 (bascule en juillet)
 function currentSeason(){
   const d = new Date();
@@ -519,10 +483,15 @@ async function handlePack(env, ctx, request, params){
 
   const data = {}; let apiAppels = 0, enCache = 0, refuses = 0;
   for (const { sn, r } of results) {
-    if (!r) { data[sn] = null; continue; }
+    // Un échec (réseau, API en erreur, IP bloquée) n'est PAS « saison sans données » :
+    // la saison est simplement absente de la réponse, et l'appli la redemandera.
+    // Avant, elle recevait null et retenait pendant trente jours que le joueur n'avait rien joué.
+    if (!r || r.isError) { refuses++; continue; }
     if (r.cached) enCache++; else apiAppels++;
     if (r.throttled) { refuses++; continue; }       // absente = à redemander, surtout pas « vide »
-    const entry = r.json && r.json.response && r.json.response[0];
+    const j = r.json;
+    if (j && j.errors && (Array.isArray(j.errors) ? j.errors.length : Object.keys(j.errors).length)) { refuses++; continue; }
+    const entry = j && j.response && j.response[0];
     data[sn] = (entry && entry.statistics && entry.statistics.length) ? { player: entry.player, statistics: entry.statistics } : null;
   }
 
@@ -548,118 +517,21 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname.replace(/^\/+/, '');
-    const origin = `${url.protocol}//${url.host}`;
+    const origin = request.headers.get('Origin') || '';
+    origineCourante = origineAutorisee(origin) ? origin : null;
 
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders() });
+      return new Response(null, { status: origineCourante ? 204 : 403, headers: corsHeaders() });
     }
-
-    /* ---------------- AUTH: inscription ---------------- */
-    if (path === 'auth/register' && request.method === 'POST') {
-      const { email, password } = await request.json().catch(()=>({}));
-      if (!email || !isValidEmail(email)) return json({ error: 'Email invalide.' }, 400);
-      if (!password || password.length < 8) return json({ error: 'Mot de passe trop court (8 caractères min).' }, 400);
-
-      const existing = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
-      if (existing) return json({ error: 'Un compte existe déjà avec cet email.' }, 409);
-
-      const salt = randomToken(16);
-      const passwordHash = await hashPassword(password, salt);
-      const id = uid();
-      const verifyToken = randomToken(32);
-      const verifyExpires = Date.now() + VERIFY_HOURS*3600*1000;
-
-      await env.DB.prepare(
-        'INSERT INTO users (id, email, password_hash, salt, verified, verify_token, verify_expires, created_at) VALUES (?,?,?,?,0,?,?,?)'
-      ).bind(id, email, passwordHash, salt, verifyToken, verifyExpires, Date.now()).run();
-
-      try {
-        await sendVerificationEmail(env, email, verifyToken, origin);
-      } catch (e) {
-        return json({ error: 'Compte créé mais email non envoyé: ' + e.message }, 500);
-      }
-      return json({ ok: true, message: 'Compte créé. Vérifiez votre boîte mail pour confirmer.' });
+    // Contrôle d'accès : une origine autorisée (le site, l'appli) ou la clé des outils.
+    // Les requêtes sans origine (curl, scripts) n'entrent qu'avec la clé.
+    if (!origineCourante && !cleValide(request, env, url)) {
+      return json({ error: 'Accès réservé à Duelio.' }, 403);
     }
-
-    /* ---------------- AUTH: vérification email ---------------- */
-    if (path === 'auth/verify' && request.method === 'GET') {
-      const token = url.searchParams.get('token');
-      const user = token ? await env.DB.prepare('SELECT * FROM users WHERE verify_token = ?').bind(token).first() : null;
-      if (!user || user.verify_expires < Date.now()) {
-        return html('<h2 style="font-family:sans-serif;text-align:center;margin-top:80px;">Lien invalide ou expiré.</h2>', 400);
-      }
-      await env.DB.prepare('UPDATE users SET verified = 1, verify_token = NULL WHERE id = ?').bind(user.id).run();
-      return html(`
-        <div style="font-family:sans-serif;text-align:center;margin-top:80px;">
-          <h2 style="color:#123832;">✅ Email confirmé !</h2>
-          <p>Vous pouvez fermer cette page et vous connecter dans Duelio.</p>
-        </div>`);
-    }
-
-    /* ---------------- AUTH: connexion ---------------- */
-    if (path === 'auth/login' && request.method === 'POST') {
-      const { email, password } = await request.json().catch(()=>({}));
-      const user = email ? await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first() : null;
-      if (!user) return json({ error: 'Email ou mot de passe incorrect.' }, 401);
-
-      const hash = await hashPassword(password || '', user.salt);
-      if (hash !== user.password_hash) return json({ error: 'Email ou mot de passe incorrect.' }, 401);
-      if (!user.verified) return json({ error: 'Email non confirmé. Vérifiez votre boîte mail.' }, 403);
-
-      const token = randomToken(32);
-      const expiresAt = Date.now() + SESSION_DAYS*24*3600*1000;
-      await env.DB.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?,?,?)').bind(token, user.id, expiresAt).run();
-
-      return json({ ok: true, token, email: user.email });
-    }
-
-    /* ---------------- AUTH: déconnexion ---------------- */
-    if (path === 'auth/logout' && request.method === 'POST') {
-      const auth = request.headers.get('Authorization') || '';
-      const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
-      if (token) await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
-      return json({ ok: true });
-    }
-
-    /* ---------------- AUTH: qui suis-je ---------------- */
-    if (path === 'auth/me' && request.method === 'GET') {
-      const user = await getSessionUser(request, env);
-      if (!user) return json({ error: 'Non connecté.' }, 401);
-      return json({ ok: true, email: user.email });
-    }
-
-    /* ---------------- FAVORIS: lister ---------------- */
-    if (path === 'favorites' && request.method === 'GET') {
-      const user = await getSessionUser(request, env);
-      if (!user) return json({ error: 'Non connecté.' }, 401);
-      const { results } = await env.DB.prepare(
-        'SELECT id, name, player_ids, created_at FROM favorites WHERE user_id = ? ORDER BY created_at DESC'
-      ).bind(user.id).all();
-      return json({ ok: true, favorites: results.map(r => ({ ...r, player_ids: JSON.parse(r.player_ids) })) });
-    }
-
-    /* ---------------- FAVORIS: ajouter ---------------- */
-    if (path === 'favorites' && request.method === 'POST') {
-      const user = await getSessionUser(request, env);
-      if (!user) return json({ error: 'Non connecté.' }, 401);
-      const { name, playerIds } = await request.json().catch(()=>({}));
-      if (!name || !Array.isArray(playerIds) || playerIds.length < 2) {
-        return json({ error: 'Nom et au moins 2 joueurs requis.' }, 400);
-      }
-      const id = uid();
-      await env.DB.prepare(
-        'INSERT INTO favorites (id, user_id, name, player_ids, created_at) VALUES (?,?,?,?,?)'
-      ).bind(id, user.id, name, JSON.stringify(playerIds), Date.now()).run();
-      return json({ ok: true, id });
-    }
-
-    /* ---------------- FAVORIS: supprimer ---------------- */
-    if (path.startsWith('favorites/') && request.method === 'DELETE') {
-      const user = await getSessionUser(request, env);
-      if (!user) return json({ error: 'Non connecté.' }, 401);
-      const favId = path.split('/')[1];
-      await env.DB.prepare('DELETE FROM favorites WHERE id = ? AND user_id = ?').bind(favId, user.id).run();
-      return json({ ok: true });
+    // Les pages de diagnostic et la construction de l'index exigent la clé, toujours :
+    // /diag révélait des informations sur le compte API-Football à qui passait par là.
+    if ((path === 'diag' || path === 'diag/usage' || path === 'index/status' || path === 'index/build') && !cleValide(request, env, url)) {
+      return json({ error: env.INDEX_BUILD_KEY ? 'Clé requise.' : 'Clé requise : définir le secret INDEX_BUILD_KEY.' }, 403);
     }
 
     /* ---------------- INDEX DES JOUEURS ---------------- */
@@ -694,7 +566,6 @@ export default {
       catch (err) { return json({ error: err.message }, 503); }
     }
     if (path === 'index/build' && request.method === 'GET') {
-      if (env.INDEX_BUILD_KEY && url.searchParams.get('key') !== env.INDEX_BUILD_KEY) return json({ error: 'Clé requise.' }, 403);
       try {
         const step = await buildIndexStep(env);
         const status = indexStatus(await readIndexDoc(env));
@@ -721,8 +592,8 @@ export default {
           ? `RELAIS à IP dédiée → ${String(env.RELAY_URL).replace(/\/+$/, '')} (la clé est sur le relais, pas ici)`
           : 'DIRECTE depuis Cloudflare Workers (adresses IP partagées : API-Football peut les bloquer au niveau réseau)',
         cleUtiliseeParCeWorker: usingRelay(env)
-          ? (key ? `${key.slice(0, 4)}…${key.slice(-4)} — inutilisée tant que le relais est actif` : 'aucune (normal avec un relais)')
-          : (key ? `${key.slice(0, 4)}…${key.slice(-4)} (${key.length} caractères)` : 'AUCUNE CLÉ CONFIGURÉE'),
+          ? (key ? 'présente — inutilisée tant que le relais est actif' : 'aucune (normal avec un relais)')
+          : (key ? `présente (${key.length} caractères)` : 'AUCUNE CLÉ CONFIGURÉE'),
         api: API_BASE,
         indexKV: env.INDEX_KV ? 'configuré' : 'NON configuré (facultatif : sert à /diag/usage et à la recherche instantanée)',
         limiteurLocal: (() => { const l = planLimits(env); return {

@@ -99,4 +99,9 @@ jobs:
           git config user.name "saison-courante"; git config user.email "saison@users.noreply.github.com"
           git add www/data/full diagnostics/saison-courante.txt
           git commit -m "Saison en cours : mise à jour hebdomadaire des fiches complètes" || { echo rien; exit 0; }
-          for i in 1 2 3 4; do git pull --rebase -q && git push && break; sleep 5; done
+          for i in 1 2 3 4 5; do
+            if git pull --rebase -q origin main && git push -q origin main; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep 20
+          done
+          echo "::error::publication impossible après 5 tentatives (conflit ou dépôt injoignable)"; exit 1

@@ -156,6 +156,15 @@ jobs:
             for (const e of idx.players || []) { const src = parJoueur.get(e.i); if (src && etatCivil(e, src)) change = true; }
             if (change) { writeFileSync(chemin, JSON.stringify(idx)); indexMaj++; }
           }
+          // search-top.json : les 5 000 joueurs les plus capés, extraits de l'index complet
+          // (il n'était plus régénéré et figeait noms, clubs et logos de la première page de recherche).
+          {
+            const vus = new Map();
+            for (const f of readdirSync("www/data/search-az").filter(x => /^[a-z0-9]\.json$/.test(x)))
+              for (const e of JSON.parse(readFileSync(`www/data/search-az/${f}`, "utf8")).players || []) vus.set(e.i, e);
+            const top = [...vus.values()].sort((a, b) => (b.m || 0) - (a.m || 0)).slice(0, 5000);
+            writeFileSync("www/data/search-top.json", JSON.stringify({ v: 1, updatedAt: new Date().toISOString(), count: top.length, partiel: true, players: top }));
+          }
           mkdirSync("diagnostics", { recursive: true });
           const bilan = `Saison ${SAISON} par championnat — ${now.toISOString().slice(0, 10)} : ${parJoueur.size} joueurs lus (${appels} appels), ${fichesMaj} fiches complètes mises à jour (${saisonsAjoutees} saisons ajoutées), ${paquetsMaj} paquets légers réécrits, ${naissances} dates de naissance relevées, ${indexMaj} fichiers d'index complétés, ${inconnus} joueurs hors index ignorés`;
           writeFileSync("diagnostics/saison-courante-ligues.txt", bilan + "\n");
@@ -166,6 +175,11 @@ jobs:
       - name: Publier
         run: |
           git config user.name "saison-ligues"; git config user.email "saison@users.noreply.github.com"
-          git add www/data/full www/data/players www/data/search-az diagnostics/saison-courante-ligues.txt
+          git add www/data/full www/data/players www/data/search-az www/data/search-top.json diagnostics/saison-courante-ligues.txt
           git commit -m "Saison en cours : mise à jour quotidienne par championnat" || { echo rien; exit 0; }
-          for i in 1 2 3 4; do git pull --rebase -q && git push && break; sleep 5; done
+          for i in 1 2 3 4 5; do
+            if git pull --rebase -q origin main && git push -q origin main; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep 20
+          done
+          echo "::error::publication impossible après 5 tentatives (conflit ou dépôt injoignable)"; exit 1

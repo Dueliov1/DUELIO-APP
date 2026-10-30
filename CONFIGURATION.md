@@ -20,15 +20,21 @@ Jamais dans le dépôt. À noter dans un gestionnaire de mots de passe, pas ici.
 | Nom | À quoi ça sert | Où le retrouver |
 | --- | --- | --- |
 | `API_FOOTBALL_KEY` | La clé API-Football | dashboard.api-football.com |
-| `RESEND_API_KEY` | L'envoi des e-mails de confirmation de compte | resend.com → API Keys |
 | `RELAY_SECRET` | Le mot de passe partagé avec le relais à IP dédiée | à regénérer si perdu |
-| `INDEX_BUILD_KEY` | Protège `/index/build` d'un déclenchement public | facultatif |
+| `INDEX_BUILD_KEY` | **Obligatoire depuis le 30 octobre 2026.** Protège `/diag`, `/diag/usage`, `/index/status` et `/index/build`, et sert de laissez-passer aux outils (sondes GitHub) qui appellent le proxy sans navigateur : en-tête `X-Duelio-Key` ou `?key=`. Une longue chaîne aléatoire ; la même valeur est à mettre dans les secrets GitHub du dépôt sous le nom `INDEX_BUILD_KEY`. | à regénérer si perdu |
+
+Depuis cette date, le proxy ne répond qu'aux origines de Duelio (le site, le futur domaine,
+l'application Android/iOS) ou aux appels munis de la clé : un proxy ouvert à tous laissait
+n'importe qui vider le quota API. Les comptes utilisateurs passent par Firebase (section 6) :
+les routes `/auth` et `/favorites`, la base D1 et l'envoi d'e-mails Resend ont été retirés
+du Worker ; `RESEND_API_KEY` et `EMAIL_FROM` ne servent plus et peuvent être supprimés.
+**Après toute modification du fichier `worker/duelio-proxy-worker.js`, le Worker doit être
+redéployé à la main** (Cloudflare → Workers → duelio-proxy → Edit code → coller → Deploy).
 
 ### Variables (type « Text », visibles)
 
 | Nom | Valeur actuelle | Effet |
 | --- | --- | --- |
-| `EMAIL_FROM` | ex. `Duelio <onboarding@resend.dev>` | L'expéditeur des e-mails |
 | `RELAY_URL` | l'adresse du relais | Si absente, le Worker appelle API-Football en direct |
 | `API_PLAN` | `free` / `pro` / `ultra` / `mega` | Fixe le plafond d'appels. Si absente, détecté automatiquement |
 | `API_RPM` / `API_RPS` | nombres | Prioritaires sur `API_PLAN` |
@@ -38,7 +44,6 @@ Jamais dans le dépôt. À noter dans un gestionnaire de mots de passe, pas ici.
 
 | Type | Nom de la variable | Contenu |
 | --- | --- | --- |
-| D1 Database | `DB` | Les comptes, les sessions, les comparaisons favorites |
 | KV Namespace | `INDEX_KV` | L'index des joueurs et le journal d'usage |
 
 ### Déclencheur cron (Settings → Triggers)
@@ -52,18 +57,11 @@ Sans lui, la recherche instantanée se vide et ne se reconstruit jamais.
 
 ---
 
-## 2. Base de données D1
+## 2. Base de données D1 — retirée
 
-Le schéma doit être exécuté **une seule fois** sur la base, avant la première utilisation.
-
-> ⚠️ Le fichier `schema.sql` n'est pas dans ce dépôt. Il doit y être ajouté.
-> Les tables utilisées par le Worker sont `users`, `sessions` et `favorites`.
-
-Colonnes lues par le code, à vérifier contre le schéma réel :
-
-- `users` : `id`, `email`, `password_hash`, `salt`, `verified`, `verify_token`, `verify_expires`, `created_at`
-- `sessions` : `token`, `user_id`, `expires_at`
-- `favorites` : `id`, `user_id`, `name`, `player_ids`, `created_at`
+Les comptes passent par Firebase (section 6) depuis fin octobre 2026. La base D1 `DB`,
+le schéma `schema.sql` et la liaison du Worker ne servent plus : la liaison peut être
+retirée et la base supprimée dans Cloudflare.
 
 ---
 
