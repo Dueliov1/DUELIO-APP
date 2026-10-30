@@ -79,7 +79,9 @@ jobs:
                 const p = r.player || {}; if (!p.id) continue;
                 const lignes = (r.statistics || []).filter(s => s.league && s.league.id === lid);
                 if (!lignes.length) continue;
-                const e = parJoueur.get(p.id) || { nom: p.name, age: p.age, nat: p.nationality, lignes: new Map() };
+                const e = parJoueur.get(p.id) || { nom: p.name, age: p.age, nat: p.nationality, lignes: new Map(),
+                  // État civil relevé au passage : prénom, nom, date de naissance (pour « Même âge »).
+                  f: p.firstname || "", l: p.lastname || "", b: (p.birth && p.birth.date) || "" };
                 e.lignes.set(lid, lignes);
                 parJoueur.set(p.id, e); vus++;
               }
@@ -107,7 +109,14 @@ jobs:
             if (change || apres.length !== avant.length) { s[String(SAISON)] = apres; return true; }
             return false;
           }
-          let fichesMaj = 0, paquetsMaj = 0, saisonsAjoutees = 0, inconnus = 0;
+          let fichesMaj = 0, paquetsMaj = 0, saisonsAjoutees = 0, inconnus = 0, naissances = 0;
+          // Prénom, nom et date de naissance : ajoutés s'ils manquent, jamais écrasés par du vide.
+          function etatCivil(cible, e) {
+            let change = false;
+            for (const k of ["f", "l", "b"]) if (e[k] && cible[k] !== e[k]) { cible[k] = e[k]; change = true; }
+            if (change && e.b) naissances++;
+            return change;
+          }
           const paquetsTouches = new Map();  // n -> liste chargée
           const NB_PAQUETS = JSON.parse(readFileSync("www/data/players/index.json", "utf8")).paquets || 1000;
           for (const [id, e] of parJoueur) {
@@ -116,9 +125,10 @@ jobs:
               const d = JSON.parse(readFileSync(chemin, "utf8"));
               d.s = d.s || {};
               const avaitSaison = !!(d.s[String(SAISON)] || []).length;
-              if (fusionner(d.s, e.lignes)) {
-                if (!avaitSaison) saisonsAjoutees++;
-                if (!(d.saisons || []).includes(SAISON)) d.saisons = [SAISON, ...(d.saisons || [])].sort((a, b) => b - a);
+              const civil = etatCivil(d, e);
+              if (fusionner(d.s, e.lignes) || civil) {
+                if (!avaitSaison && (d.s[String(SAISON)] || []).length) saisonsAjoutees++;
+                if (!(d.saisons || []).includes(SAISON) && (d.s[String(SAISON)] || []).length) d.saisons = [SAISON, ...(d.saisons || [])].sort((a, b) => b - a);
                 writeFileSync(chemin, JSON.stringify(d)); fichesMaj++;
               }
               continue;
@@ -132,13 +142,22 @@ jobs:
             const j = pq.liste.find(x => x.i === id);
             if (!j) { inconnus++; continue; }   // pas dans l'index de recherche : on n'invente pas de fiche
             j.s = j.s || {};
+            if (etatCivil(j, e)) pq.change = true;
             if (fusionner(j.s, e.lignes)) { pq.change = true; }
           }
           for (const [n, pq] of paquetsTouches) {
             if (pq.change) { writeFileSync(`www/data/players/${n}.json`, JSON.stringify(pq.liste)); paquetsMaj++; }
           }
+          // L'index de recherche reçoit aussi prénom, nom et naissance (il n'en avait pas).
+          let indexMaj = 0;
+          for (const f of readdirSync("www/data/search-az").filter(x => /^[a-z0-9]\.json$/.test(x))) {
+            const chemin = `www/data/search-az/${f}`;
+            const idx = JSON.parse(readFileSync(chemin, "utf8")); let change = false;
+            for (const e of idx.players || []) { const src = parJoueur.get(e.i); if (src && etatCivil(e, src)) change = true; }
+            if (change) { writeFileSync(chemin, JSON.stringify(idx)); indexMaj++; }
+          }
           mkdirSync("diagnostics", { recursive: true });
-          const bilan = `Saison ${SAISON} par championnat — ${now.toISOString().slice(0, 10)} : ${parJoueur.size} joueurs lus (${appels} appels), ${fichesMaj} fiches complètes mises à jour (${saisonsAjoutees} saisons ajoutées), ${paquetsMaj} paquets légers réécrits, ${inconnus} joueurs hors index ignorés`;
+          const bilan = `Saison ${SAISON} par championnat — ${now.toISOString().slice(0, 10)} : ${parJoueur.size} joueurs lus (${appels} appels), ${fichesMaj} fiches complètes mises à jour (${saisonsAjoutees} saisons ajoutées), ${paquetsMaj} paquets légers réécrits, ${naissances} dates de naissance relevées, ${indexMaj} fichiers d'index complétés, ${inconnus} joueurs hors index ignorés`;
           writeFileSync("diagnostics/saison-courante-ligues.txt", bilan + "\n");
           console.log(bilan);
           EOS
@@ -147,6 +166,6 @@ jobs:
       - name: Publier
         run: |
           git config user.name "saison-ligues"; git config user.email "saison@users.noreply.github.com"
-          git add www/data/full www/data/players diagnostics/saison-courante-ligues.txt
+          git add www/data/full www/data/players www/data/search-az diagnostics/saison-courante-ligues.txt
           git commit -m "Saison en cours : mise à jour quotidienne par championnat" || { echo rien; exit 0; }
           for i in 1 2 3 4; do git pull --rebase -q && git push && break; sleep 5; done

@@ -1,0 +1,138 @@
+name: Dates de naissance
+
+# Relève, pour chaque joueur de la base qui n'en a pas encore, sa vraie date de
+# naissance, son prénom et son nom (endpoint players/profiles, un appel par joueur).
+# Sans elle, l'année de naissance était déduite de l'âge, donc fausse d'un an pour
+# environ un joueur sur deux — et le mode « Même âge » se décalait d'une saison.
+# Les fiches complètes passent d'abord, puis les paquets légers ; le budget d'appels
+# borne chaque passage (quota API-Football : 75 000 par jour, partagé avec le
+# rafraîchissement quotidien). Relancer jusqu'à ce que le bilan dise « reste 0 ».
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "Nombre maximal d'appels API pour ce passage"
+        default: "20000"
+      cible:
+        description: "complets | legers | tous"
+        default: "tous"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: saison-courante
+  cancel-in-progress: false
+
+jobs:
+  relever:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Relever les dates de naissance
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          BUDGET: ${{ github.event.inputs.budget }}
+          CIBLE: ${{ github.event.inputs.cible }}
+        run: |
+          cat > naissances.mjs <<'EOS'
+          import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+          const H = { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } };
+          const BUDGET = parseInt(process.env.BUDGET || "20000", 10) || 20000;
+          const CIBLE = process.env.CIBLE || "tous";
+          const attendre = ms => new Promise(r => setTimeout(r, ms));
+          async function get(url) {
+            for (let k = 0; k < 6; k++) {
+              try {
+                const r = await fetch(url, H);
+                const j = await r.json();
+                const e = j.errors;
+                if (e && (Array.isArray(e) ? e.length : Object.keys(e).length)) {
+                  if (/too many|rate/i.test(JSON.stringify(e))) { await attendre(8000 * (k + 1)); continue; }
+                  throw new Error(JSON.stringify(e));
+                }
+                return j;
+              } catch (e) { if (k === 5) throw e; await attendre(3000); }
+            }
+          }
+          let appels = 0, releves = 0, sansDate = 0, echecs = 0;
+          const civil = new Map();   // id -> {f, l, b}
+          async function profil(id) {
+            if (appels >= BUDGET) return null;
+            appels++;
+            try {
+              const j = await get(`https://v3.football.api-sports.io/players/profiles?player=${id}`);
+              await attendre(120);
+              const p = (j.response && j.response[0] && j.response[0].player) || null;
+              if (!p) { sansDate++; return { f: "", l: "", b: "" }; }
+              const c = { f: p.firstname || "", l: p.lastname || "", b: (p.birth && p.birth.date) || "" };
+              if (c.b) releves++; else sansDate++;
+              civil.set(id, c);
+              return c;
+            } catch (e) { echecs++; console.log(`joueur ${id} : ${e.message}`); return null; }
+          }
+          function appliquer(cible, c) {
+            let change = false;
+            for (const k of ["f", "l", "b"]) if (c[k] && cible[k] !== c[k]) { cible[k] = c[k]; change = true; }
+            return change;
+          }
+          // 1. Fiches complètes sans date.
+          let resteComplets = 0, fichesMaj = 0;
+          if (CIBLE !== "legers") {
+            const fichiers = readdirSync("www/data/full").filter(f => /^\d+\.json$/.test(f));
+            for (const f of fichiers) {
+              const chemin = `www/data/full/${f}`;
+              const d = JSON.parse(readFileSync(chemin, "utf8"));
+              if (d.b || d.sansNaissance) continue;
+              if (appels >= BUDGET) { resteComplets++; continue; }
+              const c = await profil(d.i);
+              if (!c) continue;
+              if (!c.b) d.sansNaissance = true;   // l'API ne la connaît pas : inutile de redemander
+              if (appliquer(d, c) || d.sansNaissance) { writeFileSync(chemin, JSON.stringify(d)); fichesMaj++; }
+            }
+          }
+          // 2. Paquets légers.
+          let resteLegers = 0, paquetsMaj = 0;
+          if (CIBLE !== "complets") {
+            const NB = JSON.parse(readFileSync("www/data/players/index.json", "utf8")).paquets || 1000;
+            for (let n = 0; n < NB; n++) {
+              const chemin = `www/data/players/${n}.json`;
+              if (!existsSync(chemin)) continue;
+              const liste = JSON.parse(readFileSync(chemin, "utf8")); let change = false;
+              for (const j of liste) {
+                if (j.b || j.sansNaissance || existsSync(`www/data/full/${j.i}.json`)) continue;
+                if (appels >= BUDGET) { resteLegers++; continue; }
+                const c = await profil(j.i);
+                if (!c) continue;
+                if (!c.b) j.sansNaissance = true;
+                if (appliquer(j, c) || j.sansNaissance) change = true;
+              }
+              if (change) { writeFileSync(chemin, JSON.stringify(liste)); paquetsMaj++; }
+            }
+          }
+          // 3. L'index de recherche reçoit les mêmes champs.
+          let indexMaj = 0;
+          for (const f of readdirSync("www/data/search-az").filter(x => /^[a-z0-9]\.json$/.test(x))) {
+            const chemin = `www/data/search-az/${f}`;
+            const idx = JSON.parse(readFileSync(chemin, "utf8")); let change = false;
+            for (const e of idx.players || []) { const c = civil.get(e.i); if (c && appliquer(e, c)) change = true; }
+            if (change) { writeFileSync(chemin, JSON.stringify(idx)); indexMaj++; }
+          }
+          mkdirSync("diagnostics", { recursive: true });
+          const bilan = `Dates de naissance — ${new Date().toISOString().slice(0, 10)} : ${appels} appels, ${releves} dates relevées, ${sansDate} joueurs sans date chez l'API, ${echecs} échecs ; ${fichesMaj} fiches complètes et ${paquetsMaj} paquets légers réécrits, ${indexMaj} fichiers d'index complétés ; reste ${resteComplets} fiches complètes et ${resteLegers} joueurs légers à relever`;
+          writeFileSync("diagnostics/naissances.txt", bilan + "\n");
+          console.log(bilan);
+          EOS
+          node --max-old-space-size=6144 naissances.mjs
+          rm naissances.mjs
+      - name: Publier
+        run: |
+          git config user.name "naissances"; git config user.email "naissances@users.noreply.github.com"
+          git add www/data/full www/data/players www/data/search-az diagnostics/naissances.txt
+          git commit -m "Dates de naissance, prénoms et noms relevés auprès de l'API" || { echo rien; exit 0; }
+          for i in 1 2 3 4 5; do git pull --rebase -q origin main && git push -q origin main && break || sleep 20; done

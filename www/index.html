@@ -3582,7 +3582,7 @@ function mapApiPlayerToDuelio(entry, idx, seasonLabel=REAL_DATA_CONFIG.seasons[0
   return {
     id: pl.id || (9000+idx),
     apiId: pl.id || null,
-    name: pl.name || `${pl.firstname||''} ${pl.lastname||''}`.trim() || 'Joueur inconnu',
+    name: nomComplet(pl.name, pl.firstname) || `${pl.firstname||''} ${pl.lastname||''}`.trim() || 'Joueur inconnu',
     pos, posLabel: POS_LABEL[pos],
     club: (stat.team && stat.team.name) || null,
     clubLogo: apiTeamLogo(stat.team),
@@ -3620,7 +3620,7 @@ function mapProfileToLightPlayer(pl){
     id: pl.id,
     apiId: pl.id,
     fullName: `${pl.firstname||''} ${pl.lastname||''}`.trim(),
-    name: pl.name || `${pl.firstname||''} ${pl.lastname||''}`.trim() || 'Joueur inconnu',
+    name: nomComplet(pl.name, pl.firstname) || `${pl.firstname||''} ${pl.lastname||''}`.trim() || 'Joueur inconnu',
     pos, posLabel: pos ? POS_LABEL[pos] : '',
     club: null, clubLogo: null,
     age: pl.age || null,
@@ -4197,7 +4197,11 @@ async function packStatique(apiId){
   for(const cle of Object.keys(saisons)){
     const stats = saisons[cle];
     if(stats && stats.length) data[cle] = {
-      player: { name: fiche.n, age: fiche.a, nationality: fiche.c, _naissance: naissance },
+      player: { name: nomComplet(fiche.n, fiche.f), firstname: fiche.f || undefined, lastname: fiche.l || undefined,
+                age: fiche.a, nationality: fiche.c, _naissance: naissance,
+                // La base porte la vraie date de naissance (champ b) depuis qu'elle est relevée :
+                // l'année déduite de l'âge ne sert plus que de repli.
+                birth: fiche.b ? { date: fiche.b } : undefined },
       statistics: stats
     };
   }
@@ -4915,11 +4919,22 @@ async function chargerIndexComplet(){
   })().catch(()=>{ _indexCompletEnCours = null; return false; });
   return _indexCompletEnCours;
 }
+/* « E. Haaland » devient « Erling Haaland » quand le prénom est connu : l'API abrège
+ * le nom d'affichage de la plupart des joueurs, mais pas de tous (« Kylian Mbappé »),
+ * et les deux formes se côtoyaient dans un même duel. On ne remplace que l'initiale,
+ * par le premier prénom : le nom d'usage reste celui de l'API. */
+function nomComplet(n, prenom){
+  if(!n || !prenom) return n;
+  const premier = String(prenom).trim().split(/\s+/)[0];
+  const m = /^(\p{L})\.\s+(.+)$/u.exec(n);
+  if(!m || !premier || premier.length < 2) return n;
+  return premier[0].toLocaleUpperCase() === m[1].toLocaleUpperCase() ? `${premier} ${m[2]}` : n;
+}
 function mapIndexEntryToLightPlayer(e){
   return {
     id: e.i, apiId: e.i,
     fullName: `${e.f||''} ${e.l||''}`.trim(),
-    name: e.n || `${e.f||''} ${e.l||''}`.trim() || 'Joueur inconnu',
+    name: nomComplet(e.n, e.f) || `${e.f||''} ${e.l||''}`.trim() || 'Joueur inconnu',
     pos: e.p || null, posLabel: e.p ? (POS_LABEL[e.p] || '') : '',
     club: e.t || null, clubLogo: e.ti ? apiTeamLogo({id: e.ti}) : null,
     matchsIndex: e.m || 0,   // matchs de carrière connus de l'index : 0 = fiche vide
