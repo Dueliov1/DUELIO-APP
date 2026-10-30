@@ -8048,22 +8048,26 @@ async function dessinerGrille(o){
     } else { ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI*2); ctx.lineWidth = 1.5*S; ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.stroke(); }
   });
   y = cy + R + 14*S;
-  // Noms, poste · club, et la période de chacun si elles diffèrent.
-  let hNoms = 0;
+  // Noms, poste · club, et la période de chacun si elles diffèrent. Les quatre
+  // noms partagent la même taille (celle qui fait tenir le plus long) et les lignes
+  // du dessous la même hauteur : rien ne flotte d'une colonne à l'autre.
+  const maxW = cw - 6*S;
+  const noms = filled.map(p => shortName(p).toUpperCase());
+  const fsNom = Math.min(...noms.map(t => ajusterPolice(ctx, t, maxW, (n === 3 ? 12 : 10)*S, 6*S, TITRE)));
+  const sousTous = filled.map(p => [p.posLabel, p.club].filter(Boolean).join(' · ').toUpperCase());
+  const perTous = filled.map(p => st.periode(p));
+  const fsSous = Math.min(...sousTous.filter(Boolean).map(t => ajusterPolice(ctx, t, maxW, (stade ? 7 : 6.5)*S, 4.5*S, f => TEXTE(f))), (stade ? 7 : 6.5)*S);
+  const fsPer = Math.min(...perTous.filter(Boolean).map(t => ajusterPolice(ctx, t, maxW, (stade ? 7 : 6.5)*S, 4.5*S, f => TEXTE(f))), (stade ? 7 : 6.5)*S);
+  const ySous = y + fsNom + 11*S, yPer = ySous + (sousTous.some(Boolean) ? 9.5*S : 0);
   filled.forEach((p, i) => {
-    const cx = cxDe(i), maxW = cw - 6*S;
+    const cx = cxDe(i);
     ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    const nom = shortName(p).toUpperCase();
-    const fs = ajusterPolice(ctx, nom, maxW, (n === 3 ? 12 : 10)*S, 6*S, TITRE);
-    ombre(()=>{ ctx.fillStyle = T.texte; ecrire(ctx, nom, cx, y + fs, S, stade); }, 8*S);
-    let h = fs + 11*S;
-    const sous = [p.posLabel, p.club].filter(Boolean).join(' · ').toUpperCase();
-    if(sous){ ajusterPolice(ctx, sous, maxW, (stade ? 7 : 6.5)*S, 4.5*S, f => TEXTE(f)); ombre(()=>{ ctx.fillStyle = papier ? T.sec : stade ? '#fff' : COUL[i]; ecrire(ctx, sous, cx, y + h, S, stade); }, 6*S); h += 9.5*S; }
-    const per = st.periode(p);
-    if(per){ ajusterPolice(ctx, per, maxW, (stade ? 7 : 6.5)*S, 4.5*S, f => TEXTE(f)); ombre(()=>{ ctx.fillStyle = stade ? '#fff' : T.sec; ecrire(ctx, per, cx, y + h, S, stade); }, 6*S); h += 9.5*S; }
-    hNoms = Math.max(hNoms, h);
+    ctx.font = TITRE(fsNom);
+    ombre(()=>{ ctx.fillStyle = T.texte; ecrire(ctx, noms[i], cx, y + fsNom, S, stade); }, 8*S);
+    if(sousTous[i]){ ctx.font = TEXTE(fsSous); ombre(()=>{ ctx.fillStyle = papier ? T.sec : stade ? '#fff' : COUL[i]; ecrire(ctx, sousTous[i], cx, ySous, S, stade); }, 6*S); }
+    if(perTous[i]){ ctx.font = TEXTE(fsPer); ombre(()=>{ ctx.fillStyle = stade ? '#fff' : T.sec; ecrire(ctx, perTous[i], cx, yPer, S, stade); }, 6*S); }
   });
-  y += hNoms + 10*S;
+  y = (perTous.some(Boolean) ? yPer : ySous) + 10*S;
 
   // 4. Les statistiques, ligne par ligne.
   const lignes = lignesDeGrille(filled, list), nb = lignes.length;
