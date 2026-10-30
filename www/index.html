@@ -2648,6 +2648,7 @@ const REAL_DATA_CONFIG = {
   // la sienne depuis https://localhost.
   legendesUrl: 'https://duelio-app.bensouna-ahmed.workers.dev/data/legendes.json',
   legendesPhotos: 'https://duelio-app.bensouna-ahmed.workers.dev/legendes/photos',
+  legendesCredits: 'https://duelio-app.bensouna-ahmed.workers.dev/data/legendes-credits.json',   // adresse absolue : depuis duelio.app ou l'appli Android, le chemin relatif ne menait nulle part
   // Index de recherche fabriqué à partir de la base statique : 41 553 joueurs,
   // retraités compris. Remplace l'index KV du proxy, qui ne couvrait que la saison
   // en cours de 5 championnats et n'a jamais fini de se construire.
@@ -2662,7 +2663,7 @@ const REAL_DATA_CONFIG = {
   searchIndexTopUrl: 'https://duelio-app.bensouna-ahmed.workers.dev/data/search-top.json',
   seuilComplementApi: 5,         // sous ce nombre de résultats locaux seulement, on interroge l'API en complément
   leagueIds: [61, 39],           // 61 = Ligue 1, 39 = Premier League (via /leagues?name=...)
-  seasons: [2025, 2024],         // saisons réelles disponibles ; [0] = saison de base
+  seasons: [currentSeasonYear(), currentSeasonYear() - 1],   // saison en cours puis la précédente (était figé à [2025, 2024])
   maxPages: 25,                  // sécurité anti-boucle infinie sur la pagination
   maxPlayers: 120,                // plafond par ligue au chargement initial (le quota API/minute ne permet pas plus sans échouer — la recherche par nom, elle, reste illimitée)
   requestDelayMs: 200,           // pause entre deux appels API successifs, pour rester sous la limite de requêtes/minute du plan API-Football
@@ -3669,6 +3670,20 @@ async function searchProfilesByName(name, opts={}){
 
 // Saison API-Football en cours (2026 = saison 2026-27, bascule en juillet)
 function currentSeasonYear(){ const d = new Date(); return d.getMonth() >= 6 ? d.getFullYear() : d.getFullYear() - 1; }
+/* La saison affichée par défaut : la saison en cours dès qu'elle compte quelques matchs
+ * (huit), sinon la précédente — en août, une fiche à deux matchs n'apprend rien. Avant,
+ * une constante figée à 2025 faisait ignorer la saison en cours toute l'année. */
+const SEUIL_SAISON_EN_COURS = 8;
+function saisonParDefaut(p, candidates){
+  const dispo = (candidates || []).map(Number).filter(sn => !isNaN(sn));
+  if(!dispo.length) return null;
+  const matchs = sn => { const st = p && p.statsBySeason && p.statsBySeason[sn]; return st ? (Number(st.appearances) || 0) : 0; };
+  const [enCours, precedente] = REAL_DATA_CONFIG.seasons;
+  if(dispo.includes(enCours) && matchs(enCours) >= SEUIL_SAISON_EN_COURS) return enCours;
+  if(dispo.includes(precedente)) return precedente;
+  if(dispo.includes(enCours)) return enCours;
+  return Math.max(...dispo);
+}
 
 /* ---------------- Saisons d'un joueur : chargement, cache, carrière ----------------
  * Une saison terminée ne change plus jamais : elle est gardée 30 jours sur l'appareil.
@@ -3739,6 +3754,34 @@ function attachSeason(p, season, entry){
   p.statsBySeason[season] = st;
   p.rawBySeason[season] = entry.statistics;
   return st;
+}
+/* Les saisons venues de l'API passent par le même nettoyage que la base statique :
+ * doublons même club + compétition, tournois d'été remis dans la bonne saison, saisons
+ * « futures » ramenées. Sans cela, dans un même duel, la Coupe du monde 2026 était
+ * comptée en 2025-26 d'un côté (fiche statique) et en 2026-27 de l'autre (fiche API).
+ * Le nettoyage porte sur la carrière entière connue, puisque recaler déplace des lignes
+ * d'une saison à l'autre ; une réponse de l'API moins riche qu'une saison déjà connue
+ * ne la remplace pas. Rend la première saison (la plus récente) qui a des lignes. */
+function integrerSaisonsApi(p, entrees){
+  p.statsBySeason = p.statsBySeason || {}; p.rawBySeason = p.rawBySeason || {};
+  const brut = {}; let player = null;
+  for(const k of Object.keys(p.rawBySeason)) brut[k] = p.rawBySeason[k];
+  for(const k of Object.keys(entrees || {})){
+    const e = entrees[k]; if(!e || !e.statistics || !e.statistics.length) continue;
+    if(brut[k] && richesseSaison(brut[k]) > richesseSaison(e.statistics)) continue;
+    brut[k] = e.statistics; if(e.player && !player) player = e.player;
+  }
+  const propre = ramenerSaisonsFutures(recalerTournoisDEte(nettoyerCarriere(brut)));
+  let premiere = null;
+  for(const k of Object.keys(propre).sort((a, b) => Number(b) - Number(a))){
+    const sn = Number(k), lignes = propre[k];
+    if(!lignes || !lignes.length){ delete p.statsBySeason[sn]; delete p.rawBySeason[sn]; continue; }
+    if(p.rawBySeason[sn] === lignes && p.statsBySeason[sn]) { if(premiere === null) premiere = sn; continue; }
+    const st = extractSeasonStats({ player: player || { nationality: p.nation && p.nation.name }, statistics: lignes });
+    st.season = sn; p.statsBySeason[sn] = st; p.rawBySeason[sn] = lignes;
+    if(premiere === null) premiere = sn;
+  }
+  return premiere;
 }
 // Fait de la saison donnée celle qui est affichée pour ce joueur (cartes, image, comparaison « saison affichée »)
 function applySeasonToPlayer(p, season, pinned){
@@ -3835,8 +3878,7 @@ function loadPlayerStats(p){
       const presentes = Object.keys(p.statsBySeason || {}).map(Number)
         .filter(sn => p.statsBySeason[sn]).sort((a,b)=>b-a);
       if(presentes.length){
-        const pref = REAL_DATA_CONFIG.seasons.find(sn => presentes.includes(sn));
-        firstSeason = pref != null ? pref : presentes[0];
+        firstSeason = saisonParDefaut(p, presentes);
       }
     }
     if(firstSeason == null) throw new Error("Aucune statistique trouvée pour ce joueur sur les saisons disponibles.");
@@ -3892,7 +3934,7 @@ function chargerPaquetStatique(apiId){
   const n = apiId % REAL_DATA_CONFIG.staticShards;
   if(paquetsStatiques.has(n)) return Promise.resolve(paquetsStatiques.get(n));
   if(paquetsEnCours.has(n)) return paquetsEnCours.get(n);
-  const promesse = fetch(`${REAL_DATA_CONFIG.staticBase}/${n}.json`)
+  const promesse = fetchBorne(`${REAL_DATA_CONFIG.staticBase}/${n}.json`, 20000)
     .then(r => r.ok ? r.json() : null)
     .then(liste => {
       const index = new Map();
@@ -3921,7 +3963,7 @@ function chargerCarriereComplete(apiId){
    * aller-retour perdu avant chaque sélection. */
   const entree = PLAYER_INDEX.loaded ? PLAYER_INDEX.players.find(e => e.i === apiId) : null;
   if(entree && !entree.m){ carrieresCompletes.set(apiId, null); return Promise.resolve(null); }
-  const promesse = fetch(`${REAL_DATA_CONFIG.fullBase}/${apiId}.json`)
+  const promesse = fetchBorne(`${REAL_DATA_CONFIG.fullBase}/${apiId}.json`, 20000)
     .then(r => r.ok ? r.json() : null)
     .then(fiche => {
       const valide = (fiche && fiche.s && Object.keys(fiche.s).length) ? fiche : null;
@@ -4260,9 +4302,8 @@ async function fetchPack(p, opts){
                                    : REAL_DATA_CONFIG.seasons.some(sn => obtenues.includes(sn)));
 
       if(couvert && obtenues.length){
-        const preferee = REAL_DATA_CONFIG.seasons.find(sn => obtenues.includes(sn));
         delete p.cumulByAge; p.cumulByAge = {}; delete p._nationTotals;
-        return { premiere: preferee != null ? preferee : Math.max(...obtenues),
+        return { premiere: saisonParDefaut(p, obtenues),
                  partiel: false, pack: local, statique: true };
       }
       // Couverture incomplète : on va interroger l'API pour compléter, mais on garde
@@ -4270,8 +4311,7 @@ async function fetchPack(p, opts){
       // revient les mains vides, afficher la saison la plus récente dont on dispose
       // vaut infiniment mieux qu'un message d'erreur sur un joueur dont on a la carrière.
       if(obtenues.length){
-        const preferee = REAL_DATA_CONFIG.seasons.find(sn => obtenues.includes(sn));
-        secours = { premiere: preferee != null ? preferee : Math.max(...obtenues),
+        secours = { premiere: saisonParDefaut(p, obtenues),
                     partiel: true, pack: local, statique: true };
         // Rien de précis n'a été demandé : on affiche TOUT DE SUITE ce qu'on possède et
         // on va chercher le complément en arrière-plan. Avant, l'application attendait
@@ -4309,26 +4349,28 @@ async function fetchPack(p, opts){
     // Union avec ce qu'on connaissait déjà : l'API ne doit pas faire disparaître des saisons.
     p.seasonsAvailable = [...new Set([...(p.seasonsAvailable || []), ...json.seasons])].sort((a,b)=>b-a);
   }
-  let premiere = null;
+  const recues = {};
   Object.keys(json.data || {}).forEach(k=>{
     const sn = parseInt(k, 10); const entry = json.data[k];
     if(entry && entry.statistics && entry.statistics.length){
       writeSeasonCache(p.apiId, sn, entry);
-      if(attachSeason(p, sn, entry) && premiere === null) premiere = sn;
+      recues[sn] = entry;
     } else if(entry === null){
       p.seasonsNoData = p.seasonsNoData || {}; p.seasonsNoData[sn] = true;
       writeSeasonCache(p.apiId, sn, { player: null, statistics: [] });
     }
   });
+  // Nettoyage commun avec la base statique, puis la plus récente des saisons reçues qui a des lignes.
+  integrerSaisonsApi(p, recues);
+  const recuesAvecLignes = Object.keys(recues).map(Number).filter(sn => p.statsBySeason && p.statsBySeason[sn]).sort((a, b) => b - a);
+  let premiere = recuesAvecLignes.length ? recuesAvecLignes[0] : null;
   delete p.cumulByAge; p.cumulByAge = {}; delete p._nationTotals;
   // Saison à afficher par défaut : la saison de référence si elle a des données
   // (la saison en cours vient souvent de commencer et n'aurait que quelques matchs),
   // sinon la plus récente qui en a.
   const avecDonnees = Object.keys(json.data || {}).map(Number)
     .filter(sn => p.statsBySeason && p.statsBySeason[sn]).sort((a,b)=>b-a);
-  const preferee = REAL_DATA_CONFIG.seasons.find(sn => avecDonnees.includes(sn));
-  const choisie = preferee != null ? preferee
-                : (avecDonnees[0] !== undefined ? avecDonnees[0] : premiere);
+  const choisie = avecDonnees.length ? saisonParDefaut(p, avecDonnees) : premiere;
   // L'API a répondu, mais sans aucune statistique utilisable (quota épuisé, saison
   // absente de son côté) : on retombe sur la base statique plutôt que d'échouer.
   if(choisie == null && secours) return secours;
@@ -4360,7 +4402,9 @@ async function ensureSeasonLoaded(p, season, priority){
   if(p.statsBySeason && p.statsBySeason[season] && p.rawBySeason && p.rawBySeason[season]) return p.statsBySeason[season];
   if(!p.apiId || !(p.seasonsAvailable||[]).includes(season)) return null;
   const entry = await fetchSeasonEntry(p.apiId, season, priority);
-  return attachSeason(p, season, entry);
+  if(!entry || !entry.statistics || !entry.statistics.length) return null;
+  integrerSaisonsApi(p, { [season]: entry });   // même nettoyage que le reste de la carrière
+  return (p.statsBySeason && p.statsBySeason[season]) || null;
 }
 // Une saison est « connue » si ses lignes sont chargées, ou si la base n'a rien pour elle
 function seasonKnown(p, sn){
@@ -4811,7 +4855,7 @@ async function loadPlayerIndex(){
   // réponde en moins d'une seconde au lieu d'attendre les 5,3 Mo du grand index.
   if((!PLAYER_INDEX.loaded || copiePerimee) && REAL_DATA_CONFIG.searchIndexTopUrl){
     try{
-      const r = await fetch(REAL_DATA_CONFIG.searchIndexTopUrl);
+      const r = await fetchBorne(REAL_DATA_CONFIG.searchIndexTopUrl, 20000);
       if(r.ok){
         const court = await r.json();
         if(PLAYER_INDEX.loaded ? remplacerDansIndex(court) : applyPlayerIndex(court)){
@@ -4891,7 +4935,7 @@ async function chargerTranche(base, c){
   if(_tranchesEnCours.has(c)) return _tranchesEnCours.get(c);
   const prom = (async ()=>{
     try {
-      const res = await fetch(`${base}/${c}.json`);
+      const res = await fetchBorne(`${base}/${c}.json`, 20000);
       if(!res.ok) return null;                 // null : tranche pas encore publiée
       const ok = fusionnerIndex(await res.json());
       if(ok) tranchesChargees.add(c);
@@ -4920,7 +4964,7 @@ async function chargerIndexComplet(){
   if(indexCompletCharge()) return true;
   if(_indexCompletEnCours) return _indexCompletEnCours;
   _indexCompletEnCours = (async ()=>{
-    const res = await fetch(REAL_DATA_CONFIG.searchIndexUrl || `${REAL_DATA_CONFIG.proxyUrl}/index.json`);
+    const res = await fetchBorne(REAL_DATA_CONFIG.searchIndexUrl || `${REAL_DATA_CONFIG.proxyUrl}/index.json`, 30000);
     if(!res.ok) return false; // index pas encore construit côté proxy : la recherche API seule continue
     const data = await res.json();
     // On ne range pas le grand index dans localStorage : 5,3 Mo dépassent le quota
@@ -5199,6 +5243,11 @@ function rememberRecentPlayer(p){
     const arr = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]').filter(e=> e && e.p && e.p.apiId !== p.apiId && (Date.now()-e.t) < RECENT_TTL);
     const copy = {...p, statsVersion: STATS_VERSION}; delete copy._q; delete copy._idx;
     delete copy.rawBySeason; delete copy.careerStats; copy.careerLoaded = false; // lourd et re-calculable depuis le cache des saisons
+    // On ne garde que la saison affichée : vingt saisons découpées par compétition pour
+    // huit joueurs dépassaient le quota du stockage, et tout le reste se recharge à l'usage.
+    delete copy.cumulByAge; delete copy._nationTotals; delete copy.seasonsNoData;
+    for(const k of Object.keys(copy)) if(k[0] === '_') delete copy[k];
+    if(copy.statsBySeason && copy.seasonShown != null) copy.statsBySeason = copy.statsBySeason[copy.seasonShown] ? { [copy.seasonShown]: copy.statsBySeason[copy.seasonShown] } : {};
     arr.unshift({t: Date.now(), p: copy});
     localStorage.setItem(RECENT_KEY, JSON.stringify(arr.slice(0, RECENT_MAX)));
   }catch(e){}
@@ -5231,6 +5280,21 @@ function joueurParId(apiId){
   const e = PLAYER_INDEX.players.find(x => x.i === apiId);
   return e ? mapIndexEntryToLightPlayer(e) : null;
 }
+/* Un joueur par identifiant, même hors de l'index court : d'abord l'index en mémoire, puis
+ * sa fiche complète dans la base statique (un duel sauvegardé ou reçu par notification
+ * peut porter n'importe quel joueur, pas seulement les 5 000 les plus connus). */
+async function joueurParIdPartout(apiId){
+  for(let i = 0; i < 30 && !PLAYER_INDEX.loaded; i++) await sleep(100);
+  const direct = joueurParId(apiId);
+  if(direct) return direct;
+  if(REAL_DATA_CONFIG.fullBase){
+    try{
+      const f = await chargerCarriereComplete(apiId);
+      if(f && f.n) return mapIndexEntryToLightPlayer({ i: f.i, n: f.n, f: f.f, l: f.l, b: f.b, a: f.a, c: f.c, m: 1 });
+    }catch(e){}
+  }
+  return null;
+}
 let duelLoading = false;
 async function loadSuggestedDuel(duel, statusCb, opts){
   opts = opts || {};
@@ -5254,13 +5318,12 @@ async function loadSuggestedDuel(duel, statusCb, opts){
       };
       let found = [];
       if(side.id){
-        for(let i = 0; i < 20 && !PLAYER_INDEX.loaded; i++) await sleep(100);
-        const direct = joueurParId(side.id);
+        const direct = await joueurParIdPartout(side.id);
         if(direct) found = [direct];
       }
-      if(!found.length) found = searchLocalIndex(side.q, 10).filter(p=>prefer({firstname: (p.fullName||'').split(' ')[0], name: p.name}));
-      if(!found.length) found = await searchProfilesByName(side.q, {limit:1, prefer});
-      if(!found.length) throw new Error(`${side.label} introuvable dans la base API-Football.`);
+      if(!found.length && side.q) found = searchLocalIndex(side.q, 10).filter(p=>prefer({firstname: (p.fullName||'').split(' ')[0], name: p.name}));
+      if(!found.length && side.q) found = await searchProfilesByName(side.q, {limit:1, prefer});
+      if(!found.length) throw new Error(`${side.label} introuvable dans la base.`);
       return found[0];
     }
 
@@ -7235,14 +7298,16 @@ async function ouvrirDuelSauvegarde(d){
   if(ids.length < 2) return;
   const cote = (x)=> String(x).startsWith('L:') ? { legende: String(x).slice(2) } : { id: Number(x), q: '', first: '', label: 'Joueur' };
   const a = cote(ids[0]), b = cote(ids[1]);
-  if(!a.legende && !b.legende){ loadSuggestedDuel({ a, b }, ()=>{}); return; }
+  // En cas d'échec, le panneau du compte se rouvre avec l'explication (il n'y avait aucun retour).
+  const statut = (msg, isErr)=>{ if(isErr){ openAccountSheet(msg || 'Ce duel ne peut pas être rouvert.'); } };
+  if(!a.legende && !b.legende){ loadSuggestedDuel({ a, b }, statut); return; }
   // Au moins une légende : elles sont déjà dans PLAYERS ; un joueur réel passe par l'index.
   try{
     await chargerLegendes();
     for(let i = 0; i < 30 && !PLAYER_INDEX.loaded; i++) await new Promise(r => setTimeout(r, 100));
-    const trouver = c => c.legende ? PLAYERS.find(p => p.estLegende && p.legendeId === c.legende) : (()=>{ const l = joueurParId(c.id); return l ? PLAYERS.find(p => p.id === ensurePlayerInList(l)) : null; })();
-    const pa = trouver(a), pb = trouver(b);
-    if(!pa || !pb) return;
+    const trouver = async c => c.legende ? PLAYERS.find(p => p.estLegende && p.legendeId === c.legende) : (async()=>{ const l = await joueurParIdPartout(c.id); return l ? PLAYERS.find(p => p.id === ensurePlayerInList(l)) : null; })();
+    const [pa, pb] = await Promise.all([trouver(a), trouver(b)]);
+    if(!pa || !pb){ statut('Un des joueurs de ce duel est introuvable dans la base.', true); return; }
     await Promise.all([pa, pb].map(p => p.apiId ? loadPlayerStats(p) : Promise.resolve()));
     slots = [pa.id, pb.id]; compareMode = 'shown'; teamScope = 'club'; compactView = false;
     showScreen('compare'); renderAll();
