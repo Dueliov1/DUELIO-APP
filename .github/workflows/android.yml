@@ -2,6 +2,13 @@ name: Compiler l'app Android
 
 on:
   workflow_dispatch:
+    inputs:
+      type:
+        description: "debug (APK de test) ou release (AAB signé pour le Play Store)"
+        default: "debug"
+      versionName:
+        description: "Numéro de version affiché (ex. 1.0.0)"
+        default: "1.0.0"
 
 permissions:
   contents: read
@@ -32,6 +39,34 @@ jobs:
         run: |
           npx cap add android
           npx cap sync android
+
+      # Le projet Android est régénéré à chaque compilation (il n'est pas versionné) :
+      # sans cette étape, l'application sortait avec l'icône grise par défaut de Capacitor.
+      - name: Poser l'icône et l'écran de démarrage
+        run: |
+          RES=android/app/src/main/res
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p "$RES/mipmap-$d"
+            cp branding/android/ic_launcher-$d.png "$RES/mipmap-$d/ic_launcher.png"
+            cp branding/android/ic_launcher-$d.png "$RES/mipmap-$d/ic_launcher_round.png"
+            cp branding/android/fg-$d.png          "$RES/mipmap-$d/ic_launcher_foreground.png"
+          done
+          mkdir -p "$RES/values"
+          printf '%s\n' '<?xml version="1.0" encoding="utf-8"?>' '<resources><color name="ic_launcher_background">#0B1730</color></resources>' > "$RES/values/ic_launcher_background.xml"
+          for d in drawable drawable-port-xxxhdpi drawable-land-xxxhdpi; do
+            [ -d "$RES/$d" ] && cp branding/android/splash.png "$RES/$d/splash.png"
+          done
+          echo "Icônes posées :"; ls -la "$RES/mipmap-xxxhdpi/"
+
+      # Le Play Store refuse deux envois portant le même numéro : il s'incrémente tout seul.
+      - name: Numéro de version
+        env:
+          VN: ${{ inputs.versionName }}
+          VC: ${{ github.run_number }}
+        run: |
+          sed -i "s/versionCode .*/versionCode ${VC}/" android/app/build.gradle
+          sed -i "s/versionName .*/versionName \"${VN:-1.0.0}\"/" android/app/build.gradle
+          grep -E "versionCode|versionName" android/app/build.gradle
 
       # Notifications (Firebase Cloud Messaging). Le fichier google-services.json
       # vient du projet Firebase (Paramètres du projet → Vos applications → Android,
@@ -69,17 +104,61 @@ jobs:
           echo "Contenu embarqué :"
           ls -la "$CIBLE"
 
-      - name: Compiler l'APK
+      # --- Compilation de test : un APK qu'on installe à la main sur un téléphone ---
+      - name: Compiler l'APK de test
+        if: ${{ inputs.type != 'release' }}
         run: |
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
+          ls -lh app/build/outputs/apk/debug/*.apk
 
-      - name: Taille de l'APK
-        run: ls -lh android/app/build/outputs/apk/debug/*.apk
-
-      - name: Publier l'APK
+      - name: Publier l'APK de test
+        if: ${{ inputs.type != 'release' }}
         uses: actions/upload-artifact@v4
         with:
-          name: duelio-android
+          name: duelio-apk-test
           path: android/app/build/outputs/apk/debug/*.apk
+
+      # --- Compilation de publication : l'AAB signé qu'attend le Play Store ---
+      # Quatre secrets nécessaires : ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD,
+      # ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD. Sans eux, l'étape s'arrête en l'expliquant.
+      - name: Signer et compiler l'AAB
+        if: ${{ inputs.type == 'release' }}
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$KEYSTORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "::error::Clé de signature absente. Ajoutez les secrets ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS et ANDROID_KEY_PASSWORD."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > android/app/upload.keystore
+          {
+            echo ""
+            echo "android {"
+            echo "    signingConfigs {"
+            echo "        release {"
+            echo "            storeFile file('upload.keystore')"
+            echo "            storePassword System.getenv('KEYSTORE_PASSWORD')"
+            echo "            keyAlias System.getenv('KEY_ALIAS')"
+            echo "            keyPassword System.getenv('KEY_PASSWORD')"
+            echo "        }"
+            echo "    }"
+            echo "    buildTypes { release { signingConfig signingConfigs.release } }"
+            echo "}"
+          } >> android/app/build.gradle
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease
+          ls -lh app/build/outputs/bundle/release/*.aab
+          rm -f app/upload.keystore
+
+      - name: Publier l'AAB
+        if: ${{ inputs.type == 'release' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: duelio-aab-playstore
+          path: android/app/build/outputs/bundle/release/*.aab
