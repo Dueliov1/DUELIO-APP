@@ -1,0 +1,137 @@
+name: Palmarès des joueurs
+
+# Relève le palmarès (titres et finales) de chaque joueur de la base, une fois pour
+# toutes, dans le champ `t` de sa fiche. Sans lui, l'onglet Trophées appelait l'API à
+# chaque ouverture — et comme API-Football bloque les adresses IP de Cloudflare, l'écran
+# restait sur « Chargement du palmarès… » à chaque fois.
+#
+# Un appel par joueur (endpoint trophies). Les fiches complètes passent d'abord, puis les
+# paquets légers ; le budget borne chaque passage (quota 75 000/jour, partagé avec le
+# rafraîchissement quotidien). Relancer jusqu'à ce que le bilan dise « reste 0 ».
+#
+# Un palmarès ne bouge qu'à la fin d'une saison : `fraicheur` permet de redemander les
+# fiches relevées il y a plus de N jours (laisser 0 pour ne prendre que ce qui manque).
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "Nombre maximal d'appels API pour ce passage"
+        default: "20000"
+      cible:
+        description: "complets | legers | tous"
+        default: "complets"
+      fraicheur:
+        description: "Redemander aussi les palmarès plus vieux que N jours (0 = seulement ce qui manque)"
+        default: "0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: saison-courante
+  cancel-in-progress: false
+
+jobs:
+  relever:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+      - name: Relever les palmarès
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          BUDGET: ${{ github.event.inputs.budget }}
+          CIBLE: ${{ github.event.inputs.cible }}
+          FRAICHEUR: ${{ github.event.inputs.fraicheur }}
+        run: |
+          cat > trophees.mjs <<'EOS'
+          import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
+          const H = { headers: { "x-apisports-key": process.env.API_FOOTBALL_KEY } };
+          const BUDGET = parseInt(process.env.BUDGET || "20000", 10) || 20000;
+          const CIBLE = process.env.CIBLE || "complets";
+          const FRAICHEUR = (parseInt(process.env.FRAICHEUR || "0", 10) || 0) * 86400000;
+          const MAINTENANT = Date.now();
+          const attendre = ms => new Promise(r => setTimeout(r, ms));
+          async function get(url) {
+            for (let k = 0; k < 6; k++) {
+              try {
+                const r = await fetch(url, H);
+                const j = await r.json();
+                const e = j.errors;
+                if (e && (Array.isArray(e) ? e.length : Object.keys(e).length)) {
+                  if (/too many|rate/i.test(JSON.stringify(e))) { await attendre(8000 * (k + 1)); continue; }
+                  throw new Error(JSON.stringify(e));
+                }
+                return j;
+              } catch (e) { if (k === 5) throw e; await attendre(3000); }
+            }
+          }
+          let appels = 0, avecTitres = 0, sansTitre = 0, echecs = 0;
+          // Un palmarès se garde en quatre champs : compétition, pays, saison, résultat.
+          async function palmares(id) {
+            if (appels >= BUDGET) return null;
+            appels++;
+            try {
+              const j = await get(`https://v3.football.api-sports.io/trophies?player=${id}`);
+              await attendre(120);
+              const liste = (j.response || [])
+                .filter(t => t && t.league && t.season != null && String(t.season).trim() !== "")
+                .map(t => ({ league: t.league, country: t.country || "", season: String(t.season), place: t.place || "" }));
+              if (liste.length) avecTitres++; else sansTitre++;
+              return liste;
+            } catch (e) { echecs++; console.log(`joueur ${id} : ${e.message}`); return null; }
+          }
+          const aRelever = d => !d.tAt || (FRAICHEUR && MAINTENANT - d.tAt > FRAICHEUR);
+
+          let resteComplets = 0, fichesMaj = 0;
+          if (CIBLE !== "legers") {
+            for (const f of readdirSync("www/data/full").filter(x => /^\d+\.json$/.test(x))) {
+              const chemin = `www/data/full/${f}`;
+              const d = JSON.parse(readFileSync(chemin, "utf8"));
+              if (!aRelever(d)) continue;
+              if (appels >= BUDGET) { resteComplets++; continue; }
+              const liste = await palmares(d.i);
+              if (liste === null) continue;
+              d.t = liste; d.tAt = MAINTENANT;
+              writeFileSync(chemin, JSON.stringify(d)); fichesMaj++;
+            }
+          }
+          let resteLegers = 0, paquetsMaj = 0;
+          if (CIBLE !== "complets") {
+            const NB = JSON.parse(readFileSync("www/data/players/index.json", "utf8")).paquets || 1000;
+            for (let n = 0; n < NB; n++) {
+              const chemin = `www/data/players/${n}.json`;
+              if (!existsSync(chemin)) continue;
+              const liste = JSON.parse(readFileSync(chemin, "utf8")); let change = false;
+              for (const j of liste) {
+                if (!aRelever(j) || existsSync(`www/data/full/${j.i}.json`)) continue;
+                if (appels >= BUDGET) { resteLegers++; continue; }
+                const p = await palmares(j.i);
+                if (p === null) continue;
+                j.t = p; j.tAt = MAINTENANT; change = true;
+              }
+              if (change) { writeFileSync(chemin, JSON.stringify(liste)); paquetsMaj++; }
+            }
+          }
+          mkdirSync("diagnostics", { recursive: true });
+          const bilan = `Palmarès — ${new Date().toISOString().slice(0, 10)} : ${appels} appels, ${avecTitres} joueurs avec titres, ${sansTitre} sans titre, ${echecs} échecs ; ${fichesMaj} fiches complètes et ${paquetsMaj} paquets légers réécrits ; reste ${resteComplets} fiches complètes et ${resteLegers} joueurs légers à relever`;
+          writeFileSync("diagnostics/trophees.txt", bilan + "\n");
+          console.log(bilan);
+          EOS
+          node --max-old-space-size=6144 trophees.mjs
+          rm trophees.mjs
+      - name: Publier
+        run: |
+          git config user.name "trophees"; git config user.email "trophees@users.noreply.github.com"
+          git add www/data/full www/data/players diagnostics/trophees.txt
+          git commit -m "Palmarès des joueurs relevé auprès de l'API" || { echo rien; exit 0; }
+          for i in 1 2 3 4 5; do
+            if git pull --rebase -q origin main && git push -q origin main; then exit 0; fi
+            git rebase --abort 2>/dev/null || true
+            sleep 20
+          done
+          echo "::error::publication impossible après 5 tentatives (conflit ou dépôt injoignable)"; exit 1

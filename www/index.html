@@ -3894,6 +3894,13 @@ function loadPlayerStats(p){
       full.age = p.age || full.age; full.birthYear = p.birthYear || full.birthYear;
     }
     const keepSeasons = p.statsBySeason, keepRaw = p.rawBySeason;
+    /* Le palmarès déjà relevé (base statique ou API) ne doit pas être effacé par cette
+     * fusion : une fiche fraîchement transformée porte des compteurs de titres à zéro,
+     * et le tableau des trophées retombait à « 0 » après un simple rafraîchissement. */
+    const palmaresConnu = p.trophiesLoaded ? {
+      trophiesLoaded: true, trophiesEmpty: p.trophiesEmpty, trophiesRaw: p.trophiesRaw,
+      titresNationaux: p.titresNationaux, titresContinentaux: p.titresContinentaux, titresSelection: p.titresSelection
+    } : null;
     Object.assign(p, full, {
       id: p.id, apiId: p.apiId,
       photoUrl: p.photoUrl || full.photoUrl,
@@ -3902,7 +3909,7 @@ function loadPlayerStats(p){
       seasonsAvailable: available,
       seasonsNoData: p.seasonsNoData,
       needsStats: false
-    });
+    }, palmaresConnu || {});
     // Une saison épinglée par l'utilisateur ne doit pas être remplacée par un
     // simple rafraîchissement de métadonnées.
     if(!(p.seasonPinned && p.statsBySeason && p.statsBySeason[p.seasonShown])) applySeasonToPlayer(p, firstSeason, false);
@@ -4248,7 +4255,10 @@ async function packStatique(apiId){
     };
   }
   const seasons = Object.keys(data).map(Number).sort((a,b)=>b-a);
-  return seasons.length ? { id: apiId, seasons, data, complet } : null;
+  // Le palmarès (champ t) est relevé une fois pour toutes dans la base : sans lui, il
+  // fallait un appel à l'API à chaque ouverture de l'onglet Trophées, et le proxy étant
+  // bloqué par API-Football, l'écran restait sur « Chargement du palmarès… » sans fin.
+  return seasons.length ? { id: apiId, seasons, data, complet, trophies: Array.isArray(fiche.t) ? fiche.t : null } : null;
 }
 
 /* Complète un joueur en arrière-plan quand la base locale ne couvrait pas la saison de
@@ -4291,6 +4301,7 @@ async function fetchPack(p, opts){
       }
       // Union : notre base ne doit pas être privée d'une saison (la plus récente, souvent) par une liste plus courte déjà en place.
       p.seasonsAvailable = [...new Set([...(p.seasonsAvailable || []), ...local.seasons])].sort((x, y) => y - x);
+      if(local.trophies && !p.trophiesLoaded){ applyRealTrophies(p, local.trophies); delete p._trophyRetryAt; }
 
       // Saisons explicitement demandées : si on les a toutes, on s'arrête là.
       const demandees = (opts.seasons && opts.seasons.length) ? opts.seasons.map(Number)
@@ -5961,6 +5972,13 @@ function trophyPlaceholder(fp, key){
   return trophyLoading[real.apiId] || !real.trophiesLoaded ? '…' : '—';
 }
 // Vrai quand au moins un joueur du duel a vu son palmarès échouer au chargement.
+function reessayerPalmares(filled){
+  (filled || []).forEach(fp=>{
+    const real = PLAYERS.find(x=>x.id===fp.id) || fp;
+    delete real._trophyRetryAt; delete real._trophyEssais;
+  });
+  ensureTrophiesLoaded(filled);
+}
 function palmaresEnEchec(filled){
   return (filled || []).some(fp => {
     const real = PLAYERS.find(x=>x.id===fp.id) || fp;
@@ -6009,14 +6027,33 @@ function ensureCareerForNation(players, priority){
       .finally(()=>{ delete p._nationReq; setCareerProgress(p, 0, 0); if(currentScreen==='compare') renderAll(); else if(browseDetailId===p.id) renderBrowse(); });
   });
 }
+/* Le palmarès d'un joueur : d'abord la base statique (champ t de sa fiche), et l'API
+ * seulement si la base ne l'a pas encore. Un échec ne se répète pas toutes les minutes :
+ * après deux tentatives, l'écran dit « indisponible » et un bouton permet de réessayer —
+ * avant, l'onglet Trophées relançait l'appel sans fin et semblait charger à chaque fois. */
 function ensureTrophiesLoaded(players){
   players.forEach(fp=>{
     const p = PLAYERS.find(x=>x.id===fp.id) || fp;
     if(!p.apiId || p.trophiesLoaded || trophyLoading[p.apiId]) return;
-    if(p._trophyRetryAt && Date.now() < p._trophyRetryAt) return; // échec récent (quota) : on réessaie dans une minute
+    if(p._trophyRetryAt && Date.now() < p._trophyRetryAt) return;
     trophyLoading[p.apiId] = true;
-    fetchRealCareer(p.apiId, 'high').then(d=>{ if(d && d.trophies) applyRealTrophies(p, d.trophies); else p._trophyRetryAt = Date.now() + 60000; })
-      .catch(()=>{ p._trophyRetryAt = Date.now() + 60000; }).finally(()=>{ delete trophyLoading[p.apiId]; renderAll(); });
+    const echec = ()=>{
+      p._trophyEssais = (p._trophyEssais || 0) + 1;
+      // Deux essais rapprochés, puis on arrête : inutile de harceler une API qui refuse.
+      p._trophyRetryAt = Date.now() + (p._trophyEssais >= 2 ? 6*3600*1000 : 30000);
+    };
+    (async ()=>{
+      // 1. La base statique, sans aucun appel réseau.
+      try{
+        const local = await packStatique(p.apiId);
+        if(local && local.trophies){ applyRealTrophies(p, local.trophies); delete p._trophyRetryAt; return; }
+      }catch(e){}
+      // 2. Sinon l'API (joueur hors base, ou palmarès pas encore relevé).
+      try{
+        const d = await fetchRealCareer(p.apiId, 'high');
+        if(d && d.trophies) applyRealTrophies(p, d.trophies); else echec();
+      }catch(e){ echec(); }
+    })().finally(()=>{ delete trophyLoading[p.apiId]; renderAll(); });
   });
 }
 
@@ -6494,11 +6531,7 @@ function renderAll(){
   wireCompareTutorial(content);
   if(activeTab==='trophies' && filled.length>=2){ ensureTrophiesLoaded(filled); ensureCareerForNation(filled, 'high'); }
   const retry = content.querySelector('#palmaresRetry');
-  if(retry) retry.addEventListener('click', ()=>{
-    filled.forEach(fp=>{ const real = PLAYERS.find(x=>x.id===fp.id) || fp; delete real._trophyRetryAt; });
-    ensureTrophiesLoaded(filled);
-    renderAll();
-  });
+  if(retry) retry.addEventListener('click', ()=>{ reessayerPalmares(filled); renderAll(); });
 
   content.querySelectorAll('.tab-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
