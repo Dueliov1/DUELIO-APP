@@ -33,17 +33,45 @@
   function natif(){ const C = window.Capacitor; return !!(C && C.isNativePlatform && C.isNativePlatform()); }
   function pluginNatif(){ const C = window.Capacitor; return natif() && C.Plugins && C.Plugins.FirebaseAuthentication || null; }
 
-  async function charger(){
-    if(etat.pret) return etat.dispo;
+  /* Deux temps, pour ne pas envoyer l'adresse IP de chaque visiteur chez Google.
+   *
+   * 1. « sonder » lit seulement notre fichier de configuration : il dit si les comptes
+   *    existent sur cette installation, donc s'il faut afficher le bouton. Aucune requête
+   *    vers l'extérieur, donc rien à demander au visiteur au titre de la vie privée.
+   * 2. « charger » va chercher le SDK Firebase. Il n'est appelé qu'au premier geste vers
+   *    les comptes — ou tout de suite si cet appareil s'est déjà connecté une fois, pour
+   *    que la personne retrouve sa session sans attendre.
+   */
+  const CLE_DEJA = 'duelio_compte_actif';
+  function dejaConnecte(){ try{ return localStorage.getItem(CLE_DEJA) === '1'; }catch(e){ return false; } }
+  function marquer(oui){ try{ oui ? localStorage.setItem(CLE_DEJA, '1') : localStorage.removeItem(CLE_DEJA); }catch(e){} }
+
+  async function sonder(){
+    if(etat.config || etat.pret) return etat.dispo;
     try{
       const r = await fetch('firebase-config.json', { cache: 'no-store' });
       const cfg = r.ok ? await r.json() : null;
-      if(!cfg || !cfg.apiKey || !cfg.projectId){ etat.pret = true; return false; }
+      if(!cfg || !cfg.apiKey || !cfg.projectId){ etat.pret = true; prevenir(); return false; }
       etat.config = cfg;
+      etat.dispo = true;          // le bouton peut s'afficher ; le SDK viendra au clic
+      prevenir();
+      if(dejaConnecte() || window.__firebaseSimule) charger();
+      return true;
+    }catch(e){ etat.pret = true; prevenir(); return false; }
+  }
+
+  async function charger(){
+    if(etat.pret) return etat.dispo;
+    if(etat.chargement) return etat.chargement;
+    etat.chargement = (async ()=>{
+    try{
+      if(!etat.config && !(await sonder())) return false;
+      const cfg = etat.config;
       // Les tests peuvent fournir un Firebase simulé sous window.__firebaseSimule.
       const fb = window.__firebaseSimule || await chargerSdk();
       etat.fb = fb;
       fb.onAuthStateChanged(async (u)=>{
+        marquer(!!u);
         etat.user = u ? { uid: u.uid, email: u.email || '', verifie: !!u.emailVerified, fournisseur: (u.providerData && u.providerData[0] && u.providerData[0].providerId) || 'password' } : null;
         etat.duels = [];
         etat.duelsErreur = '';
@@ -63,6 +91,8 @@
       etat.erreur = e; etat.pret = true; prevenir();
       return false;
     }
+    })();
+    return etat.chargement;
   }
 
   async function chargerSdk(){
@@ -186,7 +216,7 @@
   }
 
   window.Compte = {
-    etat, charger, abonner: (f)=>{ abonnes.add(f); return ()=> abonnes.delete(f); },
+    etat, sonder, charger, abonner: (f)=>{ abonnes.add(f); return ()=> abonnes.delete(f); },
     messageErreur,
     natif,
     appleDisponible: ()=> !!(etat.config && (etat.config.apple === true || pluginNatif())),

@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Supprimer mon compte — Duelio</title>
+<meta name="description" content="Supprimer définitivement son compte Duelio et les duels qui y sont enregistrés, depuis le web, sans installer l'application.">
+<meta name="robots" content="index, follow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;800&family=Plus+Jakarta+Sans:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="legal.css">
+<style>
+  .boite{ background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:18px; margin:18px 0; }
+  .boite h2{ margin-top:0; }
+  label{ display:block; font-size:13px; color:var(--chalk-dim); margin:12px 0 4px; }
+  input[type=email], input[type=password]{
+    width:100%; min-height:44px; padding:0 14px; border-radius:12px; border:1px solid var(--line);
+    background:var(--bg); color:var(--chalk); font:inherit; font-size:15px; box-sizing:border-box;
+  }
+  input:focus{ outline:none; border-color:var(--gold); }
+  button.action{
+    width:100%; min-height:48px; margin-top:16px; border:none; border-radius:12px; cursor:pointer;
+    font:inherit; font-weight:800; font-size:15px; background:var(--grad-action, #22D3EE); color:#04231a;
+  }
+  button.danger{ background:#b3261e; color:#fff; }
+  button.secondaire{ background:transparent; color:var(--chalk); border:1px solid var(--line); }
+  button[disabled]{ opacity:.55; cursor:default; }
+  .message{ margin-top:14px; font-size:14px; line-height:1.5; }
+  .message.err{ color:#ffb3b3; }
+  .message.ok{ color:#7ee7b0; }
+  .liste-duels{ font-size:13.5px; color:var(--chalk-dim); margin:8px 0 0; }
+  .sep{ text-align:center; color:var(--chalk-dim); font-size:12.5px; margin:16px 0 4px; }
+</style>
+</head>
+<body>
+<div class="page">
+<header>
+  <a class="marque" href="/">DUEL<span>IO</span></a>
+  <div class="langues" role="group" aria-label="Langue / Language">
+    <button type="button" data-lang="fr" aria-pressed="true">Français</button>
+    <button type="button" data-lang="en" aria-pressed="false">English</button>
+  </div>
+</header>
+<main>
+
+<section id="fr">
+  <h1>Supprimer mon compte</h1>
+  <p class="maj">Depuis le web, sans installer l'application</p>
+  <p>Cette page efface <strong>définitivement</strong> ton compte Duelio et tout ce qui y est rattaché&nbsp;: ton adresse e-mail et les duels que tu as enregistrés. L'opération ne peut pas être annulée, et nous ne gardons aucune copie.</p>
+  <p>Tu peux aussi le faire depuis l'application&nbsp;: icône de compte, puis «&nbsp;Supprimer mon compte&nbsp;».</p>
+  <p>Si tu veux simplement arrêter d'utiliser Duelio sans effacer ton compte, il te suffit de te déconnecter&nbsp;: rien n'est publié, rien n'est partagé avec qui que ce soit.</p>
+</section>
+
+<section id="en" hidden>
+  <h1>Delete my account</h1>
+  <p class="maj">From the web, without installing the app</p>
+  <p>This page <strong>permanently</strong> deletes your Duelio account and everything attached to it: your e-mail address and the duels you saved. This cannot be undone, and we keep no copy.</p>
+  <p>You can also do it from the app: account icon, then "Delete my account".</p>
+  <p>If you simply want to stop using Duelio without deleting your account, just sign out: nothing is published, nothing is shared with anyone.</p>
+</section>
+
+<div class="boite" id="boite">
+  <h2 id="t-etape"></h2>
+  <p id="t-intro" class="liste-duels"></p>
+  <div id="zone"></div>
+  <p class="message" id="message" role="status" aria-live="polite"></p>
+</div>
+
+</main>
+<nav class="pied" aria-label="Pages légales">
+  <a href="/">Duelio</a>
+  <a href="confidentialite.html">Confidentialité / Privacy</a>
+  <a href="conditions.html">Conditions / Terms</a>
+  <a href="credits.html">Crédits / Credits</a>
+</nav>
+</div>
+<script src="legal.js"></script>
+<script type="module">
+/* Suppression de compte depuis le web.
+ *
+ * Google Play exige, pour toute application qui permet de créer un compte, un moyen
+ * d'en demander la suppression accessible DEPUIS LE WEB, sans passer par l'application.
+ * Cette page le fournit. Elle parle directement à Firebase, comme l'application, et
+ * applique la même règle : ré-authentification d'abord, effacement ensuite — jamais
+ * l'inverse, sinon un refus de Firebase laisserait un compte vidé de ses données.
+ */
+const $ = (id) => document.getElementById(id);
+const zone = $('zone'), message = $('message'), etape = $('t-etape'), intro = $('t-intro');
+const EN = () => document.documentElement.lang === 'en';
+const T = {
+  connecter:      ['Se connecter', 'Sign in'],
+  introConnexion: ["Pour des raisons de sécurité, il faut d'abord prouver que ce compte est le tien.",
+                   'For security reasons, you must first prove this account is yours.'],
+  email:          ['Adresse e-mail', 'E-mail address'],
+  mdp:            ['Mot de passe', 'Password'],
+  google:         ['Continuer avec Google', 'Continue with Google'],
+  ou:             ['ou par e-mail', 'or by e-mail'],
+  confirmer:      ['Confirmer la suppression', 'Confirm deletion'],
+  introSuppr:     ['Connecté en tant que %s. Ce compte et les duels enregistrés seront effacés définitivement.',
+                   'Signed in as %s. This account and the saved duels will be permanently deleted.'],
+  supprimer:      ['Supprimer définitivement mon compte', 'Permanently delete my account'],
+  annuler:        ['Annuler et me déconnecter', 'Cancel and sign out'],
+  enCours:        ['Suppression en cours…', 'Deleting…'],
+  fait:           ['Ton compte a été supprimé. Il ne reste rien de ton côté ni du nôtre.',
+                   'Your account has been deleted. Nothing remains, on your side or ours.'],
+  indispo:        ["Les comptes ne sont pas configurés sur cette installation. Écris-nous et nous supprimerons le compte à la main.",
+                   'Accounts are not configured on this deployment. Write to us and we will delete the account by hand.'],
+  horsLigne:      ["Impossible de joindre le service de comptes. Vérifie ta connexion et recharge la page.",
+                   'Cannot reach the accounts service. Check your connection and reload the page.'],
+  duels:          ['%n duel(s) enregistré(s) seront effacés.', '%n saved duel(s) will be deleted.'],
+};
+const t = (k) => T[k][EN() ? 1 : 0];
+function dire(txt, type){ message.textContent = txt || ''; message.className = 'message' + (type ? ' ' + type : ''); }
+
+let auth, authI, fs, db, utilisateur = null;
+
+async function demarrer(){
+  let config = null;
+  try{
+    const r = await fetch('/firebase-config.json', { cache: 'no-store' });
+    if(r.ok) config = await r.json();
+  }catch(e){}
+  if(!config || !config.apiKey){ etape.textContent = ''; zone.innerHTML = ''; dire(t('indispo'), 'err'); return; }
+  const SDK = 'https://www.gstatic.com/firebasejs/11.6.1/';
+  let app, a, f;
+  try{
+    [app, a, f] = await Promise.all([
+      import(SDK + 'firebase-app.js'), import(SDK + 'firebase-auth.js'), import(SDK + 'firebase-firestore.js')
+    ]);
+  }catch(e){ zone.innerHTML = ''; dire(t('horsLigne'), 'err'); return; }
+  auth = a; fs = f;
+  const ap = app.initializeApp(config);
+  authI = auth.getAuth(ap); db = fs.getFirestore(ap);
+  try{ authI.languageCode = EN() ? 'en' : 'fr'; }catch(e){}
+  auth.onAuthStateChanged(authI, (u)=>{ utilisateur = u; rendre(); });
+}
+
+function rendre(){
+  dire('');
+  if(!utilisateur){ ecranConnexion(); return; }
+  ecranSuppression();
+}
+
+function ecranConnexion(){
+  etape.textContent = t('connecter');
+  intro.textContent = t('introConnexion');
+  zone.innerHTML = `
+    <button class="action" id="bGoogle" type="button">${t('google')}</button>
+    <p class="sep">${t('ou')}</p>
+    <label for="email">${t('email')}</label>
+    <input id="email" type="email" autocomplete="email" inputmode="email">
+    <label for="mdp">${t('mdp')}</label>
+    <input id="mdp" type="password" autocomplete="current-password">
+    <button class="action" id="bMail" type="button">${t('connecter')}</button>`;
+  $('bGoogle').onclick = async (e)=>{
+    e.currentTarget.disabled = true; dire('');
+    try{ await auth.signInWithPopup(authI, new auth.GoogleAuthProvider()); }
+    catch(err){ dire(messageErreur(err), 'err'); e.currentTarget.disabled = false; }
+  };
+  $('bMail').onclick = async (e)=>{
+    const em = $('email').value.trim(), mp = $('mdp').value;
+    if(!em || !mp) return;
+    e.currentTarget.disabled = true; dire('');
+    try{ await auth.signInWithEmailAndPassword(authI, em, mp); }
+    catch(err){ dire(messageErreur(err), 'err'); e.currentTarget.disabled = false; }
+  };
+}
+
+async function ecranSuppression(){
+  etape.textContent = t('confirmer');
+  intro.textContent = t('introSuppr').replace('%s', utilisateur.email || utilisateur.uid);
+  const parMotDePasse = ((utilisateur.providerData && utilisateur.providerData[0] || {}).providerId || 'password') === 'password';
+  zone.innerHTML = `
+    <p class="liste-duels" id="nbDuels"></p>
+    ${parMotDePasse ? `<label for="mdp2">${t('mdp')}</label><input id="mdp2" type="password" autocomplete="current-password">` : ''}
+    <button class="action danger" id="bSup" type="button">${t('supprimer')}</button>
+    <button class="action secondaire" id="bAnn" type="button">${t('annuler')}</button>`;
+  // Combien de duels vont disparaître : on le dit avant, pas après.
+  try{
+    const snap = await fs.getDocs(fs.collection(db, 'users', utilisateur.uid, 'duels'));
+    $('nbDuels').textContent = t('duels').replace('%n', String(snap.size));
+  }catch(e){ /* les règles peuvent refuser la lecture : on n'affiche rien plutôt qu'une erreur */ }
+
+  $('bAnn').onclick = ()=> auth.signOut(authI);
+  $('bSup').onclick = async (e)=>{
+    const b = e.currentTarget; b.disabled = true; dire(t('enCours'));
+    try{
+      const u = authI.currentUser;
+      // 1. Prouver que la connexion est récente. Firebase refuse une suppression autrement,
+      //    et il faut le faire AVANT d'effacer quoi que ce soit.
+      if(parMotDePasse){
+        const mp = $('mdp2') ? $('mdp2').value : '';
+        await auth.reauthenticateWithCredential(u, auth.EmailAuthProvider.credential(u.email, mp));
+      }else{
+        const prov = (u.providerData[0] || {}).providerId;
+        const p = prov === 'apple.com' ? new auth.OAuthProvider('apple.com') : new auth.GoogleAuthProvider();
+        const recente = u.metadata && u.metadata.lastSignInTime ? (Date.now() - Date.parse(u.metadata.lastSignInTime)) : 1e9;
+        if(recente > 4*60*1000) await auth.reauthenticateWithPopup(u, p);
+      }
+      // 2. Effacer les duels, puis la fiche, puis le compte.
+      const snap = await fs.getDocs(fs.collection(db, 'users', u.uid, 'duels'));
+      await Promise.all(snap.docs.map(d => fs.deleteDoc(d.ref)));
+      try{ await fs.deleteDoc(fs.doc(db, 'users', u.uid)); }catch(err){}
+      await auth.deleteUser(u);
+      etape.textContent = ''; intro.textContent = ''; zone.innerHTML = '';
+      dire(t('fait'), 'ok');
+    }catch(err){
+      dire(messageErreur(err), 'err'); b.disabled = false;
+    }
+  };
+}
+
+function messageErreur(e){
+  const code = (e && e.code) || '';
+  const fr = {
+    'auth/invalid-email': 'Adresse e-mail invalide.',
+    'auth/user-not-found': 'Aucun compte avec cette adresse.',
+    'auth/wrong-password': 'Mot de passe incorrect.',
+    'auth/invalid-credential': 'Adresse ou mot de passe incorrect.',
+    'auth/too-many-requests': 'Trop de tentatives. Réessaie dans quelques minutes.',
+    'auth/network-request-failed': 'Pas de connexion. Vérifie ton réseau.',
+    'auth/popup-blocked': 'Ton navigateur a bloqué la fenêtre de connexion.',
+    'auth/popup-closed-by-user': 'Connexion annulée.',
+    'auth/requires-recent-login': 'Par sécurité, reconnecte-toi puis réessaie.',
+  };
+  const en = {
+    'auth/invalid-email': 'Invalid e-mail address.',
+    'auth/user-not-found': 'No account with this address.',
+    'auth/wrong-password': 'Wrong password.',
+    'auth/invalid-credential': 'Wrong address or password.',
+    'auth/too-many-requests': 'Too many attempts. Try again in a few minutes.',
+    'auth/network-request-failed': 'No connection. Check your network.',
+    'auth/popup-blocked': 'Your browser blocked the sign-in window.',
+    'auth/popup-closed-by-user': 'Sign-in cancelled.',
+    'auth/requires-recent-login': 'For security, sign in again then retry.',
+  };
+  const tab = EN() ? en : fr;
+  return tab[code] || (e && e.message) || (EN() ? 'An error occurred.' : 'Une erreur est survenue.');
+}
+
+// La bascule de langue redessine ce qui est à l'écran.
+etape.textContent = t('connecter'); intro.textContent = t('introConnexion');
+document.querySelectorAll('.langues button').forEach(b => b.addEventListener('click', ()=>{
+  if(auth) rendre(); else { etape.textContent = t('connecter'); intro.textContent = t('introConnexion'); }
+}));
+demarrer().catch(() => dire(t('horsLigne'), 'err'));
+</script>
+</body>
+</html>

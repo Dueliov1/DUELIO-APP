@@ -85,6 +85,17 @@
 <h2>7 bis. Notifications (application mobile)</h2>
 <p>Dans l'application iOS ou Android, vous pouvez choisir de recevoir des notifications (par exemple les grands duels de la semaine). Elles sont <strong>désactivées tant que vous ne les activez pas</strong>. Si vous les activez, votre appareil s'abonne à un canal d'envoi auprès de Firebase Cloud Messaging (Google), qui lui attribue un jeton technique ; ce jeton est traité par Google pour acheminer les messages et <strong>n'est pas stocké par nous</strong>. Nous n'envoyons qu'un même message à tous les abonnés, sans ciblage individuel ni publicité. Vous pouvez les désactiver à tout moment dans l'écran « À propos » de l'application ou dans les réglages de votre téléphone. <a href="https://firebase.google.com/support/privacy" rel="noopener">Politique de Firebase</a>.</p>
 
+<h2>7 ter. Les joueurs présentés dans l'application</h2>
+<p>Duelio décrit des footballeurs professionnels : leur nom, leur photo, leur nationalité, leur date de naissance, leur club et leurs statistiques de match. Ce sont des données personnelles, et les personnes concernées ne nous les ont pas fournies elles-mêmes ; nous les devons donc à l'information prévue par l'article 14 du RGPD.</p>
+<ul>
+  <li><strong>Catégories traitées :</strong> identité (nom, prénom), image (portrait), nationalité, date de naissance, appartenance sportive (club, sélection), performances sportives et palmarès. Aucune donnée sensible au sens de l'article 9 n'est traitée.</li>
+  <li><strong>Origine :</strong> API-Football (API-Sports) pour les joueurs en activité ; pour les légendes du jeu, des sources publiques citées sur chaque fiche, et <a href="https://commons.wikimedia.org" rel="noopener">Wikimedia Commons</a> pour les portraits, sous licence libre.</li>
+  <li><strong>Finalité et base légale :</strong> informer le public sur des faits sportifs publiquement connus, au titre de l'intérêt légitime (article 6.1.f du RGPD). Cet intérêt est mis en balance avec les droits des personnes : seules sont reprises des informations relatives à leur activité professionnelle, déjà largement publiées par la presse sportive, à l'exclusion de toute donnée de vie privée.</li>
+  <li><strong>Destinataires :</strong> personne. Ces données ne sont ni vendues, ni transmises à des tiers, ni utilisées à des fins publicitaires ou de profilage.</li>
+  <li><strong>Durée :</strong> tant que l'application est publiée, les statistiques sportives ayant une valeur historique.</li>
+  <li><strong>Vos droits, si vous êtes un joueur présenté ici :</strong> vous pouvez demander l'accès, la rectification, l'effacement de votre fiche ou vous opposer à son affichage, à l'adresse indiquée à la section 1. Nous donnons suite dans les meilleurs délais, et au plus tard sous un mois. Pour une statistique que vous estimez fausse, indiquez-nous la source correcte : nous corrigeons.</li>
+</ul>
+
 <h2>8. Enfants</h2>
 <p>Duelio convient à tous les âges et ne collecte aucune donnée personnelle sans compte. La création d'un compte est réservée aux 13 ans et plus ; si nous apprenons qu'un compte a été créé par un enfant plus jeune, nous le supprimons.</p>
 
@@ -131,10 +142,11 @@
 <p>You can create an account to save your duels and find them on all your devices. It is entirely optional: everything else works without it.</p>
 <ul>
   <li><strong>What we keep:</strong> your e-mail address, a technical account identifier, the creation date, and your saved duels (a name and the players' identifiers). If you sign in with Google or Apple, we receive the e-mail address that service passes on to us (Apple may offer you a masked relay address). We never receive your Google or Apple password, nor your contacts.</li>
-  <li><strong>Where:</strong> at Firebase (Google), which handles authentication, confirmation and password-reset e-mails, and the storage of duels. Passwords are stored hashed by Firebase and are never readable by us. <a href="https://firebase.google.com/support/privacy" rel="noopener">Firebase's policy</a>.</li>
+  <li><strong>Where:</strong> at Firebase (Google), which handles authentication, confirmation and password-reset e-mails, and the storage of duels. Passwords are stored hashed by Firebase and are never readable by us. Saved duels are stored in a database located in the European Union (<em>europe-west</em> region); authentication is operated by Google, which involves a transfer to the United States framed by the European Union's standard contractual clauses and the EU–US Data Privacy Framework. <a href="https://firebase.google.com/support/privacy" rel="noopener">Firebase's policy</a>.</li>
   <li><strong>Legal basis:</strong> performance of the service you request by creating the account (Article 6(1)(b) GDPR).</li>
-  <li><strong>Retention:</strong> as long as the account exists. You can delete it at any time in "My account" → "Delete my account": the account and the duels are erased immediately and permanently. An account inactive for three years will be deleted.</li>
+  <li><strong>Retention:</strong> as long as the account exists. You can delete it at any time, without installing the app, from the <a href="supprimer-compte.html">Delete my account</a> page, or in the app under "My account" → "Delete my account": the account and the duels are erased immediately and permanently. An account inactive for three years will be deleted.</li>
   <li><strong>Age:</strong> creating an account is reserved for people aged 13 and over.</li>
+  <li><strong>If you do not create an account:</strong> Firebase's components are not loaded at all. Nothing is sent to Google until you open the account screen yourself.</li>
 </ul>
 
 <h2>5. Technical data processed to serve you</h2>
@@ -159,6 +171,17 @@
 <h2>7a. Notifications (mobile app)</h2>
 <p>In the iOS or Android app, you can choose to receive notifications (for instance the big duels of the week). They are <strong>off until you turn them on</strong>. If you do, your device subscribes to a delivery channel with Firebase Cloud Messaging (Google), which assigns it a technical token; that token is processed by Google to route messages and <strong>is not stored by us</strong>. We only send the same message to all subscribers, with no individual targeting and no advertising. You can turn them off at any time in the app's "About" screen or in your phone's settings. <a href="https://firebase.google.com/support/privacy" rel="noopener">Firebase's policy</a>.</p>
 
+<h2>7b. The players featured in the app</h2>
+<p>Duelio describes professional footballers: their name, photo, nationality, date of birth, club and match statistics. These are personal data, and the people concerned did not provide them to us themselves; we therefore owe them the information required by Article 14 GDPR.</p>
+<ul>
+  <li><strong>Categories processed:</strong> identity (first and last name), image (portrait), nationality, date of birth, sporting affiliation (club, national team), sporting performance and honours. No special-category data within the meaning of Article 9 is processed.</li>
+  <li><strong>Source:</strong> API-Football (API-Sports) for active players; for the legends of the game, public sources cited on each profile, and <a href="https://commons.wikimedia.org" rel="noopener">Wikimedia Commons</a> for the portraits, under free licences.</li>
+  <li><strong>Purpose and legal basis:</strong> informing the public about publicly known sporting facts, on the basis of legitimate interest (Article 6(1)(f) GDPR). That interest is balanced against the rights of the persons concerned: only information relating to their professional activity is used, already widely published by the sports press, to the exclusion of any private-life data.</li>
+  <li><strong>Recipients:</strong> none. These data are not sold, passed to third parties, or used for advertising or profiling.</li>
+  <li><strong>Retention:</strong> for as long as the app is published, sporting statistics having historical value.</li>
+  <li><strong>Your rights, if you are a player featured here:</strong> you may request access, rectification or erasure of your profile, or object to its display, at the address given in section 1. We respond as soon as possible, and within one month at the latest. For a statistic you believe is wrong, send us the correct source: we will fix it.</li>
+</ul>
+
 <h2>8. Children</h2>
 <p>Duelio is suitable for all ages and collects no personal data without an account. Creating an account is reserved for those aged 13 and over; if we learn that an account was created by a younger child, we delete it.</p>
 
@@ -173,6 +196,7 @@
 <nav class="pied" aria-label="Pages légales">
   <a href="/">Duelio</a>
   <a href="conditions.html">Conditions d'utilisation / Terms of use</a>
+  <a href="supprimer-compte.html">Supprimer mon compte / Delete account</a>
 </nav>
 </div>
 <script src="legal.js"></script>

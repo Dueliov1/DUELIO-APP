@@ -1743,6 +1743,7 @@
           <a href="/legal/confidentialite.html" target="_blank" rel="noopener">Politique de confidentialité</a>
           <a href="/legal/conditions.html" target="_blank" rel="noopener">Conditions d'utilisation</a>
           <a href="/legal/credits.html" target="_blank" rel="noopener">Crédits des photos</a>
+          <a href="/legal/supprimer-compte.html" target="_blank" rel="noopener">Supprimer mon compte</a>
           <a href="mailto:bensouna.ahmed@hotmail.com">Nous écrire</a>
         </div>
         <p class="about-version">Édité par Ahmed Bensouna · Belgique</p>
@@ -7218,6 +7219,7 @@ function wireSaveDuel(root, filled){
   });
 }
 function openAccountSheet(message){
+  if(window.Compte) Compte.charger();   // c'est ici que Firebase est réellement chargé
   const el = document.getElementById('accountSheet');
   if(el.hidden) navOverlayOpened('accountSheet');
   el.hidden = false;
@@ -7386,7 +7388,10 @@ if(window.Compte){
     if(!document.getElementById('accountSheet').hidden) renderAccountSheet('');
     if(currentScreen === 'compare') renderAll();
   });
-  Compte.charger();
+  // Au démarrage on ne fait que SONDER : lecture de notre fichier de configuration, aucune
+  // requête vers Google. Le SDK Firebase n'est téléchargé qu'au premier geste vers les
+  // comptes (ou d'emblée si cet appareil s'est déjà connecté).
+  Compte.sonder();
 }
 
 /* ---------------- À propos ---------------- */
@@ -8127,8 +8132,9 @@ async function dessinerAfficheDuel(o){
   ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
   const piedY = Math.min(y + 14*S, H - 14*S);
   ctx.fillText('D U E L I O   ·   C O M P A R E   T E S   J O U E U R S', W/2, piedY);
+  const hCredits = dessinerCredits(ctx, filled, W, piedY + 2*S, S, 'rgba(255,255,255,.42)');
 
-  const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - 14*S) / 2));
+  const decalage = Math.max(0, Math.round((H - (piedY + hCredits + 8*S) - 14*S) / 2));
   ctxFond.drawImage(calque, 0, decalage);
   publierImage(canvas, btn, W, H);
 }
@@ -8278,7 +8284,8 @@ async function dessinerGrille(o){
   ctx.font = TEXTE(7*S); ctx.fillStyle = papier ? T.sec : stade ? 'rgba(255,255,255,.85)' : 'rgba(255,255,255,.5)'; ctx.textAlign = 'center';
   const piedY = Math.min(y + 14*S, H - m - 8*S);
   ecrire(ctx, 'D U E L I O   ·   C O M P A R E   T E S   J O U E U R S', W/2, piedY, S, stade);
-  const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - m - 6*S) / 2));
+  const hCredits = dessinerCredits(ctx, filled, W, piedY + 2*S, S, papier ? T.sec : stade ? '#fff' : 'rgba(255,255,255,.6)', stade);
+  const decalage = Math.max(0, Math.round((H - (piedY + hCredits + 8*S) - m - 6*S) / 2));
   ctxFond.drawImage(calque, 0, decalage);
   publierImage(canvas, btn, W, H);
 }
@@ -8332,6 +8339,34 @@ function lignesDuDuel(filled, list){
     if(connu && (Math.abs(nA) + Math.abs(nB)) > 0){ let a = Math.abs(nA), b = Math.abs(nB); if(r.lowerIsBetter){ const t = a + b; a = t - a; b = t - b; } part = Math.max(.06, Math.min(.94, a / (a + b))); }
     return { label: r.label, tA: txt(vals[0]), tB: txt(vals[1]), connu, gagneA, gagneB, part };
   });
+}
+/* Les portraits des légendes viennent de Wikimedia Commons sous licences libres.
+ * CC BY et CC BY-SA imposent de citer l'auteur et la licence sur TOUTE reproduction,
+ * y compris une image partagée hors de l'application : sans cette ligne, chaque partage
+ * d'un duel de légendes violait la licence. Rien n'est écrit quand aucun des joueurs
+ * affichés n'est une légende. */
+function creditsPhotos(filled){
+  const vus = new Set(), bouts = [];
+  for(const p of filled || []){
+    if(!p || !p.estLegende) continue;
+    const c = (LEGENDES.credits || {})[p.legendeId];
+    if(!c) continue;
+    const auteur = (c.auteur || '').replace(/^(Originally|Retouched by)\s+/i, '').split(/[;,]/)[0].trim();
+    const cle = auteur + '|' + (c.licence || '');
+    if(!auteur || vus.has(cle)) continue;
+    vus.add(cle);
+    bouts.push(`${auteur} (${c.licence || c.type || 'licence libre'})`);
+  }
+  return bouts.length ? 'Photos : ' + bouts.join(' · ') + ' — via Wikimedia Commons' : '';
+}
+/* Écrit cette ligne sous le pied de l'image, en tout petit. Rend la hauteur occupée. */
+function dessinerCredits(ctx, filled, W, y, S, couleur, contour){
+  const txt = creditsPhotos(filled);
+  if(!txt) return 0;
+  const fs = ajusterPolice(ctx, txt, W - 24*S, 6*S, 3.4*S, f => `600 ${f}px 'Plus Jakarta Sans', sans-serif`);
+  ctx.fillStyle = couleur; ctx.textAlign = 'center';
+  ecrire(ctx, txt, W/2, y + fs + 3*S, S, !!contour);
+  return fs + 6*S;
 }
 function rgbaDe(c, a){ const m = String(c).match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i); return m ? `rgba(${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)},${a})` : c; }
 function ajusterPolice(ctx, texte, maxW, fs, min, gabarit){
@@ -8491,7 +8526,8 @@ async function dessinerStade(o){
   ctx.textBaseline = 'alphabetic';
   ctx.font = `700 ${7*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = 'rgba(255,255,255,.45)'; ctx.textAlign = 'center';
   ctx.fillText('D U E L I O   ·   C O M P A R E   T E S   J O U E U R S', W/2, y + ph - 10*S);
-  const decalage = Math.max(0, Math.round((H - (y + ph) - 22*S) / 2));
+  const hCredits = dessinerCredits(ctx, filled, W, y + ph + 2*S, S, '#fff', true);
+  const decalage = Math.max(0, Math.round((H - (y + ph + hCredits) - 22*S) / 2));
   ctxFond.drawImage(calque, 0, decalage);
   publierImage(canvas, btn, W, H);
 }
@@ -8574,7 +8610,8 @@ async function dessinerPapier(o){
   ctx.font = `700 ${7.5*S}px 'Plus Jakarta Sans', sans-serif`; ctx.fillStyle = GRIS; ctx.textAlign = 'center';
   const piedY = Math.min(y + 16*S, H - m - 10*S);
   ctx.fillText('duelio  ·  compare tes joueurs', W/2, piedY);
-  const decalage = Math.max(0, Math.round((H - (piedY + 8*S) - (m + 16*S)) / 2));
+  const hCredits = dessinerCredits(ctx, filled, W, piedY + 2*S, S, GRIS);
+  const decalage = Math.max(0, Math.round((H - (piedY + hCredits + 8*S) - (m + 16*S)) / 2));
   ctxFond.drawImage(calque, 0, decalage);
   publierImage(canvas, btn, W, H);
 }
