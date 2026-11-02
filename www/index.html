@@ -273,7 +273,7 @@
    * cartes et traversaient les valeurs comme des éléments cassés ; sous le
    * contenu il s'efface, l'accueil garde sa pleine présence. */
   .phone::before{
-    content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+    content:''; position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:0; pointer-events:none;
     background-image: var(--pitch-bg); background-size:cover; background-position:center top; background-repeat:no-repeat;
     opacity:.05;
   }
@@ -298,7 +298,7 @@
   }
 
   .welcome-screen{
-    position:absolute; inset:0; z-index:50; overflow:hidden;
+    position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:50; overflow:hidden;
   }
   .welcome-half{
     position:absolute; left:0; right:0; height:50%; overflow:hidden;
@@ -321,13 +321,13 @@
     padding: 40px 34px; text-align:center; overflow:hidden;
   }
   .welcome-content::before{
-    content:''; position:absolute; inset:0; z-index:0; pointer-events:none;
+    content:''; position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:0; pointer-events:none;
     background-image: var(--pitch-bg); background-size:100% 100%; background-position:center;
     opacity:.12;
   }
   .welcome-content::after{ content:none; }
   .welcome-content > .beam{
-    position:absolute; inset:0; z-index:0; pointer-events:none;
+    position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:0; pointer-events:none;
     animation: floodlightPulse 4s ease-in-out infinite;
     will-change: opacity;
   }
@@ -375,14 +375,14 @@
      des duels du jour comme un programme de matchs. */
   .welcome-content{ padding:0; justify-content:flex-start; align-items:stretch; text-align:left; overflow:hidden; }
   .welcome-content > .wl-split{
-    position:absolute; inset:0; z-index:0; pointer-events:none;
+    position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:0; pointer-events:none;
     background:
       radial-gradient(ellipse at 0% 0%, rgba(255,255,255,.10), transparent 55%),
       linear-gradient(104deg, rgba(56,189,248,.26) 0%, rgba(56,189,248,.06) 49.8%, rgba(255,176,32,.05) 50.2%, rgba(255,176,32,.24) 100%);
   }
   /* La ligne de partage ne traverse pas le titre : elle s'allume à hauteur des portraits. */
   .welcome-content > .wl-split::after{
-    content:''; position:absolute; inset:0;
+    content:''; position:absolute; top:0; right:0; bottom:0; left:0; inset:0;
     background: linear-gradient(104deg, transparent 49.55%, rgba(255,255,255,.6) 49.8%, rgba(255,255,255,.6) 50.2%, transparent 50.45%);
     -webkit-mask-image: linear-gradient(180deg, transparent 22%, #000 32%, #000 78%, transparent 96%);
     mask-image: linear-gradient(180deg, transparent 22%, #000 32%, #000 78%, transparent 96%);
@@ -404,7 +404,7 @@
     background: linear-gradient(180deg, #16234A, #0B1730); font-family:'Unbounded', sans-serif; font-weight:800; font-size:38px; color:#fff;
     box-shadow: 0 0 0 4px var(--c), 0 26px 50px rgba(0,0,0,.55);
   }
-  .wl-p img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 12%; }
+  .wl-p img{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 12%; }
   .wl-p.a{ left:4px; top:6px; --c:#38BDF8; animation: wdSlide .6s cubic-bezier(.22,1.1,.36,1) both .28s; }
   .wl-p.b{ right:4px; top:58px; --c:#FFB020; animation: wdSlideB .6s cubic-bezier(.22,1.1,.36,1) both .34s; }
   @keyframes wdSlide{ from{ opacity:0; transform:translateX(-30px); } to{ opacity:1; transform:none; } }
@@ -450,7 +450,7 @@
     background:linear-gradient(180deg, #16234A, #0B1730); box-shadow:0 0 0 2px #050B18;
   }
   .wl-mini b{ font-family:'Unbounded', sans-serif; font-weight:800; font-size:9px; color:#fff; }
-  .wl-mini img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 15%; }
+  .wl-mini img{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 15%; }
   .wl-mini + .wl-mini{ margin-left:-8px; }
   .wl-mt{ flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .wl-mt .vs{ font-family:'Unbounded', sans-serif; font-size:9px; color:var(--gold); margin:0 7px; }
@@ -632,7 +632,7 @@
   .career-progress{ text-align:center; font-size:10.5px; color:var(--gold); margin: 6px 16px 0; min-height:0; }
   .career-progress:empty{ display:none; }
   /* Feuille de bas d'écran */
-  .sheet{ position:absolute; inset:0; z-index:20; background: rgba(3,8,20,.55); display:flex; align-items:flex-end; }
+  .sheet{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; z-index:20; background: rgba(3,8,20,.55); display:flex; align-items:flex-end; }
   .sheet[hidden]{ display:none; }
   .sheet-panel{
     width:100%; max-height:78%; background: var(--bg); border-radius: 22px 22px 0 0; border-top:1px solid var(--line);
@@ -981,7 +981,7 @@
   .season-pick:hover, .season-pick:focus-within{ border-color: var(--gold); }
   .season-pick .sp-txt{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   .season-pick .sp-arrow{ color: var(--gold); font-size:11px; flex-shrink:0; }
-  .season-pick select{ position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; color-scheme: dark; }
+  .season-pick select{ position:absolute; top:0; right:0; bottom:0; left:0; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; font-size:16px; color-scheme: dark; }
   .season-pick select:disabled{ cursor:progress; }
   .season-pick.busy{ opacity:.65; }
   .season-pick.static{ flex-wrap:wrap; row-gap:0; line-height:1.25; cursor:default; background:none; border-style:dashed; color: var(--chalk-dim); font-weight:700; font-size:11px; text-align:center; }
@@ -1104,7 +1104,7 @@
   .compare-cols.count-4 .col-club{ font-size:9px; }
   .compare-cols.count-4 .col-hint{ font-size:7px; }
   .compare-cols.count-4 .col-head{ padding: 10px 2px 8px; }
-  .compare-cols.count-4 .stat-row{ padding: 4px 6px; height:46px; border-radius:12px; }
+  .compare-cols.count-4 .stat-row{ padding: 4px 6px; min-height:46px; border-radius:12px; }
   .compare-cols.count-4 .stat-row .k{ font-size:7.5px; }
   .compare-cols.count-4 .stat-row .v{ font-size:12px; }
   .player-col.add-col{ display:flex; align-items:flex-start; }
@@ -1243,7 +1243,7 @@
   .share-download-btn.secondary{ background:var(--surface-2); color:var(--chalk); border:1px solid var(--line); }
   .stat-row{
     background: rgba(30,47,92,.55); border:1px solid var(--line); border-radius:14px; margin-bottom:6px;
-    height:52px; overflow:hidden; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    min-height:52px; display:flex; flex-direction:column; align-items:center; justify-content:center;
     box-sizing:border-box; text-align:center; padding:4px 10px;
     transition: background .15s, border-color .15s;
   }
@@ -1264,7 +1264,7 @@
   }
   .dr-vals{ display:flex; gap:14px; justify-content:center; align-items:stretch; }
   .dr-val{
-    flex:0 0 150px; min-width:0; box-sizing:border-box; height:46px; padding:0 8px;
+    flex:0 0 150px; min-width:0; box-sizing:border-box; min-height:46px; padding:6px 8px;
     display:flex; align-items:center; justify-content:center; text-align:center;
     background: rgba(30,47,92,.55); border:1px solid var(--line); border-radius:14px;
     font-family:'Unbounded','Plus Jakarta Sans',sans-serif; font-weight:800; font-size:15px; color:#fff;
@@ -1436,7 +1436,7 @@
 
   /* ---- Picker overlay ---- */
   .picker{
-    position:absolute; inset:0; background: var(--bg);
+    position:absolute; top:0; right:0; bottom:0; left:0; inset:0; background: var(--bg);
     display:flex; flex-direction:column;
     transform: translateY(100%); transition: transform .25s ease;
     z-index:10;
@@ -3809,7 +3809,9 @@ function pickBestSeason(p){
 // Nom court d'affichage : on ne garde que le nom de famille quand le nom connu est « initiale. Nom »
 function shortName(p){
   const n = (p && p.name) || '';
-  return /^\p{L}\.\s/u.test(n) ? n.split(' ').slice(-1)[0] : n;
+  // Un prénom abrégé : « E. Haaland ». Écrit sans \p{L} : cette classe Unicode fait
+  // échouer l'ANALYSE du script sur les moteurs anciens, donc la page entière reste blanche.
+  return /^[^\s.]\.\s/.test(n) ? n.split(' ').slice(-1)[0] : n;
 }
 /* Libellé d'une saison.
  *
@@ -4995,7 +4997,7 @@ async function chargerIndexComplet(){
 function nomComplet(n, prenom){
   if(!n || !prenom) return n;
   const premier = String(prenom).trim().split(/\s+/)[0];
-  const m = /^(\p{L})\.\s+(.+)$/u.exec(n);
+  const m = /^([^\s.])\.\s+(.+)$/.exec(n);
   if(!m || !premier || premier.length < 2) return n;
   return premier[0].toLocaleUpperCase() === m[1].toLocaleUpperCase() ? `${premier} ${m[2]}` : n;
 }
@@ -6158,6 +6160,35 @@ function glisserPilules(root){
   _pilulesAvant.clear();
 }
 // Léger retour haptique dans l'application native (sans effet sur le web).
+/* Dans l'application installée (Android, iOS), la page tourne dans une WebView :
+ * navigator.share n'y existe pas et un lien « download » ne déclenche aucun
+ * téléchargement. L'image de partage, qui est la fonctionnalité la plus visible de
+ * Duelio, était donc inutilisable une fois l'application publiée. On passe par les
+ * modules natifs de Capacitor : le PNG est écrit dans un fichier, puis confié au
+ * partage du système ou rangé dans les documents de l'appareil. */
+function estNatif(){ const C = window.Capacitor; return !!(C && C.isNativePlatform && C.isNativePlatform()); }
+function pluginCap(nom){ const C = window.Capacitor; return (estNatif() && C.Plugins && C.Plugins[nom]) || null; }
+function blobEnBase64(blob){
+  return new Promise((res, rej)=>{ const r = new FileReader(); r.onerror = rej;
+    r.onloadend = ()=> res(String(r.result).split(',')[1] || ''); r.readAsDataURL(blob); });
+}
+async function ecrireFichierNatif(blob, dossier){
+  const fs = pluginCap('Filesystem'); if(!fs) return null;
+  const nom = `duelio-${Date.now()}.png`;
+  const r = await fs.writeFile({ path: nom, data: await blobEnBase64(blob), directory: dossier, recursive: true });
+  return (r && r.uri) || null;
+}
+async function partagerImageNative(blob){
+  const share = pluginCap('Share'); if(!share) return false;
+  const uri = await ecrireFichierNatif(blob, 'CACHE');
+  if(!uri) return false;
+  await share.share({ title: 'Duelio', text: texteDePartage(), files: [uri] });
+  return true;
+}
+async function enregistrerImageNative(blob){
+  const uri = await ecrireFichierNatif(blob, 'DOCUMENTS');
+  return !!uri;
+}
 function haptique(style){
   try{ const C = window.Capacitor; const H = C && C.Plugins && C.Plugins.Haptics; if(H && C.isNativePlatform && C.isNativePlatform()) H.impact({ style: style || 'light' }); }catch(e){}
 }
@@ -7218,7 +7249,9 @@ function renderAccountSheet(message){
       ${!u.verifie && u.fournisseur === 'password' ? `<p class="account-switch"><button type="button" data-act="renvoyer">Renvoyer l'e-mail de confirmation</button></p>` : ''}
       <div class="browse-section-label">Mes duels</div>
       ${duels.length ? `<div class="duels-list">${duels.map(d => `<div class="duel-saved"><button type="button" class="nom" data-ouvrir="${escapeHtml(d.id)}">${escapeHtml(d.name)}</button><button type="button" class="sup" data-sup="${escapeHtml(d.id)}" aria-label="Supprimer">×</button></div>`).join('')}</div>`
-                     : `<p class="muted">Aucun duel sauvegardé. Sous une comparaison, touche « Sauvegarder ce duel ».</p>`}
+                     : (Compte.etat.duelsErreur
+                        ? `<p class="account-msg err">Tes duels n'ont pas pu être chargés : ${escapeHtml(Compte.etat.duelsErreur)}</p>`
+                        : `<p class="muted">Aucun duel sauvegardé. Sous une comparaison, touche « Sauvegarder ce duel ».</p>`)}
       ${msg(message)}
       <button class="account-btn" type="button" data-act="deconnexion">Se déconnecter</button>
       <p class="account-switch"><button type="button" data-act="versSuppression">Supprimer mon compte</button></p>`;
@@ -7917,13 +7950,18 @@ async function dessinerAfficheDuel(o){
     ctxFond.fillStyle = g; ctxFond.fillRect(0, 0, W, H);
     // Le portrait géant en bichromie : gris, puis multiplié par la couleur du joueur, fondu vers le centre et le bas.
     const { img, isAvatar } = imgs[i] || {};
-    if(img && !isAvatar){
+    // 'filter' absent (Safari avant 16.4, vieilles WebView) : affecter la propriété ne lève
+    // aucune exception, il faut la tester. Sans flou, la photo de 150 px agrandie six fois
+    // puis multipliée par la couleur du joueur donnait deux aplats pixelisés et boueux :
+    // on préfère alors la moitié colorée nue, qui reste propre.
+    const peutFlouter = (()=>{ try{ return 'filter' in document.createElement('canvas').getContext('2d'); }catch(e){ return false; } })();
+    if(img && !isAvatar && peutFlouter){
       const hImg = H * (story ? .5 : .62), sc = hImg / img.height, wImg = img.width * sc;
       const x = gauche ? -wImg*0.12 : W - wImg*0.88, y = -hImg*0.04;
       const t = document.createElement('canvas'); t.width = W; t.height = H; const tc = t.getContext('2d');
       // Un flou large : les photos sont petites (150 px) et seraient pixelisées une fois agrandies.
       const flou = Math.max(6*S, sc*2.2);
-      try{ tc.filter = `grayscale(1) contrast(1.35) brightness(1.05) blur(${flou}px)`; }catch(e){}
+      tc.filter = `grayscale(1) contrast(1.35) brightness(1.05) blur(${flou}px)`;
       tc.drawImage(img, x, y, wImg, hImg);
       try{ tc.filter = 'none'; }catch(e){}
       tc.globalCompositeOperation = 'multiply';
@@ -8553,7 +8591,8 @@ function publierImage(canvas, btn, W, H){
     shareGeneratedBlobUrl = URL.createObjectURL(blob);
     const area = document.getElementById('sharePreviewArea');
     const file = new File([blob], `duelio-${Date.now()}.png`, {type:'image/png'});
-    const canNativeShare = !!(navigator.share && navigator.canShare && navigator.canShare({files:[file]}));
+    const natif = estNatif() && !!pluginCap('Share') && !!pluginCap('Filesystem');
+    const canNativeShare = natif || !!(navigator.share && navigator.canShare && navigator.canShare({files:[file]}));
     haptique('medium');
     area.innerHTML = `
       <div class="share-preview-wrap">
@@ -8561,7 +8600,7 @@ function publierImage(canvas, btn, W, H){
         <canvas id="sharePreviewCanvas" width="${W}" height="${H}"></canvas>
         <div class="share-download-row">
           ${canNativeShare ? `<button class="share-download-btn share" id="shareNativeBtn" type="button">Partager</button>` : ''}
-          <button class="share-download-btn ${canNativeShare ? 'secondary' : 'primary'}" id="shareDownloadBtn" type="button">Télécharger</button>
+          <button class="share-download-btn ${canNativeShare ? 'secondary' : 'primary'}" id="shareDownloadBtn" type="button">${natif ? 'Enregistrer' : 'Télécharger'}</button>
         </div>
       </div>`;
     // L'image apparaît sous la liste des stats : on l'amène sous les yeux, en douceur.
@@ -8569,7 +8608,16 @@ function publierImage(canvas, btn, W, H){
     const sticky = document.getElementById('shareSticky'); if(sticky) sticky.style.display = 'none';
     const previewCanvas = document.getElementById('sharePreviewCanvas');
     previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
-    document.getElementById('shareDownloadBtn').addEventListener('click', ()=>{
+    document.getElementById('shareDownloadBtn').addEventListener('click', async (e)=>{
+      const b = e.currentTarget;
+      if(natif){
+        const avant = b.textContent; b.disabled = true; b.textContent = 'Enregistrement…';
+        try{
+          b.textContent = (await enregistrerImageNative(blob)) ? 'Enregistrée ✓' : 'Échec';
+        }catch(err){ b.textContent = 'Échec'; }
+        setTimeout(()=>{ b.disabled = false; b.textContent = avant; }, 2200);
+        return;
+      }
       const a = document.createElement('a');
       a.href = shareGeneratedBlobUrl;
       a.download = `duelio-comparaison-${Date.now()}.png`;
@@ -8580,7 +8628,10 @@ function publierImage(canvas, btn, W, H){
       // L'adresse voyage dans le TEXTE et non dans le champ « url » : sur iOS, remplir
       // les deux fait souvent partager le lien seul, sans l'image. Dans le texte, les
       // deux arrivent ensemble partout.
-      try{ await navigator.share({files:[file], title:'Duelio', text: texteDePartage()}); }catch(e){ /* partage annulé */ }
+      try{
+        if(natif){ await partagerImageNative(blob); return; }
+        await navigator.share({files:[file], title:'Duelio', text: texteDePartage()});
+      }catch(e){ /* partage annulé */ }
     });
     const scr = document.getElementById('generateScreen');
     if(scr){ const top = area.getBoundingClientRect().top - scr.getBoundingClientRect().top + scr.scrollTop - 8; scr.scrollTo({top, behavior:'smooth'}); }

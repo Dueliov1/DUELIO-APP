@@ -47,14 +47,14 @@ jobs:
           RES=android/app/src/main/res
           for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
             mkdir -p "$RES/mipmap-$d"
-            cp branding/android/ic_launcher-$d.png "$RES/mipmap-$d/ic_launcher.png"
-            cp branding/android/ic_launcher-$d.png "$RES/mipmap-$d/ic_launcher_round.png"
-            cp branding/android/fg-$d.png          "$RES/mipmap-$d/ic_launcher_foreground.png"
+            cp branding/icones/ic_launcher-$d.png "$RES/mipmap-$d/ic_launcher.png"
+            cp branding/icones/ic_launcher-$d.png "$RES/mipmap-$d/ic_launcher_round.png"
+            cp branding/icones/fg-$d.png          "$RES/mipmap-$d/ic_launcher_foreground.png"
           done
           mkdir -p "$RES/values"
           printf '%s\n' '<?xml version="1.0" encoding="utf-8"?>' '<resources><color name="ic_launcher_background">#0B1730</color></resources>' > "$RES/values/ic_launcher_background.xml"
           for d in drawable drawable-port-xxxhdpi drawable-land-xxxhdpi; do
-            [ -d "$RES/$d" ] && cp branding/android/splash.png "$RES/$d/splash.png"
+            [ -d "$RES/$d" ] && cp branding/icones/splash.png "$RES/$d/splash.png"
           done
           echo "Icônes posées :"; ls -la "$RES/mipmap-xxxhdpi/"
 

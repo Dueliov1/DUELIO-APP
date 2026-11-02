@@ -46,7 +46,13 @@
       fb.onAuthStateChanged(async (u)=>{
         etat.user = u ? { uid: u.uid, email: u.email || '', verifie: !!u.emailVerified, fournisseur: (u.providerData && u.providerData[0] && u.providerData[0].providerId) || 'password' } : null;
         etat.duels = [];
-        if(etat.user){ try{ etat.duels = await fb.listerDuels(u.uid); }catch(e){ console.warn('duels :', e && e.message); } }
+        etat.duelsErreur = '';
+        if(etat.user){
+          // Un échec ici affichait une liste vide, sans un mot : l'utilisateur croyait ses
+          // duels perdus. On retient l'erreur pour que l'écran puisse la dire.
+          try{ etat.duels = await fb.listerDuels(u.uid); }
+          catch(e){ etat.duelsErreur = messageErreur(e); console.warn('duels :', e && e.message); }
+        }
         prevenir();
       });
       etat.dispo = true; etat.pret = true;
