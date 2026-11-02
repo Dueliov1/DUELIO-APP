@@ -1231,7 +1231,8 @@
   .share-format-btn{ display:flex; align-items:center; justify-content:center; gap:8px; }
   .share-format-btn svg{ width:18px; height:18px; }
   .share-preview-wrap{ text-align:center; margin-top:6px; }
-  .share-preview-wrap canvas{ width:100%; max-width:320px; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.4); }
+  .share-preview-wrap img{ width:100%; height:auto; max-width:320px; border-radius:14px; box-shadow:0 8px 24px rgba(0,0,0,.4); display:block; margin:0 auto; -webkit-touch-callout:default; }
+  .share-astuce{ font-size:11.5px; color:var(--chalk-dim); margin:8px auto 0; max-width:300px; line-height:1.45; }
   .share-download-row{ display:flex; gap:8px; margin-top:16px; }
   .share-download-btn{
     flex:1; padding:13px; border-radius:22px; border:none; cursor:pointer; font-weight:800; font-size:13px;
@@ -1541,7 +1542,7 @@
   .screen-in{ animation: screenIn .24s cubic-bezier(.22,.9,.3,1) both; }
   .sheet:not([hidden]){ animation: fadeIn .2s ease both; }
   .sheet:not([hidden]) .sheet-panel{ animation: sheetUp .28s cubic-bezier(.3,.9,.3,1) both; }
-  #sharePreviewCanvas{ animation: revealUp .4s cubic-bezier(.22,.9,.3,1) both; }
+  #sharePreviewImg{ animation: revealUp .4s cubic-bezier(.22,.9,.3,1) both; }
   .tabbar-btn svg{ transition: transform .18s cubic-bezier(.3,.9,.3,1); }
   .tabbar-btn:active svg{ transform: scale(.88); }
   .tabbar-btn.active svg{ transform: translateY(-1px); }
@@ -8629,23 +8630,29 @@ function publierImage(canvas, btn, W, H){
     const area = document.getElementById('sharePreviewArea');
     const file = new File([blob], `duelio-${Date.now()}.png`, {type:'image/png'});
     const natif = estNatif() && !!pluginCap('Share') && !!pluginCap('Filesystem');
+    // iPhone et iPad : un lien de téléchargement y dépose le fichier dans Fichiers, jamais
+    // dans les photos. On oriente vers l'appui long et vers le partage, qui savent le faire.
+    const iOS = !natif && (/iPad|iPhone|iPod/.test(navigator.platform || '') ||
+                (/Mac/.test(navigator.platform || '') && navigator.maxTouchPoints > 1) ||
+                /iPhone|iPad|iPod/.test(navigator.userAgent || ''));
     const canNativeShare = natif || !!(navigator.share && navigator.canShare && navigator.canShare({files:[file]}));
     haptique('medium');
     area.innerHTML = `
       <div class="share-preview-wrap">
         <div class="share-ready">Ton image est prête.</div>
-        <canvas id="sharePreviewCanvas" width="${W}" height="${H}"></canvas>
+        <img id="sharePreviewImg" src="${shareGeneratedBlobUrl}" width="${W}" height="${H}" alt="Aperçu de l'image du duel">
+        ${iOS ? `<div class="share-astuce">Appuie longuement sur l'image pour l'ajouter à tes photos, ou passe par Partager.</div>` : ''}
         <div class="share-download-row">
-          ${canNativeShare ? `<button class="share-download-btn share" id="shareNativeBtn" type="button">Partager</button>` : ''}
-          <button class="share-download-btn ${canNativeShare ? 'secondary' : 'primary'}" id="shareDownloadBtn" type="button">${natif ? 'Enregistrer' : 'Télécharger'}</button>
+          ${canNativeShare ? `<button class="share-download-btn share" id="shareNativeBtn" type="button">${iOS ? 'Partager ou enregistrer' : 'Partager'}</button>` : ''}
+          ${iOS && canNativeShare ? '' : `<button class="share-download-btn ${canNativeShare ? 'secondary' : 'primary'}" id="shareDownloadBtn" type="button">${natif ? 'Enregistrer' : 'Télécharger'}</button>`}
         </div>
       </div>`;
     // L'image apparaît sous la liste des stats : on l'amène sous les yeux, en douceur.
     try{ area.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); }catch(e){}
     const sticky = document.getElementById('shareSticky'); if(sticky) sticky.style.display = 'none';
-    const previewCanvas = document.getElementById('sharePreviewCanvas');
-    previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
-    document.getElementById('shareDownloadBtn').addEventListener('click', async (e)=>{
+
+    const dlBtn = document.getElementById('shareDownloadBtn');
+    if(dlBtn) dlBtn.addEventListener('click', async (e)=>{
       const b = e.currentTarget;
       if(natif){
         const avant = b.textContent; b.disabled = true; b.textContent = 'Enregistrement…';
