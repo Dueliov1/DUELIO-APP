@@ -1,423 +1,439 @@
-Saison 2026 — 2026-11-03 : 15001 fiches, 5446 mises à jour, 24 saisons ajoutées, 9531 inchangées, 0 sans réponse — quota au départ : 73751 appels restants sur 75000
+Saison 2026 — 2026-11-10 : 15001 fiches, 5073 mises à jour, 40 saisons ajoutées, 9888 inchangées, 0 sans réponse — quota au départ : 73747 appels restants sur 75000
 
-~ 10004 Eduardo Sasha : 40 → 40 m
-~ 10006 Arthur Gomes : 12 → 13 m
-~ 10007 Yuri Alberto : 36 → 36 m
-~ 10008 Kaio Jorge : 39 → 40 m
-~ 100086 A. Timossi Andersson : 20 → 20 m
-~ 10013 Moisés : 3 → 3 m
-~ 10015 Nino Paraíba : 15 → 15 m
+~ 10003 Felippe Cardoso : 7 → 8 m
+~ 10004 Eduardo Sasha : 41 → 41 m
+~ 10006 Arthur Gomes : 13 → 14 m
+~ 10007 Yuri Alberto : 37 → 37 m
+~ 10008 Kaio Jorge : 41 → 41 m
+~ 100086 A. Timossi Andersson : 20 → 22 m
+~ 10015 Nino Paraíba : 15 → 16 m
 ~ 10017 Ignacio : 34 → 34 m
-~ 10025 Shaylon : 38 → 38 m
-~ 10027 Eric Ramires : 39 → 39 m
-~ 10031 Gregore : 9 → 11 m
-~ 10036 Douglas Augusto : 9 → 10 m
-+ 10037 Clayton : saison 2026 ajoutée (4 m)
-~ 10039 Arthur Caíke : 22 → 23 m
-~ 10040 Artur : 44 → 44 m
-~ 10041 Gilberto : 18 → 18 m
-~ 10042 Élber : 8 → 9 m
-~ 10048 Marcinho : 19 → 20 m
-~ 1005 B. Kololli : 6 → 7 m
-~ 10052 Marcelo Benevenuto : 28 → 29 m
-~ 10056 Fernando Costanza : 11 → 12 m
-~ 10059 Kanu : 7 → 7 m
-~ 100612 C. Lungoyi : 7 → 7 m
-~ 10064 Rhuan : 13 → 15 m
+~ 10025 Shaylon : 39 → 39 m
+~ 10027 Eric Ramires : 40 → 40 m
+~ 10031 Gregore : 11 → 13 m
+~ 10036 Douglas Augusto : 10 → 11 m
+~ 10040 Artur : 45 → 45 m
+~ 10042 Élber : 9 → 10 m
+~ 10048 Marcinho : 20 → 20 m
+~ 1005 B. Kololli : 7 → 8 m
+~ 10052 Marcelo Benevenuto : 29 → 30 m
+~ 10056 Fernando Costanza : 12 → 13 m
+~ 10059 Kanu : 8 → 8 m
+~ 100612 C. Lungoyi : 7 → 8 m
 ~ 10065 Jean Irmer : 25 → 25 m
-~ 10067 Alex Santana : 1 → 1 m
-~ 10071 L. Valencia : 21 → 21 m
-~ 10073 Luiz Fernando : 37 → 37 m
-~ 10080 Fábio : 57 → 57 m
-~ 10081 Rafael : 50 → 50 m
-~ 10083 Murilo : 54 → 55 m
-~ 10085 Cacá : 31 → 31 m
-~ 10089 Fabrício Bruno : 42 → 43 m
-~ 10091 Jádson : 29 → 29 m
-~ 10096 Marquinhos Gabriel : 35 → 36 m
-~ 10097 Éderson : 16 → 16 m
-~ 10100 L. Romero : 33 → 34 m
-~ 10102 Lucas Silva : 22 → 22 m
-~ 10103 Sassá : 0 → 0 m
-~ 10105 David : 45 → 45 m
-~ 10106 Pedro Rocha : 34 → 34 m
-~ 10111 Bento : 13 → 13 m
+~ 10071 L. Valencia : 21 → 23 m
+~ 10074 Erik : 20 → 21 m
+~ 10080 Fábio : 58 → 58 m
+~ 10081 Rafael : 51 → 51 m
+~ 10083 Murilo : 56 → 57 m
+~ 10085 Cacá : 32 → 32 m
+~ 10089 Fabrício Bruno : 44 → 44 m
+~ 10091 Jádson : 30 → 30 m
+~ 10096 Marquinhos Gabriel : 36 → 37 m
+~ 10097 Éderson : 19 → 19 m
+~ 10100 L. Romero : 35 → 35 m
+~ 10102 Lucas Silva : 23 → 23 m
+~ 10105 David : 45 → 46 m
+~ 10106 Pedro Rocha : 35 → 35 m
+~ 10111 Bento : 13 → 14 m
 ~ 10112 Santos : 28 → 28 m
-~ 10115 Robson Bambu : 9 → 10 m
-~ 10117 Madson : 25 → 26 m
-~ 10118 Éder : 27 → 27 m
-~ 10122 Renan Lodi : 46 → 48 m
-~ 10124 Léo Pereira : 46 → 46 m
-~ 10125 Khellven : 38 → 38 m
-~ 10127 T. Andrade : 9 → 9 m
-~ 10130 Erick : 28 → 28 m
-~ 10135 Bruno Guimarães : 39 → 40 m
-~ 10143 Rony : 46 → 46 m
-~ 10147 Vitinho : 37 → 37 m
-~ 10149 B. Romero : 18 → 18 m
-~ 10153 César : 12 → 12 m
-~ 10157 Rodinei : 13 → 13 m
-~ 10160 Léo Duarte : 4 → 5 m
+~ 10115 Robson Bambu : 10 → 11 m
+~ 10117 Madson : 26 → 27 m
+~ 10118 Éder : 27 → 28 m
+~ 10122 Renan Lodi : 48 → 49 m
+~ 10124 Léo Pereira : 47 → 47 m
+~ 10125 Khellven : 39 → 39 m
+~ 10130 Erick : 29 → 29 m
+~ 10135 Bruno Guimarães : 41 → 41 m
+~ 10138 Matheus Rossetto : 1 → 2 m
+~ 10143 Rony : 47 → 47 m
+~ 10144 Bruno Nazário : 26 → 27 m
+~ 10147 Vitinho : 38 → 38 m
+~ 10149 B. Romero : 18 → 19 m
+~ 10153 César : 12 → 14 m
+~ 10157 Rodinei : 14 → 14 m
+~ 10160 Léo Duarte : 6 → 6 m
 ~ 10161 Matheuzinho : 53 → 53 m
-~ 10163 Renê : 36 → 36 m
+~ 10163 Renê : 37 → 37 m
+~ 10165 Matheus Thuler : 18 → 18 m
 ~ 10166 Reinier : 36 → 36 m
-~ 10167 Ronaldo : 17 → 17 m
-~ 10168 Éverton Ribeiro : 25 → 25 m
-~ 10169 Vinicius Souza : 11 → 12 m
-~ 10170 Hugo Moura : 33 → 33 m
+~ 10167 Ronaldo : 18 → 18 m
+~ 10168 Éverton Ribeiro : 26 → 26 m
+~ 10172 Yuri César : 6 → 6 m
 ~ 10173 Willian Arão : 46 → 46 m
-~ 10174 Gabriel Barbosa : 48 → 48 m
-~ 10176 Vitor Gabriel : 20 → 20 m
-~ 10177 Vitinho : 25 → 25 m
-~ 10178 Lincoln : 3 → 3 m
-~ 10180 Bruno Henrique : 44 → 44 m
-~ 101812 J. Boselli : 10 → 11 m
-~ 101814 R. Araújo : 25 → 26 m
-~ 10186 João Ricardo : 28 → 28 m
-~ 10192 Bruno Pacheco : 27 → 27 m
-~ 10215 Victor Andrade : 28 → 28 m
-~ 10218 Lourency : 6 → 6 m
-~ 10220 Perotti : 36 → 37 m
+~ 10174 Gabriel Barbosa : 49 → 49 m
+~ 10177 Vitinho : 26 → 26 m
+~ 10178 Lincoln : 3 → 4 m
+~ 10180 Bruno Henrique : 45 → 45 m
+~ 101812 J. Boselli : 11 → 11 m
+~ 101814 R. Araújo : 27 → 27 m
+~ 10186 João Ricardo : 28 → 30 m
+~ 10192 Bruno Pacheco : 28 → 28 m
+~ 10215 Victor Andrade : 28 → 29 m
+~ 10218 Lourency : 6 → 7 m
+~ 10220 Perotti : 37 → 38 m
 ~ 10222 Everaldo : 26 → 26 m
-~ 10223 Aylon : 34 → 35 m
-~ 10225 João Victor : 13 → 13 m
-~ 10226 Walter : 43 → 43 m
-~ 10228 Caíque França : 7 → 8 m
+~ 10225 João Victor : 13 → 14 m
+~ 10226 Walter : 44 → 44 m
+~ 10228 Caíque França : 8 → 8 m
 ~ 10229 Cássio : 5 → 5 m
-~ 10232 Marllon : 35 → 35 m
-~ 10233 B. Méndez : 23 → 24 m
-~ 10234 Lucas Piton : 39 → 40 m
-~ 10235 Pedro Henrique : 31 → 31 m
+~ 10232 Marllon : 36 → 36 m
+~ 10233 B. Méndez : 24 → 24 m
+~ 10234 Lucas Piton : 40 → 41 m
 ~ 10237 Manoel : 9 → 9 m
-~ 10238 Carlos Augusto : 12 → 12 m
-~ 10241 Mateus Vital : 31 → 32 m
-~ 10242 Júnior Urso : 8 → 8 m
-~ 10247 Gabriel : 34 → 34 m
-~ 10252 J. Sornoza : 40 → 41 m
-~ 10253 Marquinhos : 6 → 7 m
-~ 10256 André Luís : 27 → 28 m
-~ 10258 Clayson : 23 → 23 m
-~ 10260 Janderson : 37 → 38 m
-~ 10264 Diogo Silva : 24 → 24 m
-~ 10265 Luiz Otávio : 12 → 13 m
-~ 10267 Samuel Xavier : 28 → 28 m
-~ 10273 Eduardo Brock : 16 → 19 m
-~ 10276 Richardson : 19 → 19 m
-~ 10281 Raul : 34 → 35 m
-~ 102851 R. Ledezma : 19 → 20 m
-~ 10305 Gilberto : 24 → 24 m
-~ 10306 Nino : 10 → 10 m
-~ 10309 Marlon : 26 → 27 m
-~ 1031 Igor Silva : 3 → 4 m
-~ 10311 PH Ganso : 41 → 41 m
-~ 10314 Dodi : 15 → 16 m
-~ 10317 Bruno Silva : 0 → 0 m
+~ 10238 Carlos Augusto : 14 → 14 m
+~ 10241 Mateus Vital : 32 → 34 m
+~ 10247 Gabriel : 35 → 35 m
+~ 10252 J. Sornoza : 41 → 42 m
+~ 10253 Marquinhos : 7 → 8 m
+~ 10256 André Luís : 28 → 29 m
+~ 10257 Gustavo : 29 → 29 m
+~ 10258 Clayson : 23 → 24 m
+~ 10260 Janderson : 38 → 39 m
+~ 10265 Luiz Otávio : 13 → 15 m
+~ 10267 Samuel Xavier : 29 → 29 m
+~ 10273 Eduardo Brock : 19 → 20 m
+~ 10276 Richardson : 19 → 21 m
+~ 10281 Raul : 35 → 36 m
+~ 102851 R. Ledezma : 20 → 21 m
+~ 10305 Gilberto : 25 → 25 m
+~ 10306 Nino : 10 → 12 m
+~ 10309 Marlon : 27 → 28 m
+~ 1031 Igor Silva : 4 → 5 m
+~ 10311 PH Ganso : 42 → 42 m
+~ 10312 Caio Vinícius : 24 → 25 m
+~ 10314 Dodi : 17 → 18 m
+~ 10316 Caio Henrique : 14 → 14 m
 ~ 10319 Allan : 38 → 38 m
-~ 10320 Daniel : 37 → 37 m
-~ 10321 Pedro : 53 → 53 m
-~ 10322 Marcos Paulo : 42 → 43 m
-~ 10323 Luciano : 44 → 44 m
-~ 10324 Pablo Dyego : 27 → 28 m
-~ 10325 Ewandro : 16 → 17 m
-~ 10326 Léo Artur : 1 → 2 m
-~ 10327 Kelvin : 6 → 7 m
-~ 10328 Y. González : 31 → 33 m
+~ 10320 Daniel : 37 → 39 m
+~ 10321 Pedro : 54 → 54 m
+~ 10322 Marcos Paulo : 43 → 44 m
+~ 10323 Luciano : 45 → 45 m
+~ 10324 Pablo Dyego : 28 → 29 m
+~ 10325 Ewandro : 18 → 19 m
+~ 10326 Léo Artur : 2 → 3 m
+~ 10327 Kelvin : 7 → 8 m
+~ 10328 Y. González : 33 → 34 m
 ~ 10329 João Pedro : 14 → 14 m
-~ 10335 Tadeu : 24 → 25 m
-~ 10340 Marcelo Hermes : 47 → 48 m
-~ 10347 João Afonso : 6 → 6 m
-~ 10348 Yago Felipe : 29 → 29 m
-~ 10351 David Duarte : 28 → 28 m
-~ 10356 Giovanni Augusto : 27 → 27 m
-~ 10361 Júnior Brandão : 2 → 2 m
-~ 10363 Marcinho : 34 → 34 m
-~ 10370 Keiller : 0 → 0 m
+~ 10335 Tadeu : 25 → 27 m
+~ 10338 Kevin : 28 → 29 m
+~ 10340 Marcelo Hermes : 48 → 49 m
+~ 10347 João Afonso : 6 → 7 m
+~ 10348 Yago Felipe : 30 → 30 m
+~ 10351 David Duarte : 29 → 29 m
+~ 10356 Giovanni Augusto : 28 → 28 m
+~ 10361 Júnior Brandão : 2 → 3 m
+~ 10363 Marcinho : 35 → 35 m
+~ 10366 Miguel Figueira : 2 → 2 m
 ~ 10372 Marcelo Lomba : 4 → 4 m
-~ 10373 Carlos Miguel : 59 → 60 m
-~ 10375 Iago : 19 → 19 m
-~ 10376 Zeca : 28 → 28 m
-~ 10378 Rodrigo Moledo : 9 → 9 m
-~ 10379 Bruno Fuchs : 19 → 19 m
-~ 10380 Klaus : 13 → 13 m
-~ 10385 Emerson Santos : 8 → 9 m
-~ 10387 Edenílson : 33 → 33 m
-~ 10388 Patrick : 30 → 30 m
-~ 10393 Rodrigo Dourado : 15 → 16 m
-~ 103958 C. Ramírez : 17 → 17 m
-~ 10396 Nonato : 33 → 33 m
-~ 10397 M. Sarrafiore : 36 → 37 m
-~ 104 Carlos Vinícius : 53 → 54 m
-~ 10400 William Pottker : 26 → 27 m
-~ 10401 P. Guerrero : 33 → 33 m
-~ 10404 Guilherme Parede : 26 → 27 m
-~ 104041 B. Cabango : 16 → 16 m
-~ 10413 Tinga : 23 → 23 m
-~ 10416 Bruno Melo : 31 → 31 m
-~ 104183 Abdulwahab Al Malood : 4 → 5 m
-~ 104188 Abdulaziz Al Muqbali : 0 → 2 m
-~ 10428 Dodô : 24 → 25 m
-~ 10429 Marlon : 6 → 7 m
+~ 10373 Carlos Miguel : 61 → 62 m
+~ 10375 Iago : 20 → 20 m
+~ 10376 Zeca : 28 → 29 m
+~ 10378 Rodrigo Moledo : 10 → 10 m
+~ 10379 Bruno Fuchs : 20 → 21 m
+~ 10385 Emerson Santos : 9 → 10 m
+~ 10387 Edenílson : 34 → 34 m
+~ 10388 Patrick : 31 → 31 m
+~ 10393 Rodrigo Dourado : 16 → 17 m
+~ 103958 C. Ramírez : 18 → 18 m
+~ 10396 Nonato : 34 → 34 m
+~ 10397 M. Sarrafiore : 37 → 38 m
+~ 10398 Wellington Silva : 29 → 30 m
+~ 104 Carlos Vinícius : 54 → 55 m
+~ 10400 William Pottker : 27 → 27 m
+~ 10404 Guilherme Parede : 27 → 28 m
+~ 104041 B. Cabango : 18 → 18 m
+~ 10413 Tinga : 24 → 24 m
+~ 10416 Bruno Melo : 32 → 32 m
+~ 10417 Felipe Ferreira : 25 → 25 m
+~ 104183 Abdulwahab Al Malood : 5 → 6 m
+~ 104188 Abdulaziz Al Muqbali : 2 → 3 m
+~ 10428 Dodô : 25 → 26 m
+~ 10429 Marlon : 7 → 7 m
 ~ 10432 Júnior Santos : 27 → 27 m
-~ 10434 Osvaldo : 15 → 15 m
-~ 10438 Romarinho : 21 → 21 m
-~ 10440 Jordi : 39 → 40 m
-~ 10442 João Carlos : 14 → 15 m
-~ 10448 Luciano Castán : 28 → 29 m
+~ 10438 Romarinho : 21 → 22 m
+~ 10440 Jordi : 40 → 41 m
+~ 10442 João Carlos : 15 → 16 m
+~ 10448 Luciano Castán : 29 → 30 m
 ~ 104553 A. Crețu : 8 → 8 m
-~ 10459 Dawhan : 21 → 22 m
+~ 10459 Dawhan : 22 → 23 m
 ~ 10479 Brenno : 6 → 6 m
-~ 104792 Chris Ramos : 10 → 10 m
-~ 10481 Juninho Capixaba : 44 → 44 m
-~ 104835 Darío Poveda : 5 → 6 m
-~ 104849 O. Atzili : 12 → 13 m
-~ 10488 Rodrigues : 17 → 17 m
++ 104808 Enric Saborit : saison 2026 ajoutée (7 m)
+~ 10481 Juninho Capixaba : 45 → 45 m
+~ 104835 Darío Poveda : 6 → 7 m
+~ 104849 O. Atzili : 13 → 14 m
+~ 10488 Rodrigues : 17 → 19 m
 ~ 10492 Thaciano : 37 → 37 m
-~ 10494 Matheus Henrique : 40 → 40 m
-~ 104941 Monchu : 13 → 13 m
-~ 10497 Lincoln : 11 → 11 m
-~ 10499 Darlan : 3 → 4 m
-~ 10500 Pepê Aquino : 16 → 16 m
-~ 10501 Alisson : 12 → 12 m
-~ 10503 Felipe Vizeu : 29 → 29 m
+~ 10494 Matheus Henrique : 41 → 41 m
+~ 104941 Monchu : 13 → 14 m
+~ 10499 Darlan : 4 → 6 m
+~ 10500 Pepê Aquino : 18 → 18 m
 ~ 10506 Marinho : 20 → 20 m
-~ 10508 Vladimir : 1 → 1 m
-~ 10519 Igor Fernandes : 33 → 34 m
-~ 10526 Pedro Castro : 38 → 38 m
-~ 10527 Caio Paulista : 19 → 20 m
-~ 1053 J. Broun : 12 → 13 m
-~ 105320 O. Zubkov : 11 → 12 m
+~ 10519 Igor Fernandes : 34 → 34 m
+~ 10526 Pedro Castro : 38 → 40 m
+~ 10527 Caio Paulista : 21 → 22 m
+~ 1053 J. Broun : 13 → 14 m
+~ 10532 Luanzinho : 11 → 12 m
+~ 105320 O. Zubkov : 13 → 13 m
 ~ 105321 D. Ignatenko : 8 → 8 m
-~ 10544 Lourenço : 31 → 32 m
-~ 105474 V. Musliu : 21 → 21 m
-~ 105479 Stênio Júnior : 6 → 7 m
-~ 1055 P. Iliev : 12 → 13 m
-~ 105501 Cris Silva : 39 → 41 m
-~ 10551 R. Cáceres : 23 → 24 m
-~ 10552 Danilo Barcelos : 24 → 25 m
-~ 10557 Miranda : 29 → 30 m
-+ 105572 V. Ahmedi : saison 2026 ajoutée (2 m)
-~ 105581 D. Hotić : 6 → 7 m
-~ 105605 M. Vítor : 15 → 16 m
-~ 10565 Lucas Mineiro : 39 → 40 m
-~ 10568 Willian Maranhão : 22 → 22 m
-~ 10574 Marrony : 31 → 31 m
-+ 10575 Ribamar : saison 2026 ajoutée (2 m)
-~ 105789 D. Churlinov : 15 → 16 m
-~ 105803 M. Jurčevič : 2 → 4 m
-~ 105807 E. Tibi : 6 → 7 m
-~ 10581 Yago Pikachu : 34 → 34 m
-~ 105949 E. Sabo : 11 → 12 m
-~ 105971 G. Bazunu : 7 → 7 m
-~ 105993 A. Hoxha : 24 → 26 m
-~ 106418 Madson : 15 → 16 m
-~ 106464 Fabrício Daniel : 25 → 26 m
-~ 106485 Maurício : 59 → 60 m
-~ 106510 Ferreira : 39 → 39 m
-~ 106612 Saulo Mineiro : 13 → 14 m
-~ 106725 K. Lewis-Potter : 11 → 11 m
-~ 106851 S. Machino : 12 → 13 m
-~ 1071 D. Yankov : 8 → 10 m
-~ 107168 G. May : 2 → 4 m
-~ 107197 B. Reyna : 22 → 23 m
-~ 107303 D. Sikan : 21 → 21 m
-~ 107332 Djalma Silva : 28 → 29 m
-~ 1079 C. Stanković : 10 → 11 m
-~ 108017 M. Abu Fani : 12 → 13 m
+~ 10544 Lourenço : 32 → 34 m
+~ 105474 V. Musliu : 23 → 23 m
+~ 1055 P. Iliev : 13 → 14 m
+~ 105501 Cris Silva : 41 → 41 m
+~ 10551 R. Cáceres : 24 → 25 m
+~ 105572 V. Ahmedi : 2 → 3 m
+~ 105581 D. Hotić : 7 → 8 m
+~ 105605 M. Vítor : 16 → 17 m
+~ 10565 Lucas Mineiro : 40 → 40 m
+~ 10570 Yan Sasse : 3 → 4 m
+~ 10574 Marrony : 31 → 32 m
+~ 10575 Ribamar : 2 → 4 m
+~ 105789 D. Churlinov : 16 → 17 m
+~ 105803 M. Jurčevič : 4 → 5 m
+~ 105807 E. Tibi : 7 → 8 m
+~ 10581 Yago Pikachu : 35 → 35 m
+~ 105871 Ž. Žužek : 6 → 6 m
+~ 105949 E. Sabo : 12 → 13 m
+~ 105993 A. Hoxha : 27 → 28 m
+~ 106418 Madson : 16 → 17 m
+~ 106464 Fabrício Daniel : 26 → 27 m
+~ 106485 Maurício : 61 → 62 m
+~ 106510 Ferreira : 40 → 40 m
+~ 106612 Saulo Mineiro : 14 → 15 m
+~ 106823 E. Kartsev : 25 → 26 m
+~ 106851 S. Machino : 14 → 14 m
+~ 1069 Lucas Sasha : 36 → 38 m
++ 107044 Bruno Almeida : saison 2026 ajoutée (3 m)
+~ 107168 G. May : 4 → 5 m
+~ 107197 B. Reyna : 23 → 25 m
+~ 107268 C. Şen : 9 → 10 m
+~ 107303 D. Sikan : 23 → 23 m
+~ 107332 Djalma Silva : 29 → 31 m
+~ 1079 C. Stanković : 11 → 12 m
+~ 108017 M. Abu Fani : 13 → 13 m
 ~ 1082 S. Lainer : 1 → 1 m
-~ 1084 M. Pongračić : 15 → 15 m
-~ 108453 L. Selahi : 7 → 8 m
-~ 1085 André Ramalho : 19 → 19 m
-~ 1086 D. Todorović : 12 → 12 m
-~ 109 A. Golovin : 15 → 15 m
-~ 1095 X. Schlager : 20 → 20 m
-~ 109504 O. Imeri : 6 → 7 m
-~ 109542 S. Herrera : 14 → 14 m
-~ 109564 B. Miovski : 13 → 14 m
-~ 1096 D. Szoboszlai : 17 → 17 m
-~ 109696 Ž. Lipušček : 33 → 34 m
-~ 109714 D. Petrovič : 2 → 3 m
-~ 109740 T. Horvat : 8 → 8 m
-~ 109762 D. Stojinović : 3 → 4 m
-~ 109797 G. Sikošek : 10 → 11 m
-~ 1098 P. Daka : 7 → 8 m
-~ 109887 D. Brekalo : 34 → 34 m
-~ 1099 F. Gulbrandsen : 27 → 28 m
-~ 109939 I. Vekič : 9 → 11 m
-~ 10995 B. Chorbadzhiyski : 2 → 3 m
-~ 110 H. Massengo : 9 → 10 m
-~ 1100 E. Haaland : 25 → 25 m
-~ 1101 T. Minamino : 15 → 15 m
-~ 110153 T. Arokodare : 15 → 15 m
-~ 11017 M. Cvetković : 6 → 6 m
-~ 1102 S. Prevljak : 8 → 9 m
-~ 11038 S. Ivanov : 11 → 12 m
-~ 111 Rony Lopes : 5 → 6 m
+~ 108453 L. Selahi : 8 → 9 m
+~ 1085 André Ramalho : 20 → 20 m
+~ 108526 K. Gómez : 10 → 10 m
+~ 108563 R. Zalazar : 18 → 18 m
+~ 1086 D. Todorović : 12 → 13 m
+~ 109 A. Golovin : 17 → 17 m
+~ 1095 X. Schlager : 21 → 21 m
+~ 109504 O. Imeri : 7 → 8 m
+~ 109542 S. Herrera : 15 → 22 m
+~ 109559 Serginho : 4 → 6 m
+~ 109564 B. Miovski : 14 → 14 m
+~ 1096 D. Szoboszlai : 19 → 19 m
+~ 109696 Ž. Lipušček : 34 → 34 m
+~ 109714 D. Petrovič : 3 → 4 m
+~ 109740 T. Horvat : 9 → 9 m
+~ 109762 D. Stojinović : 5 → 5 m
+~ 109797 G. Sikošek : 11 → 11 m
+~ 1098 P. Daka : 9 → 9 m
+~ 109887 D. Brekalo : 35 → 35 m
+~ 1099 F. Gulbrandsen : 29 → 30 m
+~ 109939 I. Vekič : 11 → 12 m
+~ 10995 B. Chorbadzhiyski : 3 → 4 m
+~ 109987 S. Sešlar : 11 → 11 m
+~ 1100 E. Haaland : 27 → 27 m
+~ 1101 T. Minamino : 17 → 17 m
+~ 110153 T. Arokodare : 17 → 17 m
+~ 11017 M. Cvetković : 6 → 7 m
+~ 1102 S. Prevljak : 10 → 10 m
+~ 11024 Nuno Reis : 2 → 3 m
+~ 11038 S. Ivanov : 12 → 14 m
+~ 11074 K. Dimitrov : 16 → 16 m
+~ 110941 O. Arad : 8 → 9 m
+~ 111 Rony Lopes : 6 → 7 m
 ~ 111003 R. Mishpati : 1 → 1 m
-~ 111016 R. Shlomo : 19 → 20 m
-~ 1111 J. Hendry : 19 → 19 m
-~ 11113 V. Panayotov : 11 → 12 m
-~ 111148 G. Kanichowsky : 20 → 20 m
-~ 11116 M. Minchev : 13 → 14 m
+~ 111016 R. Shlomo : 20 → 21 m
+~ 11113 V. Panayotov : 12 → 14 m
+~ 111148 G. Kanichowsky : 20 → 22 m
+~ 11116 M. Minchev : 14 → 15 m
 ~ 111266 N. Lavi : 15 → 15 m
-~ 111274 R. Safouri : 8 → 8 m
-~ 111278 D. Keltjens : 3 → 4 m
-~ 111284 S. Yehezkel : 4 → 5 m
-~ 111288 I. Nachmias : 12 → 13 m
-~ 111325 O. Glazer : 10 → 10 m
-~ 1117 K. Tierney : 18 → 20 m
-~ 1119 K. Ajer : 25 → 26 m
-~ 111917 A. Matko : 18 → 18 m
+~ 111278 D. Keltjens : 4 → 5 m
+~ 111284 S. Yehezkel : 7 → 8 m
+~ 111288 I. Nachmias : 14 → 15 m
+~ 111324 Allyson : 35 → 36 m
+~ 111325 O. Glazer : 10 → 12 m
+~ 1115 A. Ralston : 8 → 8 m
+~ 111532 E. Tapalov : 11 → 11 m
+~ 1117 K. Tierney : 21 → 22 m
+~ 1119 K. Ajer : 27 → 27 m
+~ 111917 A. Matko : 18 → 19 m
 ~ 11238 Y. Karabelyov : 5 → 5 m
-~ 1125 R. Christie : 22 → 23 m
-~ 112531 Eduardo Mancha : 1 → 2 m
-~ 1126 E. Kouassi : 5 → 6 m
-~ 1127 J. Forrest : 10 → 11 m
-~ 11278 P. Umarbayev : 21 → 22 m
-~ 11280 B. Karagaren : 11 → 12 m
-~ 1129 C. McGregor : 14 → 16 m
-~ 11307 Z. Dimitrov : 15 → 16 m
-~ 11317 G. Rusev : 18 → 19 m
+~ 1125 R. Christie : 25 → 25 m
+~ 112531 Eduardo Mancha : 2 → 3 m
+~ 1127 J. Forrest : 12 → 13 m
+~ 11278 P. Umarbayev : 22 → 23 m
+~ 11280 B. Karagaren : 12 → 14 m
+~ 1129 C. McGregor : 17 → 18 m
+~ 11307 Z. Dimitrov : 16 → 17 m
+~ 11317 G. Rusev : 19 → 20 m
 ~ 11348 C. Toselli : 0 → 0 m
-~ 113580 Willy Semedo : 9 → 9 m
+~ 1135 O. Édouard : 9 → 9 m
+~ 113580 Willy Semedo : 9 → 10 m
 ~ 11365 B. Kuscevic : 22 → 22 m
-~ 11368 C. Pinares : 18 → 19 m
-~ 11377 D. Valencia : 6 → 7 m
-~ 1138 T. Weah : 17 → 17 m
-~ 1139 P. Gulácsi : 9 → 9 m
-~ 11405 W. Bou : 22 → 23 m
-~ 1141 M. Müller : 10 → 11 m
-~ 11421 G. Suazo : 30 → 30 m
+~ 11368 C. Pinares : 19 → 20 m
+~ 11377 D. Valencia : 7 → 7 m
+~ 1138 T. Weah : 19 → 19 m
+~ 1139 P. Gulácsi : 11 → 11 m
+~ 11405 W. Bou : 23 → 24 m
+~ 1141 M. Müller : 11 → 12 m
+~ 1142 Y. Mvogo : 13 → 13 m
+~ 11421 G. Suazo : 31 → 31 m
 ~ 11424 W. Alarcón : 14 → 14 m
+~ 1144 L. Klostermann : 2 → 2 m
 ~ 11442 T. Galdames : 6 → 6 m
-~ 114436 Matheuzinho : 36 → 36 m
-~ 1145 I. Konaté : 16 → 16 m
-~ 1146 N. Mukiele : 10 → 10 m
+~ 114436 Matheuzinho : 37 → 37 m
+~ 1145 I. Konaté : 17 → 17 m
+~ 1146 N. Mukiele : 11 → 11 m
 ~ 11463 C. Palacios : 12 → 12 m
-~ 11466 B. Yáñez : 32 → 33 m
-~ 1147 A. Nukan : 3 → 3 m
+~ 11466 B. Yáñez : 33 → 34 m
 ~ 11471 T. Alarcón : 23 → 23 m
-~ 1148 W. Orbán : 20 → 21 m
-~ 1149 D. Upamecano : 24 → 24 m
-~ 11490 R. López : 17 → 17 m
-~ 1150 T. Adams : 22 → 23 m
-~ 1153 A. Haidara : 13 → 13 m
-~ 115525 João Victor : 46 → 46 m
-~ 115554 Manuel Kambala : 8 → 9 m
-~ 115587 M. Kjærgaard : 10 → 10 m
+~ 1148 W. Orbán : 23 → 23 m
+~ 1149 D. Upamecano : 26 → 26 m
+~ 11490 R. López : 17 → 19 m
+~ 1150 T. Adams : 25 → 25 m
+~ 1153 A. Haidara : 15 → 15 m
+~ 115525 João Victor : 47 → 47 m
+~ 115554 Manuel Kambala : 9 → 9 m
+~ 115587 M. Kjærgaard : 12 → 12 m
 ~ 115589 B. Šeško : 6 → 6 m
-~ 1156 T. Krauß : 9 → 10 m
-~ 1157 K. Laimer : 18 → 19 m
-~ 11582 N. Bandiera : 36 → 38 m
-~ 1159 M. Sabitzer : 18 → 19 m
+~ 1157 K. Laimer : 21 → 21 m
+~ 11582 N. Bandiera : 38 → 40 m
+~ 1159 M. Sabitzer : 20 → 20 m
 ~ 11601 G. Soto : 8 → 8 m
-~ 116117 M. Caicedo : 28 → 29 m
-~ 1163 Bruma : 3 → 3 m
-~ 1165 Matheus Cunha : 29 → 29 m
-~ 11675 J. Altamirano : 22 → 23 m
-~ 1171 V. Hedenstad : 7 → 7 m
-~ 11751 G. Vadalá : 27 → 28 m
-~ 11756 A. Rossi : 48 → 48 m
-~ 11765 E. Bello : 41 → 42 m
-~ 118 Gelson Martins : 12 → 13 m
-~ 11828 R. Echeverría : 40 → 41 m
-~ 118307 Đ. Petrović : 13 → 13 m
+~ 11605 J. Fernández : 29 → 29 m
+~ 116117 M. Caicedo : 30 → 30 m
+~ 1163 Bruma : 3 → 4 m
+~ 1165 Matheus Cunha : 31 → 31 m
+~ 11675 J. Altamirano : 23 → 24 m
+~ 1173 B. Meling : 15 → 17 m
+~ 11751 G. Vadalá : 28 → 29 m
+~ 11756 A. Rossi : 49 → 49 m
+~ 11765 E. Bello : 42 → 43 m
+~ 118 Gelson Martins : 14 → 15 m
+~ 11828 R. Echeverría : 41 → 42 m
+~ 118307 Đ. Petrović : 14 → 14 m
 ~ 1184 A. Trondsen : 17 → 17 m
-~ 11840 Á. Henríquez : 12 → 13 m
-~ 11857 M. Marín : 21 → 22 m
-~ 1188 E. Botheim : 29 → 30 m
-~ 1189 E. Ceïde : 24 → 25 m
-~ 119112 A. Đokanović : 12 → 13 m
-~ 119115 M. Bouchouari : 4 → 5 m
-~ 119121 T. Hume : 19 → 19 m
-~ 119139 E. Kara : 14 → 15 m
-~ 119158 H. Bockhorn : 8 → 9 m
-~ 119278 M. Ștefănescu : 10 → 10 m
-~ 119485 B. Rollheiser : 51 → 51 m
-~ 119690 V. Postolachi : 3 → 4 m
-~ 1197 A. Lunev : 6 → 6 m
-~ 119749 S. Asan : 3 → 4 m
-~ 119762 K. Piątkowski : 13 → 14 m
+~ 11840 Á. Henríquez : 13 → 14 m
+~ 11857 M. Marín : 22 → 23 m
+~ 1188 E. Botheim : 31 → 32 m
+~ 1189 E. Ceïde : 25 → 26 m
+~ 119112 A. Đokanović : 13 → 14 m
+~ 119115 M. Bouchouari : 5 → 5 m
+~ 119121 T. Hume : 21 → 21 m
+~ 119139 E. Kara : 15 → 16 m
+~ 119278 M. Ștefănescu : 10 → 12 m
+~ 119485 B. Rollheiser : 52 → 52 m
+~ 119690 V. Postolachi : 4 → 5 m
+~ 1197 A. Lunev : 6 → 7 m
+~ 119749 S. Asan : 4 → 5 m
+~ 119762 K. Piątkowski : 14 → 15 m
+~ 119780 B. Kramer : 6 → 6 m
 ~ 119795 G. Kochorashvili : 18 → 18 m
-~ 119853 M. Diaw : 14 → 14 m
-~ 12003 M. Guerrero : 29 → 30 m
-~ 12067 M. Di Benedetto : 21 → 21 m
-~ 1209 W. Barrios : 15 → 16 m
-~ 121 S. Jovetić : 13 → 14 m
+~ 12003 M. Guerrero : 30 → 30 m
+~ 1209 W. Barrios : 16 → 17 m
+~ 121 S. Jovetić : 14 → 14 m
 ~ 1210 A. Erokhin : 3 → 3 m
-~ 1212 D. Kuzyaev : 3 → 4 m
-~ 1217 M. Ozdoev : 12 → 12 m
-~ 122 Jordi Mboula : 15 → 16 m
-~ 1221 S. Azmoun : 23 → 24 m
-~ 122419 S. Boboev : 5 → 5 m
-~ 122428 K. Kangwa : 10 → 11 m
-~ 122469 Josete Miranda : 2 → 2 m
+~ 1212 D. Kuzyaev : 4 → 5 m
+~ 1217 M. Ozdoev : 12 → 13 m
+~ 122 Jordi Mboula : 16 → 17 m
+~ 1221 S. Azmoun : 24 → 26 m
+~ 122428 K. Kangwa : 12 → 12 m
+~ 122469 Josete Miranda : 2 → 3 m
 ~ 122505 R. Yatimov : 15 → 15 m
-~ 122509 E. Panjshanbe : 17 → 17 m
-~ 122657 R. Nteka : 3 → 4 m
-~ 1227 O. Kolář : 0 → 0 m
-~ 122734 Ferran Jutglà : 14 → 14 m
+~ 122734 Ferran Jutglà : 15 → 15 m
 ~ 122956 Diego Conde : 0 → 0 m
 ~ 1230 J. Bořil : 3 → 3 m
 ~ 12303 Ricardo Ade : 51 → 51 m
-~ 1231 V. Coufal : 18 → 19 m
-~ 1233 M. Frydrych : 6 → 7 m
-~ 123469 Z. Amdouni : 21 → 21 m
-~ 123476 F. Stojilković : 10 → 11 m
-~ 123530 Mahmoud Al Mardi : 22 → 24 m
-~ 1237 J. Zelený : 16 → 17 m
-~ 123759 Hugo Souza : 53 → 53 m
-~ 12380 J. Amoroso : 25 → 26 m
++ 123047 Sergio González : saison 2026 ajoutée (8 m)
+~ 1231 V. Coufal : 20 → 20 m
+~ 1233 M. Frydrych : 7 → 8 m
+~ 1234 A. Král : 26 → 28 m
+~ 123469 Z. Amdouni : 22 → 22 m
+~ 123476 F. Stojilković : 11 → 12 m
+~ 123530 Mahmoud Al Mardi : 24 → 25 m
+~ 1237 J. Zelený : 18 → 19 m
+~ 123759 Hugo Souza : 54 → 54 m
+~ 12380 J. Amoroso : 26 → 27 m
 ~ 123941 Soeuy Visal : 3 → 3 m
-~ 1240 L. Masopust : 10 → 11 m
-~ 12406 C. Rotondi : 9 → 10 m
-~ 1242 P. Ševčík : 5 → 5 m
-~ 1243 T. Souček : 10 → 10 m
-~ 1248 J. Zmrhal : 11 → 11 m
-~ 12493 Tana : 7 → 9 m
-~ 125171 J. Stanišić : 23 → 24 m
-~ 125173 J. Adamu : 8 → 9 m
-~ 1252 M. van Buren : 16 → 17 m
-~ 125239 K. Arriaga : 16 → 16 m
-~ 125418 Y. Konoplya : 1 → 2 m
+~ 1240 L. Masopust : 11 → 12 m
+~ 12406 C. Rotondi : 10 → 11 m
+~ 1241 M. Ngadeu : 24 → 25 m
+~ 1242 P. Ševčík : 5 → 6 m
+~ 1243 T. Souček : 12 → 12 m
+~ 12493 Tana : 9 → 11 m
+~ 125171 J. Stanišić : 26 → 26 m
+~ 125173 J. Adamu : 10 → 10 m
+~ 1252 M. van Buren : 17 → 18 m
+~ 125239 K. Arriaga : 17 → 18 m
 ~ 125450 B. Balat : 7 → 7 m
-~ 1256 V. Jovanović : 6 → 6 m
-~ 125631 M. Dulca : 8 → 8 m
-~ 125674 J. Cabal : 6 → 6 m
+~ 12555 R. Živković : 5 → 5 m
+~ 1256 V. Jovanović : 6 → 8 m
+~ 125631 M. Dulca : 8 → 9 m
+~ 125652 Matheus Jussa : 20 → 21 m
+~ 125674 J. Cabal : 8 → 8 m
 ~ 125677 Zé Gabriel : 28 → 28 m
-~ 125715 F. Daniliuc : 11 → 12 m
-~ 125719 S. Sonnenberg : 1 → 1 m
-~ 125743 Beto : 16 → 16 m
-~ 126 Iñaki Peña : 16 → 17 m
+~ 1257 J. Koundé : 20 → 20 m
+~ 125715 F. Daniliuc : 12 → 13 m
+~ 125743 Beto : 18 → 18 m
+~ 126 Iñaki Peña : 18 → 19 m
 ~ 1262 Otávio : 15 → 15 m
-~ 1264 Y. Sabaly : 2 → 3 m
-~ 12653 Wang Gang : 26 → 27 m
-~ 126530 Daniel Peretz : 21 → 21 m
-~ 126640 D. Affengruber : 12 → 12 m
+~ 1264 Y. Sabaly : 3 → 4 m
+~ 126500 A. Muhammad : 8 → 10 m
+~ 12653 Wang Gang : 27 → 29 m
+~ 126530 Daniel Peretz : 23 → 23 m
+~ 126640 D. Affengruber : 13 → 13 m
 ~ 126642 P. Wimmer : 14 → 14 m
-~ 126665 M. Lacava : 8 → 9 m
-~ 12667 Jonathan Viera : 5 → 5 m
-~ 1267 Y. Benrahou : 12 → 13 m
-~ 12670 Zhang Xizhe : 28 → 29 m
-~ 12674 Zhang Yuning : 45 → 46 m
-~ 126756 M. Soomets : 15 → 15 m
-+ 128397 P. Vroegh : saison 2026 ajoutée (1 m)
-+ 19864 J. Flint : saison 2026 ajoutée (1 m)
-+ 2162 Sidcley : saison 2026 ajoutée (1 m)
-+ 35575 Édgar Méndez : saison 2026 ajoutée (6 m)
-+ 361981 A. Chase : saison 2026 ajoutée (0 m)
-+ 36936 L. Thy : saison 2026 ajoutée (1 m)
-+ 37130 T. Buitink : saison 2026 ajoutée (1 m)
-+ 37274 S. van der Water : saison 2026 ajoutée (2 m)
-+ 37311 L. Slagveer : saison 2026 ajoutée (1 m)
-+ 41373 J. Martínez : saison 2026 ajoutée (1 m)
-+ 46190 D. Onyango : saison 2026 ajoutée (0 m)
-+ 50182 K. Kesgin : saison 2026 ajoutée (1 m)
-+ 53634 P. Boumal : saison 2026 ajoutée (2 m)
-+ 56012 Y. Cohen : saison 2026 ajoutée (4 m)
-+ 62138 G. Karačić : saison 2026 ajoutée (11 m)
-+ 68534 K. Tobers : saison 2026 ajoutée (0 m)
-+ 7531 P. Wiesinger : saison 2026 ajoutée (0 m)
-+ 76904 H. Šabanović : saison 2026 ajoutée (7 m)
-+ 76924 S. Jakovljević : saison 2026 ajoutée (8 m)
-+ 80 E. Dennis : saison 2026 ajoutée (0 m)
-+ 9020 N. Bilbija : saison 2026 ajoutée (12 m)
+~ 126665 M. Lacava : 9 → 10 m
+~ 126670 M. Brizuela : 25 → 26 m
+~ 1267 Y. Benrahou : 13 → 14 m
+~ 12670 Zhang Xizhe : 29 → 31 m
+~ 126711 A. Kraev : 19 → 21 m
+~ 12674 Zhang Yuning : 46 → 48 m
+~ 126761 Adriano : 28 → 29 m
+~ 12678 Yan Junling : 37 → 39 m
+~ 126791 N. Broadhead : 8 → 8 m
+~ 12684 Wang Shenchao : 15 → 16 m
+~ 126849 A. Uğur : 0 → 1 m
+~ 126868 F. Domínguez : 14 → 16 m
+~ 126892 D. Bîrligea : 15 → 15 m
++ 129046 A. El Bouchataoui : saison 2026 ajoutée (9 m)
++ 13 D. Zagadou : saison 2026 ajoutée (1 m)
++ 143268 A. Burak : saison 2026 ajoutée (0 m)
++ 152278 O. Özdemir : saison 2026 ajoutée (0 m)
++ 15471 M. Ilia : saison 2026 ajoutée (5 m)
++ 15532 M. Antoniou : saison 2026 ajoutée (5 m)
++ 161686 K. Vivcharenko : saison 2026 ajoutée (0 m)
++ 163471 J. van Mullem : saison 2026 ajoutée (8 m)
++ 1740 C. Goldson : saison 2026 ajoutée (4 m)
++ 1885 D. Spoljaric : saison 2026 ajoutée (3 m)
++ 19322 M. van der Hoorn : saison 2026 ajoutée (4 m)
++ 196329 Danny Agostinho Henriques : saison 2026 ajoutée (8 m)
++ 20691 S. Yago : saison 2026 ajoutée (8 m)
++ 2113 G. Cimirot : saison 2026 ajoutée (5 m)
++ 21645 J. Repas : saison 2026 ajoutée (7 m)
++ 22169 W. Cyprien : saison 2026 ajoutée (1 m)
++ 24201 A. Confais : saison 2026 ajoutée (2 m)
++ 29014 R. Das : saison 2026 ajoutée (1 m)
++ 31741 P. Tachtsidis : saison 2026 ajoutée (5 m)
++ 37168 E. Bergström : saison 2026 ajoutée (2 m)
++ 37927 G. Troupée : saison 2026 ajoutée (3 m)
++ 40296 K. Angielski : saison 2026 ajoutée (6 m)
++ 40401 Cafú : saison 2026 ajoutée (2 m)
++ 40546 V. De Marco : saison 2026 ajoutée (9 m)
++ 46652 Unai García : saison 2026 ajoutée (6 m)
++ 46771 Jairo Izquierdo : saison 2026 ajoutée (8 m)
++ 47568 Miramón : saison 2026 ajoutée (8 m)
++ 47983 Kristopher Da Graca : saison 2026 ajoutée (7 m)
++ 48469 T. Jurić : saison 2026 ajoutée (3 m)
++ 50078 A. Vural : saison 2026 ajoutée (0 m)
++ 5218 S. Lomónaco : saison 2026 ajoutée (4 m)
++ 6664 T. Sandoval : saison 2026 ajoutée (12 m)
++ 67973 I. Ugbo : saison 2026 ajoutée (7 m)
++ 7682 C. Gebauer : saison 2026 ajoutée (11 m)
++ 9084 R. Bajić : saison 2026 ajoutée (8 m)
++ 91448 H. Miličević : saison 2026 ajoutée (9 m)
++ 92980 R. Fernandes : saison 2026 ajoutée (5 m)
